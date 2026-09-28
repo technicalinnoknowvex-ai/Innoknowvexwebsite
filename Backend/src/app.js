@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const { frontendUrl } = require("./config/env");
 const authRoutes = require("./routes/authRoutes");
+const programRoutes = require("./routes/programRoutes");
 
 const app = express();
 
@@ -13,6 +14,7 @@ app.get("/health", (request, response) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api", programRoutes);
 
 app.use((error, request, response, next) => {
   console.error("Request failed:", {

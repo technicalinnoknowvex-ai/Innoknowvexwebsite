@@ -29,3 +29,50 @@ The accepted roles are `admin` and `student`/`user`. Roles are read from Supabas
 The reset-password request uses the access token Supabase provides after the recovery link is opened. Supabase's managed `auth.users` table cannot be renamed; the application-owned profile table is named `user_profiles_new`.
 
 The `user_profiles_new` table stores `id`, `full_name`, `email`, `created_at`, and `updated_at`. The signup trigger copies `full_name` from user metadata and `email` from `auth.users`.
+
+## Program APIs
+
+Run `supabase/programs_new.sql` in Supabase SQL Editor before using these routes.
+
+Public routes:
+
+- `GET /api/programs`
+- `GET /api/programs/:slug`
+- `GET /api/categories`
+
+Admin routes require `Authorization: Bearer <admin_access_token>` where the token user has `app_metadata.role = "admin"`:
+
+- `POST /api/admin/programs`
+- `GET /api/admin/programs`
+- `GET /api/admin/programs/:id`
+- `PUT /api/admin/programs/:id`
+- `DELETE /api/admin/programs/:id`
+- `POST /api/admin/categories`
+- `PUT /api/admin/categories/:id`
+- `DELETE /api/admin/categories/:id`
+
+Program create/update body fields use camelCase:
+
+```json
+{
+	"title": "Full-Stack Web Development",
+	"slug": "web-development",
+	"category": "Web Development",
+	"shortDescription": "Build production-ready web applications.",
+	"description": "A complete full-stack development program.",
+	"tag": "Popular Program",
+	"heroImage": "/images/programs/web-development.jpg",
+	"status": "published",
+	"featured": true,
+	"popular": true,
+	"duration": "6 Months",
+	"hours": 100,
+	"projectCount": 10,
+	"certificate": true,
+	"internship": true,
+	"placementSupport": true,
+	"originalPrice": 6000,
+	"price": 2500,
+	"discount": 58
+}
+```
