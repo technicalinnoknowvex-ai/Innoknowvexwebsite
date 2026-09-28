@@ -33,6 +33,7 @@ The `user_profiles_new` table stores `id`, `full_name`, `email`, `created_at`, a
 ## Program APIs
 
 Run `supabase/programs_new.sql` in Supabase SQL Editor before using these routes.
+Run `supabase/program_pricing_new.sql` as well to create and seed the pricing table from the supplied CSV. Rows where all six prices are `0.00` were intentionally excluded.
 
 Public routes:
 
@@ -60,19 +61,10 @@ Program create/update body fields use camelCase:
 	"category": "Web Development",
 	"shortDescription": "Build production-ready web applications.",
 	"description": "A complete full-stack development program.",
-	"tag": "Popular Program",
-	"heroImage": "/images/programs/web-development.jpg",
+	"imageUrl": "",
+	"brochureUrl": "",
 	"status": "published",
 	"featured": true,
-	"popular": true,
-	"duration": "6 Months",
-	"hours": 100,
-	"projectCount": 10,
-	"certificate": true,
-	"internship": true,
-	"placementSupport": true,
-	"originalPrice": 6000,
-	"price": 2500,
-	"discount": 58
+	"internship": true
 }
 ```

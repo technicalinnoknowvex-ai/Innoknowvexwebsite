@@ -7,21 +7,11 @@ const programFields = [
   "slug",
   "category",
   "short_description",
-  "description",
-  "tag",
-  "hero_image",
+  "image_url",
+  "brochure_url",
   "status",
   "featured",
-  "popular",
-  "duration",
-  "hours",
-  "project_count",
-  "certificate",
   "internship",
-  "placement_support",
-  "original_price",
-  "price",
-  "discount",
 ];
 
 function createAuthenticatedClient(accessToken) {
@@ -50,21 +40,11 @@ function toProgram(row) {
     slug: row.slug,
     category: row.category,
     shortDescription: row.short_description,
-    description: row.description,
-    tag: row.tag,
-    heroImage: row.hero_image,
+    imageUrl: row.image_url,
+    brochureUrl: row.brochure_url,
     status: row.status,
     featured: row.featured,
-    popular: row.popular,
-    duration: row.duration,
-    hours: row.hours,
-    projectCount: row.project_count,
-    certificate: row.certificate,
     internship: row.internship,
-    placementSupport: row.placement_support,
-    originalPrice: row.original_price,
-    price: row.price,
-    discount: row.discount,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -74,10 +54,8 @@ function programPayload(body, partial = false) {
   const payload = {};
   const aliases = {
     shortDescription: "short_description",
-    heroImage: "hero_image",
-    projectCount: "project_count",
-    placementSupport: "placement_support",
-    originalPrice: "original_price",
+    imageUrl: "image_url",
+    brochureUrl: "brochure_url",
   };
 
   for (const field of programFields) {
