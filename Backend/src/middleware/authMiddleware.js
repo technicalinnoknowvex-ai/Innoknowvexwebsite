@@ -4,7 +4,7 @@ function getAccessToken(request) {
   return request.headers.authorization?.replace(/^Bearer\s+/i, "");
 }
 
-async function requireAuth(request, response, next) {
+async function authenticate(request, response, next) {
   const accessToken = getAccessToken(request);
 
   if (!accessToken) {
@@ -22,4 +22,30 @@ async function requireAuth(request, response, next) {
   return next();
 }
 
-module.exports = { requireAuth };
+function authorize(...allowedRoles) {
+  const normalizedRoles = allowedRoles.map((role) => role.toLowerCase());
+
+  return function authorizeRequest(request, response, next) {
+    const role = request.user?.app_metadata?.role;
+    const userRole = typeof role === "string" ? role.toLowerCase() : undefined;
+
+    if (!userRole || !normalizedRoles.includes(userRole)) {
+      return response.status(403).json({
+        error: "You do not have permission to access this resource.",
+      });
+    }
+
+    return next();
+  };
+}
+
+function adminOnly(request, response, next) {
+  return authorize("admin")(request, response, next);
+}
+
+module.exports = {
+  authenticate,
+  authorize,
+  adminOnly,
+  requireAuth: authenticate,
+};

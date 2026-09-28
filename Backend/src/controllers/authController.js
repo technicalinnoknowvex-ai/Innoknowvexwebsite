@@ -40,7 +40,7 @@ async function login(request, response) {
   const { data, error } = await supabase.auth.signInWithPassword(credentials);
 
   if (error) throw error;
-  response.json({ data });
+  response.json({ data ,message:"Login successfull"});
 }
 
 async function logout(request, response) {
