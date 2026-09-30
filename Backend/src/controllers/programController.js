@@ -1,6 +1,7 @@
 const { createClient } = require("@supabase/supabase-js");
 const supabase = require("../config/supabaseClient");
 const { supabaseUrl, supabaseAnonKey } = require("../config/env");
+const { uploadToStorage, assertFileType } = require("../utils/storageUpload");
 
 const programFields = [
   "title",
@@ -84,9 +85,30 @@ function programPayload(body, partial = false) {
 }
 
 async function createProgram(request, response) {
+  const payload = programPayload(request.body);
+  const files = request.files || {};
+  if (files.image?.[0]) {
+    assertFileType(files.image[0], "image");
+    payload.image_url = await uploadToStorage({
+      client: requestClient(request),
+      bucket: "program-images",
+      folder: payload.slug,
+      file: files.image[0],
+    });
+  }
+  if (files.brochure?.[0]) {
+    assertFileType(files.brochure[0], "pdf");
+    payload.brochure_url = await uploadToStorage({
+      client: requestClient(request),
+      bucket: "program-brochures",
+      folder: payload.slug,
+      file: files.brochure[0],
+    });
+  }
+
   const { data, error } = await requestClient(request)
     .from("programs_new")
-    .insert(programPayload(request.body))
+    .insert(payload)
     .select()
     .single();
 
@@ -117,9 +139,31 @@ async function getAdminProgram(request, response) {
 }
 
 async function updateProgram(request, response) {
+  const payload = programPayload(request.body, true);
+  const files = request.files || {};
+  const folder = payload.slug || request.params.id;
+  if (files.image?.[0]) {
+    assertFileType(files.image[0], "image");
+    payload.image_url = await uploadToStorage({
+      client: requestClient(request),
+      bucket: "program-images",
+      folder,
+      file: files.image[0],
+    });
+  }
+  if (files.brochure?.[0]) {
+    assertFileType(files.brochure[0], "pdf");
+    payload.brochure_url = await uploadToStorage({
+      client: requestClient(request),
+      bucket: "program-brochures",
+      folder,
+      file: files.brochure[0],
+    });
+  }
+
   const { data, error } = await requestClient(request)
     .from("programs_new")
-    .update({ ...programPayload(request.body, true), updated_at: new Date().toISOString() })
+    .update({ ...payload, updated_at: new Date().toISOString() })
     .eq("id", request.params.id)
     .select()
     .maybeSingle();

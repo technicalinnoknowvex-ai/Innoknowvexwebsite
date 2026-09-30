@@ -34,6 +34,9 @@ The `user_profiles_new` table stores `id`, `full_name`, `email`, `created_at`, a
 
 Run `supabase/programs_new.sql` in Supabase SQL Editor before using these routes.
 Run `supabase/program_pricing_new.sql` as well to create and seed the pricing table from the supplied CSV. Rows where all six prices are `0.00` were intentionally excluded.
+Run `supabase/storage_new.sql` to create the public media buckets and admin-only upload policies.
+
+Admin media uploads use `multipart/form-data`, with a maximum file size of 10 MB. Program uploads use `image` for an image and `brochure` for a PDF. Testimonial uploads use `profileImage`, and partner uploads use `logo`. The resulting public Storage URLs are saved in the related table.
 
 Public routes:
 
@@ -68,3 +71,47 @@ Program create/update body fields use camelCase:
 	"internship": true
 }
 ```
+
+## Testimonial APIs
+
+Run `supabase/testimonials_new.sql` in Supabase SQL Editor. Testimonials are independent content; `program` is optional text used only for filtering.
+
+Public route:
+
+- `GET /api/testimonials`
+
+Admin routes require an admin bearer token:
+
+- `POST /api/admin/testimonials`
+- `GET /api/admin/testimonials`
+- `PUT /api/admin/testimonials/:id`
+- `DELETE /api/admin/testimonials/:id`
+
+Create body:
+
+```json
+{
+	"name": "Ayesha Khan",
+	"profileImage": "https://example.com/ayesha.jpg",
+	"designation": "Web Development Intern",
+	"program": "web-development",
+	"rating": 5,
+	"content": "The program and mentorship were excellent.",
+	"featured": false,
+	"status": "draft",
+	"order": 1
+}
+```
+
+## Partner APIs
+
+Run `supabase/partners_new.sql` in Supabase SQL Editor.
+
+Public:
+
+- `GET /api/partners`
+
+Admin routes require an admin bearer token:
+
+- `POST /api/admin/partners` with multipart fields `name` and `logo` (image file), or JSON with a `logo` URL
+- `DELETE /api/admin/partners/:id`

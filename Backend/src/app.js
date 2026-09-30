@@ -3,6 +3,9 @@ const cors = require("cors");
 const { frontendUrl } = require("./config/env");
 const authRoutes = require("./routes/authRoutes");
 const programRoutes = require("./routes/programRoutes");
+const testimonialRoutes = require("./routes/testimonialRoutes");
+const partnerRoutes = require("./routes/partnerRoutes");
+const blogRoutes = require("./routes/blogRoutes");
 
 const app = express();
 
@@ -15,6 +18,9 @@ app.get("/health", (request, response) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api", programRoutes);
+app.use("/api", testimonialRoutes);
+app.use("/api", partnerRoutes);
+app.use("/api", blogRoutes);
 
 app.use((error, request, response, next) => {
   console.error("Request failed:", {
@@ -26,7 +32,7 @@ app.use((error, request, response, next) => {
     stack: error.stack,
   });
 
-  const statusCode = error.statusCode || error.status || 500;
+  const statusCode = error.statusCode || error.status || (error.code === "LIMIT_FILE_SIZE" ? 400 : 500);
   response.status(statusCode).json({
     error: statusCode >= 500 ? "Internal server error." : error.message,
     ...(statusCode < 500 && error.code ? { code: error.code } : {}),
