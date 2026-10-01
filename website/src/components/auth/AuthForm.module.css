@@ -1,0 +1,96 @@
+.form {
+  display: grid;
+  gap: 18px;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+  color: #263c52;
+  font-size: 13px;
+  font-weight: 680;
+}
+
+.field input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid #d5e0e9;
+  border-radius: 6px;
+  outline: none;
+  background: #fff;
+  color: #10253b;
+  font: inherit;
+  font-weight: 450;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.field input::placeholder {
+  color: #9aa8b6;
+}
+
+.field input:focus {
+  border-color: #159fe0;
+  box-shadow: 0 0 0 3px rgb(21 159 224 / 14%);
+}
+
+.submit {
+  min-height: 48px;
+  margin-top: 2px;
+  border: 0;
+  border-radius: 6px;
+  background: #078fce;
+  color: #fff;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 730;
+  transition: background 150ms ease, transform 150ms ease;
+}
+
+.submit:hover:not(:disabled) {
+  background: #0678b0;
+}
+
+.submit:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.submit:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.error,
+.success {
+  margin: -2px 0 0;
+  padding: 11px 12px;
+  border-radius: 5px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.error {
+  background: #fff0ef;
+  color: #a8322a;
+}
+
+.success {
+  background: #eaf8f0;
+  color: #176c42;
+}
+
+.switchPrompt {
+  margin: 1px 0 0;
+  color: #627386;
+  font-size: 13px;
+  text-align: center;
+}
+
+.switchPrompt a {
+  color: #087fc2;
+  font-weight: 730;
+}
+
+.switchPrompt a:hover {
+  color: #075f91;
+}

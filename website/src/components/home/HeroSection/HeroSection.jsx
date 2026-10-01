@@ -1,7 +1,8 @@
 import styles from "./HeroSection.module.css";
 import Image from "next/image";
+import Link from "next/link";
 import heroBackground from "../../../assets/images/hero/home.png";
-import brandLogo from "../../../assets/images/hero/logo1.png";
+import brandLogo from "../../../assets/images/hero/logo.png";
 
 const navItems = [
   "Home",
@@ -49,9 +50,12 @@ export default function HeroSection() {
               ))}
             </div>
 
-            <button className="rounded-full bg-[#1ea6ff] px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[#1ea6ff]/30 transition hover:bg-[#39b5ff]">
+            <Link
+              href="/auth/student/login"
+              className="rounded-full bg-[#1ea6ff] px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[#1ea6ff]/30 transition hover:bg-[#39b5ff]"
+            >
               Log In / Sign Up
-            </button>
+            </Link>
           </nav>
         </div>
       </div>
