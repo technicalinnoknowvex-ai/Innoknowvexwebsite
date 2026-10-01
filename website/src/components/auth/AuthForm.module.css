@@ -1,6 +1,6 @@
 .form {
   display: grid;
-  gap: 18px;
+  gap: 17px;
 }
 
 .field {
@@ -13,12 +13,12 @@
 
 .field input {
   width: 100%;
-  min-height: 48px;
+  min-height: 50px;
   padding: 0 14px;
-  border: 1px solid #d5e0e9;
-  border-radius: 6px;
+  border: 1px solid #d7e2eb;
+  border-radius: 7px;
   outline: none;
-  background: #fff;
+  background: #fcfdff;
   color: #10253b;
   font: inherit;
   font-weight: 450;
@@ -31,24 +31,27 @@
 
 .field input:focus {
   border-color: #159fe0;
-  box-shadow: 0 0 0 3px rgb(21 159 224 / 14%);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgb(21 159 224 / 13%);
 }
 
 .submit {
-  min-height: 48px;
+  min-height: 50px;
   margin-top: 2px;
   border: 0;
-  border-radius: 6px;
-  background: #078fce;
+  border-radius: 7px;
+  background: linear-gradient(100deg, #078fce, #087fc2);
   color: #fff;
   font: inherit;
   font-size: 15px;
   font-weight: 730;
-  transition: background 150ms ease, transform 150ms ease;
+  box-shadow: 0 5px 12px rgb(8 127 194 / 18%);
+  transition: filter 150ms ease, transform 150ms ease, box-shadow 150ms ease;
 }
 
 .submit:hover:not(:disabled) {
-  background: #0678b0;
+  filter: brightness(0.96);
+  box-shadow: 0 7px 15px rgb(8 127 194 / 23%);
 }
 
 .submit:active:not(:disabled) {
@@ -64,7 +67,7 @@
 .success {
   margin: -2px 0 0;
   padding: 11px 12px;
-  border-radius: 5px;
+  border-radius: 7px;
   font-size: 13px;
   line-height: 1.5;
 }

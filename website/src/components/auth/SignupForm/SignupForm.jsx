@@ -9,13 +9,11 @@ import { persistAccessToken, registerWithPassword } from "../../../lib/auth-api"
 export default function SignupForm() {
   const router = useRouter();
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(event) {
     event.preventDefault();
     setError("");
-    setSuccess("");
 
     const formData = new FormData(event.currentTarget);
     const password = String(formData.get("password"));
@@ -36,13 +34,18 @@ export default function SignupForm() {
         confirmPassword,
       });
 
-      if (persistAccessToken(authData)) {
-        router.replace("/");
+      if (Array.isArray(authData?.user?.identities) && authData.user.identities.length === 0) {
+        setError("An account may already exist with this email. Try signing in instead.");
+        setIsSubmitting(false);
         return;
       }
 
-      setSuccess("Your account is created. Check your email to confirm your address, then sign in.");
-      setIsSubmitting(false);
+      if (persistAccessToken(authData)) {
+        router.replace("/auth/student/dashboard");
+        return;
+      }
+
+      router.replace("/auth/student/login?verification=pending");
     } catch (submitError) {
       setError(submitError.message || "Unable to create your account. Please try again.");
       setIsSubmitting(false);
@@ -103,12 +106,6 @@ export default function SignupForm() {
           {error}
         </p>
       )}
-      {success && (
-        <p className={styles.success} role="status">
-          {success}
-        </p>
-      )}
-
       <button className={styles.submit} type="submit" disabled={isSubmitting}>
         {isSubmitting ? "Creating account..." : "Create account"}
       </button>

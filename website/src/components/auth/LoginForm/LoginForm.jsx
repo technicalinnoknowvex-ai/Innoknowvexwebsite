@@ -6,7 +6,7 @@ import Link from "next/link";
 import styles from "../AuthForm.module.css";
 import { loginWithPassword, persistAccessToken } from "../../../lib/auth-api";
 
-export default function LoginForm() {
+export default function LoginForm({ verificationPending = false }) {
   const router = useRouter();
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -28,7 +28,7 @@ export default function LoginForm() {
         throw new Error("Login succeeded, but no session was returned. Please try again.");
       }
 
-      router.replace("/");
+      router.replace("/auth/student/dashboard");
     } catch (submitError) {
       setError(submitError.message || "Unable to sign in. Please try again.");
       setIsSubmitting(false);
@@ -63,6 +63,11 @@ export default function LoginForm() {
       {error && (
         <p className={styles.error} role="alert">
           {error}
+        </p>
+      )}
+      {verificationPending && (
+        <p className={styles.success} role="status">
+          Account created. Check your inbox and spam folder for the verification link before signing in.
         </p>
       )}
 

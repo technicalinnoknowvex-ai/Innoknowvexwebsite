@@ -6,7 +6,9 @@ export const metadata = {
   description: "Sign in to your Innoknowvex student account.",
 };
 
-export default function StudentLoginPage() {
+export default async function StudentLoginPage({ searchParams }) {
+  const params = searchParams ? await searchParams : {};
+
   return (
     <AuthLayout
       eyebrow="WELCOME BACK"
@@ -16,7 +18,7 @@ export default function StudentLoginPage() {
       alternatePrompt="New here?"
       alternateLabel="Create an account"
     >
-      <LoginForm />
+      <LoginForm verificationPending={params.verification === "pending"} />
     </AuthLayout>
   );
 }

@@ -16,6 +16,8 @@
 - `POST /api/auth/forgot-password` with `{ "email", "redirectTo"? }`
 - `POST /api/auth/reset-password` with `{ "password" }` and `Authorization: Bearer <access_token>`
 
+To require email verification before login, enable email confirmations in Supabase Auth settings and add `${FRONTEND_URL}/auth/student/login` to the allowed redirect URLs. The backend uses `FRONTEND_URL` (default `http://localhost:3000`) as the verification email destination. After verification, users can sign in through the student login page.
+
 ## Roles
 
 Protected routes use `authenticate`. Admin-only routes must use both middleware functions:

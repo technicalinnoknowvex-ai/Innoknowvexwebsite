@@ -1,16 +1,6 @@
 import styles from "./HeroSection.module.css";
-import Image from "next/image";
-import Link from "next/link";
+import Header from "../../layout/Header/Header";
 import heroBackground from "../../../assets/images/hero/home.png";
-import brandLogo from "../../../assets/images/hero/logo.png";
-
-const navItems = [
-  "Home",
-  "Programs",
-  "ORVEXA",
-  "About",
-  "Contact",
-];
 
 const learnerAvatars = [
   "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&crop=faces&w=96&h=96&q=85",
@@ -22,54 +12,18 @@ const learnerAvatars = [
 export default function HeroSection() {
   return (
     <>
-      <div className="fixed inset-x-0 top-0 z-50 h-17 bg-white">
-        <div className="mx-auto h-full max-w-[1280px] px-5 md:px-8">
-          <nav className="flex h-full items-center justify-between gap-4 text-slate-900">
-            <Image
-              src={brandLogo}
-              alt="INNOKNOWVEX"
-              width={180}
-              height={44}
-              priority
-              className="h-22 w-auto object-contain mix-blend-multiply"
-            />
-
-            <div className="hidden items-center gap-8 text-sm font-medium text-slate-700 lg:flex">
-              {navItems.map((item, index) => (
-                <a
-                  key={item}
-                  href="#"
-                  className={
-                    index === 0
-                      ? "border-b-2 border-[#1ea6ff] pb-1 text-slate-950"
-                      : "transition hover:text-slate-950"
-                  }
-                >
-                  {item}
-                </a>
-              ))}
-            </div>
-
-            <Link
-              href="/auth/student/login"
-              className="rounded-full bg-[#1ea6ff] px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[#1ea6ff]/30 transition hover:bg-[#39b5ff]"
-            >
-              Log In / Sign Up
-            </Link>
-          </nav>
-        </div>
-      </div>
+      <Header fixed activeItem="Home" />
 
       <header
-        className={`relative overflow-hidden bg-[#031d47] text-white ${styles.hero}`}
+        className={`relative overflow-hidden bg-white text-white ${styles.hero}`}
         style={{
           backgroundImage: `url(${heroBackground.src})`,
         }}
       >
-        <div className="absolute inset-0 bg-[#031d47]/15" />
+        <div className="absolute inset-x-0 top-0 h-[92%] bg-[#031d47]/15 max-[900px]:h-full" />
 
         <div className="relative z-10">
-          <div className="mx-auto max-w-[1280px] px-5 pb-10 pt-14 md:px-8 md:pb-14">
+          <div className="mx-auto max-w-[1280px] px-5 pb-6 pt-14 md:px-8 md:pb-1">
           <div className="relative min-h-[620px]">
             <div className="absolute inset-0" />
 

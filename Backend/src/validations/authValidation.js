@@ -18,12 +18,23 @@ function requireEmailAndPassword(request) {
   return { email: email.trim().toLowerCase(), password };
 }
 
-function requireRegistration(request) {
-  const { fullName, email, password, confirmPassword } = request.body || {};
+function requireFullName(request) {
+  const { fullName } = request.body || {};
 
   if (typeof fullName !== "string" || !fullName.trim()) {
     throw validationError("Full name is required.");
   }
+
+  if (fullName.trim().length > 120) {
+    throw validationError("Full name must be 120 characters or fewer.");
+  }
+
+  return fullName.trim();
+}
+
+function requireRegistration(request) {
+  const { email, password, confirmPassword } = request.body || {};
+  const fullName = requireFullName(request);
 
   const credentials = requireEmailAndPassword(request);
 
@@ -63,6 +74,7 @@ function requirePassword(request) {
 
 module.exports = {
   requireEmailAndPassword,
+  requireFullName,
   requireRegistration,
   requireEmail,
   requirePassword,

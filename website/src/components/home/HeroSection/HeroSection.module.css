@@ -1,6 +1,13 @@
 .hero {
-  background-size: 100% 85%;
-  background-position: center center;
+  background-size: 100% 92%;
+  background-position: center top;
   background-repeat: no-repeat;
 }
+
+@media (max-width: 900px) {
+  .hero {
+    background-size: 100% 100%;
+  }
+}
+
 

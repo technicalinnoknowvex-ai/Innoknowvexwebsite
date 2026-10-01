@@ -3,6 +3,7 @@ const supabase = require("../config/supabaseClient");
 const { frontendUrl, supabaseUrl, supabaseAnonKey } = require("../config/env");
 const {
   requireEmailAndPassword,
+  requireFullName,
   requireRegistration,
   requireEmail,
   requirePassword,
@@ -28,7 +29,10 @@ async function register(request, response) {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { full_name: fullName } },
+    options: {
+      data: { full_name: fullName },
+      emailRedirectTo: new URL("/auth/student/login", frontendUrl).toString(),
+    },
   });
 
   if (error) throw error;
@@ -55,6 +59,17 @@ async function currentUser(request, response) {
   response.json({ data: request.user });
 }
 
+async function updateProfile(request, response) {
+  const fullName = requireFullName(request);
+  const authenticatedSupabase = createAuthenticatedClient(accessTokenFromRequest(request));
+  const { data, error } = await authenticatedSupabase.auth.updateUser({
+    data: { full_name: fullName },
+  });
+
+  if (error) throw error;
+  response.json({ data: data.user, message: "Profile updated." });
+}
+
 async function forgotPassword(request, response) {
   const email = requireEmail(request);
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -74,4 +89,12 @@ async function resetPassword(request, response) {
   response.json({ data: data.user });
 }
 
-module.exports = { register, login, logout, currentUser, forgotPassword, resetPassword };
+module.exports = {
+  register,
+  login,
+  logout,
+  currentUser,
+  updateProfile,
+  forgotPassword,
+  resetPassword,
+};
