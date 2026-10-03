@@ -1,10 +1,11 @@
 import styles from "./StatisticsSection.module.css";
+import CountUp from "./CountUp";
 
 const statistics = [
-  { value: "50K+", label: "Students Trained", icon: "students" },
-  { value: "200+", label: "Institutional Partners", icon: "institutions" },
-  { value: "100+", label: "Industry-Relevant Programs", icon: "programs" },
-  { value: "95%", label: "Learner Satisfaction", icon: "satisfaction" },
+  { value: 50, suffix: "K+", label: "Students Trained", icon: "students" },
+  { value: 200, suffix: "+", label: "Institutional Partners", icon: "institutions" },
+  { value: 100, suffix: "+", label: "Industry-Relevant Programs", icon: "programs" },
+  { value: 95, suffix: "%", label: "Learner Satisfaction", icon: "satisfaction" },
 ];
 
 function StatisticIcon({ type }) {
@@ -53,8 +54,12 @@ export default function StatisticsSection() {
           <div className={styles.statistic} key={statistic.label}>
             <StatisticIcon type={statistic.icon} />
             <div className={styles.copy}>
-              <strong>{statistic.value}</strong>
-              <span>{statistic.label}</span>
+              <CountUp
+                value={statistic.value}
+                suffix={statistic.suffix}
+                className={styles.value}
+              />
+              <span className={styles.label}>{statistic.label}</span>
             </div>
           </div>
         ))}

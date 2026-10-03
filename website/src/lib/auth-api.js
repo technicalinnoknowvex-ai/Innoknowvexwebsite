@@ -71,10 +71,24 @@ async function authenticatedAuthRequest(endpoint, accessToken, method = "GET", b
     throw new Error("Unable to connect. Please check that the service is available.");
   }
 
-  const result = response.status === 204 ? {} : await response.json().catch(() => ({}));
+  let result = {};
+  if (response.status !== 204) {
+    const responseText = await response.text();
+    try {
+      result = responseText ? JSON.parse(responseText) : {};
+    } catch {
+      result = {};
+    }
+  }
 
   if (!response.ok) {
-    const error = new Error(result.error || "The request could not be completed.");
+    const responseMessage =
+      (typeof result.error === "string" && result.error) ||
+      (typeof result.message === "string" && result.message);
+    const fallbackMessage = response.status === 404
+      ? "The requested API endpoint was not found. Restart the backend and try again."
+      : `The request could not be completed (HTTP ${response.status}).`;
+    const error = new Error(responseMessage || fallbackMessage);
     error.status = response.status;
     throw error;
   }
@@ -88,6 +102,14 @@ export function getCurrentUser(accessToken) {
 
 export function updateStudentProfile(accessToken, fullName) {
   return authenticatedAuthRequest("me", accessToken, "PUT", { fullName });
+}
+
+export function getStudentPortfolio(accessToken) {
+  return authenticatedAuthRequest("me/portfolio", accessToken);
+}
+
+export function updateStudentPortfolio(accessToken, portfolio) {
+  return authenticatedAuthRequest("me/portfolio", accessToken, "PUT", portfolio);
 }
 
 export function logoutUser(accessToken) {

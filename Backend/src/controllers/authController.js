@@ -7,6 +7,7 @@ const {
   requireRegistration,
   requireEmail,
   requirePassword,
+  requireStudentPortfolio,
 } = require("../validations/authValidation");
 
 function accessTokenFromRequest(request) {
@@ -22,6 +23,37 @@ function createAuthenticatedClient(accessToken) {
       detectSessionInUrl: false,
     },
   });
+}
+
+async function updateAuthenticatedUser(accessToken, updates) {
+  let response;
+  try {
+    response = await fetch(`${supabaseUrl.replace(/\/+$/, "")}/auth/v1/user`, {
+      method: "PUT",
+      headers: {
+        apikey: supabaseAnonKey,
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(updates),
+    });
+  } catch {
+    const error = new Error("Unable to connect to Supabase Auth.");
+    error.statusCode = 502;
+    throw error;
+  }
+
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(
+      result.msg || result.message || result.error_description || "Unable to update your account.",
+    );
+    error.statusCode = response.status;
+    if (result.code) error.code = result.code;
+    throw error;
+  }
+
+  return result;
 }
 
 async function register(request, response) {
@@ -61,13 +93,47 @@ async function currentUser(request, response) {
 
 async function updateProfile(request, response) {
   const fullName = requireFullName(request);
-  const authenticatedSupabase = createAuthenticatedClient(accessTokenFromRequest(request));
-  const { data, error } = await authenticatedSupabase.auth.updateUser({
+  const user = await updateAuthenticatedUser(accessTokenFromRequest(request), {
     data: { full_name: fullName },
   });
+  response.json({ data: user, message: "Profile updated." });
+}
+
+async function getStudentPortfolio(request, response) {
+  const authenticatedSupabase = createAuthenticatedClient(accessTokenFromRequest(request));
+  const { data, error } = await authenticatedSupabase
+    .from("user_profiles_new")
+    .select("skills, projects")
+    .eq("id", request.user.id)
+    .maybeSingle();
 
   if (error) throw error;
-  response.json({ data: data.user, message: "Profile updated." });
+  response.json({
+    data: {
+      skills: data?.skills || [],
+      projects: data?.projects || [],
+    },
+  });
+}
+
+async function updateStudentPortfolio(request, response) {
+  const { skills, projects } = requireStudentPortfolio(request);
+  const authenticatedSupabase = createAuthenticatedClient(accessTokenFromRequest(request));
+  const { data, error } = await authenticatedSupabase
+    .from("user_profiles_new")
+    .update({ skills, projects })
+    .eq("id", request.user.id)
+    .select("skills, projects")
+    .single();
+
+  if (error) throw error;
+  response.json({
+    data: {
+      skills: data.skills,
+      projects: data.projects,
+    },
+    message: "Student portfolio updated.",
+  });
 }
 
 async function forgotPassword(request, response) {
@@ -82,11 +148,8 @@ async function forgotPassword(request, response) {
 
 async function resetPassword(request, response) {
   const password = requirePassword(request);
-  const authenticatedSupabase = createAuthenticatedClient(accessTokenFromRequest(request));
-  const { data, error } = await authenticatedSupabase.auth.updateUser({ password });
-
-  if (error) throw error;
-  response.json({ data: data.user });
+  const user = await updateAuthenticatedUser(accessTokenFromRequest(request), { password });
+  response.json({ data: user });
 }
 
 module.exports = {
@@ -95,6 +158,8 @@ module.exports = {
   logout,
   currentUser,
   updateProfile,
+  getStudentPortfolio,
+  updateStudentPortfolio,
   forgotPassword,
   resetPassword,
 };

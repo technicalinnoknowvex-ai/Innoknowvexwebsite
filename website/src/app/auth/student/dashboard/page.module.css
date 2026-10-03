@@ -88,6 +88,230 @@
   box-shadow: 0 8px 24px rgb(30 64 93 / 5%);
 }
 
+.portfolioCard {
+  margin-top: 22px;
+  padding: 28px 30px 30px;
+  border: 1px solid #e0e9f0;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgb(30 64 93 / 5%);
+}
+
+.portfolioHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.portfolioHeader h2 {
+  margin: 0;
+  color: #152b40;
+  font-size: 20px;
+  font-weight: 730;
+}
+
+.portfolioHeader > div > p:last-child {
+  margin: 7px 0 0;
+  color: #6b7d8d;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.portfolioContent,
+.portfolioForm {
+  display: grid;
+  gap: 25px;
+  margin-top: 25px;
+  padding-top: 24px;
+  border-top: 1px solid #e9eff4;
+}
+
+.portfolioGroup h3,
+.projectEditorHeader h3 {
+  margin: 0 0 13px;
+  color: #1d354c;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.skillList,
+.projectTechnologies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.skillList li,
+.projectTechnologies li {
+  padding: 7px 11px;
+  border: 1px solid #d5eaf4;
+  border-radius: 999px;
+  background: #f2faff;
+  color: #28617d;
+  font-size: 12px;
+  font-weight: 620;
+}
+
+.emptyPortfolio {
+  margin: 0;
+  color: #7a8b99;
+  font-size: 13px;
+}
+
+.projectList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.projectCard {
+  min-width: 0;
+  padding: 17px;
+  border: 1px solid #e3ebf1;
+  border-radius: 8px;
+  background: #fbfdff;
+}
+
+.projectCard h4 {
+  margin: 0;
+  color: #1d354c;
+  font-size: 15px;
+}
+
+.projectCard > p {
+  margin: 9px 0 0;
+  color: #64788a;
+  font-size: 13px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.projectTechnologies {
+  margin-top: 12px;
+  gap: 6px;
+}
+
+.projectTechnologies li {
+  padding: 5px 8px;
+  font-size: 11px;
+}
+
+.projectCard > a {
+  display: inline-block;
+  margin-top: 13px;
+  color: #087fc2;
+  font-size: 13px;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.projectCard > a:hover {
+  text-decoration: underline;
+}
+
+.portfolioForm {
+  gap: 18px;
+}
+
+.portfolioField {
+  display: grid;
+  gap: 8px;
+  color: #354b60;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.portfolioField input,
+.portfolioField textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 13px;
+  border: 1px solid #d6e2eb;
+  border-radius: 7px;
+  outline: none;
+  color: #142a40;
+  font: inherit;
+  font-weight: 450;
+}
+
+.portfolioField textarea {
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.portfolioField input:focus,
+.portfolioField textarea:focus {
+  border-color: #159fe0;
+  box-shadow: 0 0 0 3px rgb(21 159 224 / 12%);
+}
+
+.portfolioField small {
+  color: #7a8b99;
+  font-size: 11px;
+  font-weight: 450;
+}
+
+.projectEditorHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.projectEditorHeader h3 {
+  margin: 0;
+}
+
+.addProjectButton,
+.removeProjectButton {
+  min-height: 34px;
+  padding: 0 11px;
+  border: 1px solid #d6e4ee;
+  border-radius: 6px;
+  background: #fff;
+  color: #25506f;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.addProjectButton:hover,
+.removeProjectButton:hover {
+  border-color: #9bcde6;
+  background: #f0f9fd;
+  color: #087fc2;
+}
+
+.projectEditor {
+  position: relative;
+  display: grid;
+  gap: 15px;
+  min-width: 0;
+  margin: 0;
+  padding: 20px;
+  border: 1px solid #e0e9f0;
+  border-radius: 8px;
+}
+
+.projectEditor legend {
+  padding: 0 7px;
+  color: #526a7f;
+  font-size: 12px;
+  font-weight: 680;
+}
+
+.removeProjectButton {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  color: #a8322a;
+}
+
 .profileHeader {
   display: flex;
   align-items: center;
@@ -256,6 +480,14 @@
     padding: 22px 20px 24px;
   }
 
+  .portfolioCard {
+    padding: 22px 20px 24px;
+  }
+
+  .portfolioHeader {
+    flex-direction: column;
+  }
+
   .profileHeader {
     flex-wrap: wrap;
   }
@@ -283,5 +515,9 @@
 
   .profileHeaderActions {
     margin-left: 0;
+  }
+
+  .projectList {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

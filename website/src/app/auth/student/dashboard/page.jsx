@@ -6,11 +6,15 @@ import Header from "../../../../components/layout/Header/Header";
 import {
   clearAuthStorage,
   getCurrentUser,
+  getStudentPortfolio,
   logoutUser,
   persistProfileInitial,
+  updateStudentPortfolio,
   updateStudentProfile,
 } from "../../../../lib/auth-api";
 import styles from "./page.module.css";
+
+const EMPTY_PORTFOLIO = { skills: [], projects: [] };
 
 function getInitials(name) {
   return name
@@ -32,9 +36,14 @@ export default function StudentDashboardPage() {
   const [user, setUser] = useState(null);
   const [fullName, setFullName] = useState("");
   const [draftName, setDraftName] = useState("");
+  const [portfolio, setPortfolio] = useState(EMPTY_PORTFOLIO);
+  const [draftSkills, setDraftSkills] = useState("");
+  const [draftProjects, setDraftProjects] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isEditingPortfolio, setIsEditingPortfolio] = useState(false);
+  const [isSavingPortfolio, setIsSavingPortfolio] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -57,6 +66,10 @@ export default function StudentDashboardPage() {
         setFullName(currentName);
         setDraftName(currentName);
         persistProfileInitial(currentName);
+
+        const currentPortfolio = await getStudentPortfolio(accessToken);
+        if (!isCurrent) return;
+        setPortfolio(currentPortfolio || EMPTY_PORTFOLIO);
       } catch (profileError) {
         if (profileError.status === 401) {
           clearAuthStorage();
@@ -112,6 +125,61 @@ export default function StudentDashboardPage() {
     } finally {
       setIsSaving(false);
     }
+  }
+
+  function startPortfolioEdit() {
+    setDraftSkills(portfolio.skills.join("\n"));
+    setDraftProjects(portfolio.projects.map((project) => ({
+      ...project,
+      technologies: project.technologies.join(", "),
+    })));
+    setError("");
+    setNotice("");
+    setIsEditingPortfolio(true);
+  }
+
+  async function handleSavePortfolio(event) {
+    event.preventDefault();
+    setError("");
+    setNotice("");
+
+    const accessToken = window.sessionStorage.getItem("innoknowvex_access_token");
+    if (!accessToken) {
+      router.replace("/auth/student/login");
+      return;
+    }
+
+    const nextPortfolio = {
+      skills: draftSkills.split(/[,\n]/).map((skill) => skill.trim()).filter(Boolean),
+      projects: draftProjects.map((project) => ({
+        ...project,
+        technologies: project.technologies.split(",").map((technology) => technology.trim()).filter(Boolean),
+      })),
+    };
+
+    setIsSavingPortfolio(true);
+    try {
+      const savedPortfolio = await updateStudentPortfolio(accessToken, nextPortfolio);
+      setPortfolio(savedPortfolio);
+      setIsEditingPortfolio(false);
+      setNotice("Your skills and projects have been updated.");
+    } catch (portfolioError) {
+      if (portfolioError.status === 401) {
+        clearAuthStorage();
+        router.replace("/auth/student/login");
+        return;
+      }
+      setError(portfolioError.message || "Unable to update your skills and projects.");
+    } finally {
+      setIsSavingPortfolio(false);
+    }
+  }
+
+  function addProject() {
+    setDraftProjects((projects) => [
+      ...projects,
+      { title: "", description: "", technologies: "", url: "" },
+    ]);
   }
 
   async function handleLogout() {
@@ -238,6 +306,157 @@ export default function StudentDashboardPage() {
                 <dd>{user?.email_confirmed_at ? "Verified" : "Active account"}</dd>
               </div>
             </dl>
+          )}
+        </section>
+
+        <section className={styles.portfolioCard} aria-labelledby="portfolio-title">
+          <div className={styles.portfolioHeader}>
+            <div>
+              <p className={styles.cardEyebrow}>YOUR EXPERIENCE</p>
+              <h2 id="portfolio-title">Skills &amp; projects</h2>
+              <p>Showcase the skills you have learned and the projects you have built.</p>
+            </div>
+            {!isEditingPortfolio && (
+              <button className={styles.editButton} type="button" onClick={startPortfolioEdit}>
+                Edit skills &amp; projects
+              </button>
+            )}
+          </div>
+
+          {isEditingPortfolio ? (
+            <form className={styles.portfolioForm} onSubmit={handleSavePortfolio}>
+              <label className={styles.portfolioField}>
+                <span>Skills</span>
+                <textarea
+                  value={draftSkills}
+                  onChange={(event) => setDraftSkills(event.target.value)}
+                  placeholder={"JavaScript\nReact\nUI design"}
+                  maxLength={3000}
+                  rows={4}
+                />
+                <small>Enter one skill per line or separate skills with commas (up to 30).</small>
+              </label>
+
+              <div className={styles.projectEditorHeader}>
+                <h3>Projects</h3>
+                <button className={styles.addProjectButton} type="button" onClick={addProject}>
+                  Add project
+                </button>
+              </div>
+              {draftProjects.map((project, index) => (
+                <fieldset className={styles.projectEditor} key={`project-${index}`}>
+                  <legend>Project {index + 1}</legend>
+                  <button
+                    className={styles.removeProjectButton}
+                    type="button"
+                    onClick={() => setDraftProjects((projects) => projects.filter((_, itemIndex) => itemIndex !== index))}
+                    aria-label={`Remove project ${index + 1}`}
+                  >
+                    Remove
+                  </button>
+                  <label className={styles.portfolioField}>
+                    <span>Project name</span>
+                    <input
+                      type="text"
+                      value={project.title}
+                      onChange={(event) => setDraftProjects((projects) => projects.map((item, itemIndex) =>
+                        itemIndex === index ? { ...item, title: event.target.value } : item))}
+                      maxLength={120}
+                      required
+                    />
+                  </label>
+                  <label className={styles.portfolioField}>
+                    <span>Description</span>
+                    <textarea
+                      value={project.description}
+                      onChange={(event) => setDraftProjects((projects) => projects.map((item, itemIndex) =>
+                        itemIndex === index ? { ...item, description: event.target.value } : item))}
+                      maxLength={1000}
+                      rows={3}
+                    />
+                  </label>
+                  <label className={styles.portfolioField}>
+                    <span>Technologies</span>
+                    <input
+                      type="text"
+                      value={project.technologies}
+                      onChange={(event) => setDraftProjects((projects) => projects.map((item, itemIndex) =>
+                        itemIndex === index ? { ...item, technologies: event.target.value } : item))}
+                      placeholder="React, Supabase"
+                    />
+                    <small>Separate technologies with commas.</small>
+                  </label>
+                  <label className={styles.portfolioField}>
+                    <span>Project link</span>
+                    <input
+                      type="url"
+                      value={project.url}
+                      onChange={(event) => setDraftProjects((projects) => projects.map((item, itemIndex) =>
+                        itemIndex === index ? { ...item, url: event.target.value } : item))}
+                      placeholder="https://example.com"
+                    />
+                  </label>
+                </fieldset>
+              ))}
+
+              {error && <p className={styles.pageError} role="alert">{error}</p>}
+              <div className={styles.editActions}>
+                <button className={styles.saveButton} type="submit" disabled={isSavingPortfolio}>
+                  {isSavingPortfolio ? "Saving..." : "Save skills & projects"}
+                </button>
+                <button
+                  className={styles.cancelButton}
+                  type="button"
+                  onClick={() => {
+                    setIsEditingPortfolio(false);
+                    setError("");
+                  }}
+                  disabled={isSavingPortfolio}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          ) : (
+            <div className={styles.portfolioContent}>
+              <div className={styles.portfolioGroup}>
+                <h3>Skills</h3>
+                {portfolio.skills.length ? (
+                  <ul className={styles.skillList}>
+                    {portfolio.skills.map((skill, index) => <li key={`${skill}-${index}`}>{skill}</li>)}
+                  </ul>
+                ) : (
+                  <p className={styles.emptyPortfolio}>No skills added yet.</p>
+                )}
+              </div>
+              <div className={styles.portfolioGroup}>
+                <h3>Projects</h3>
+                {portfolio.projects.length ? (
+                  <div className={styles.projectList}>
+                    {portfolio.projects.map((project, index) => (
+                      <article className={styles.projectCard} key={`${project.title}-${index}`}>
+                        <h4>{project.title}</h4>
+                        {project.description && <p>{project.description}</p>}
+                        {project.technologies.length > 0 && (
+                          <ul className={styles.projectTechnologies}>
+                            {project.technologies.map((technology, technologyIndex) => (
+                              <li key={`${technology}-${technologyIndex}`}>{technology}</li>
+                            ))}
+                          </ul>
+                        )}
+                        {project.url && (
+                          <a href={project.url} target="_blank" rel="noreferrer">
+                            View project
+                          </a>
+                        )}
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <p className={styles.emptyPortfolio}>No projects added yet.</p>
+                )}
+              </div>
+            </div>
           )}
         </section>
       </main>

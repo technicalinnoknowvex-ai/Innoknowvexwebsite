@@ -30,7 +30,7 @@ The accepted roles are `admin` and `student`/`user`. Roles are read from Supabas
 
 The reset-password request uses the access token Supabase provides after the recovery link is opened. Supabase's managed `auth.users` table cannot be renamed; the application-owned profile table is named `user_profiles_new`.
 
-The `user_profiles_new` table stores `id`, `full_name`, `email`, `created_at`, and `updated_at`. The signup trigger copies `full_name` from user metadata and `email` from `auth.users`.
+The `user_profiles_new` table stores `id`, `full_name`, `email`, `created_at`, and `updated_at`. The signup trigger copies `full_name` from user metadata and `email` from `auth.users`. Run `supabase/user_profiles_new_portfolio.sql` to add the `skills` and `projects` columns used by the student dashboard.
 
 ## Program APIs
 
