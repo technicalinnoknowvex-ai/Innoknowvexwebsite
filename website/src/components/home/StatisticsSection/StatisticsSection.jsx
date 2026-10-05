@@ -48,7 +48,11 @@ function StatisticIcon({ type }) {
 
 export default function StatisticsSection() {
   return (
-    <section className={styles.section} aria-label="Innoknowvex impact">
+    <section
+      className={styles.section}
+      id="impact"
+      aria-label="Innoknowvex impact"
+    >
       <div className={styles.statistics}>
         {statistics.map((statistic) => (
           <div className={styles.statistic} key={statistic.label}>
