@@ -69,9 +69,7 @@ export default function PopularPrograms() {
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (!entry.isIntersecting) return;
-        setHasEnteredView(true);
-        observer.unobserve(entry.target);
+        setHasEnteredView(entry.isIntersecting);
       },
       { threshold: 0.2 },
     );

@@ -44,9 +44,15 @@ export default function CountUp({ value, suffix = "", className = "" }) {
 
     observer = new IntersectionObserver(
       ([entry]) => {
-        if (!entry.isIntersecting) return;
-        startCount();
-        observer.disconnect();
+        if (entry.isIntersecting) {
+          startCount();
+          return;
+        }
+
+        hasStarted = false;
+        window.cancelAnimationFrame(animationFrame);
+        animationFrame = 0;
+        setCount(0);
       },
       { threshold: 0.5 },
     );

@@ -1,7 +1,9 @@
 import HeroSection from "../components/home/HeroSection/HeroSection";
 import OrvexaSection from "../components/home/OrvexaPromo/OrvexaPromo";
+import PartnersSection from "../components/home/PartnersSection/PartnersSection";
 import PopularPrograms from "../components/home/PopularPrograms/PopularPrograms";
 import StatisticsSection from "../components/home/StatisticsSection/StatisticsSection";
+import TestimonialsSection from "../components/home/TestimonialsSection/TestimonialsSection";
 import WhyInnoknowvex from "../components/home/WhyInnoknowvex/WhyInnoknowvex";
 
 export default function Home() {
@@ -12,6 +14,8 @@ export default function Home() {
       <StatisticsSection />
       <PopularPrograms />
       <WhyInnoknowvex />
+      <PartnersSection />
+      <TestimonialsSection />
     </>
   );
 }

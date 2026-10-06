@@ -1,1 +1,5 @@
-export const getPartners = async () => null;
+import { getPublicCollection } from "./api";
+
+export function getPartners() {
+  return getPublicCollection("partners");
+}

@@ -141,6 +141,7 @@ async function listTestimonials(request, response) {
   const { data, error } = await supabase
     .from("testimonials_new")
     .select()
+    .eq("status", "approved")
     .order("display_order", { ascending: true })
     .order("created_at", { ascending: false });
 
