@@ -262,6 +262,7 @@ export default function TestimonialsSection() {
   return (
     <section
       className={styles.section}
+      id="testimonials"
       aria-labelledby="testimonials-title"
       ref={sectionRef}
       onFocusCapture={() => setIsPaused(true)}

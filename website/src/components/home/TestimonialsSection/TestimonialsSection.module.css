@@ -207,10 +207,10 @@
 
 .quote {
   color: #1b2c47;
-  font-size: clamp(17px, 1.85vw, 23px);
-  font-weight: 560;
-  letter-spacing: -0.025em;
-  line-height: 1.42;
+  font-size: clamp(16px, 1.55vw, 20px);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1.55;
 }
 
 .quoteLine {
@@ -588,7 +588,7 @@
   }
 
   .quote {
-    font-size: clamp(17px, 2.6vw, 21px);
+    font-size: clamp(16px, 2.3vw, 19px);
   }
 
   .studentDetails {
@@ -630,8 +630,9 @@
   }
 
   .quote {
-    font-size: 16px;
-    line-height: 1.48;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.55;
   }
 
   .quoteLine {

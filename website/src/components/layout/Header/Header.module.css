@@ -2,7 +2,11 @@
 	position: relative;
 	z-index: 50;
 	height: 68px;
-	background: #fff;
+	background: rgb(218 239 253 / 94%);
+	-webkit-backdrop-filter: blur(14px);
+	backdrop-filter: blur(14px);
+	border-bottom: 1px solid rgb(115 169 208 / 36%);
+	box-shadow: 0 4px 18px rgb(16 50 80 / 10%);
 }
 
 .fixed {
@@ -53,16 +57,17 @@
 	align-items: center;
 	padding-bottom: 4px;
 	border-bottom: 2px solid transparent;
-	color: #4d6175;
+	color: #102f4d;
 	font-size: 13px;
-	font-weight: 550;
+	font-weight: 600;
+	text-shadow: 0 1px 0 rgb(255 255 255 / 45%);
 	transition: color 150ms ease, border-color 150ms ease;
 }
 
 .link:hover,
 .activeLink {
-	border-bottom-color: #1ea6ff;
-	color: #078fce;
+	border-bottom-color: #0569aa;
+	color: #064f82;
 }
 
 @media (max-width: 1100px) {

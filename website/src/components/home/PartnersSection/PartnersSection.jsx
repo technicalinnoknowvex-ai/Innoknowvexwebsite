@@ -214,7 +214,7 @@ export default function PartnersSection() {
         <header className={styles.heading}>
           <p className={styles.eyebrow}>Our Ecosystem</p>
           <h2 className={styles.title} id="partners-title">
-            Building Connections. Creating Opportunities.
+            Learning Meets Opportunity
           </h2>
           <p className={styles.intro}>
             We collaborate with leading organizations, institutions, and hiring
