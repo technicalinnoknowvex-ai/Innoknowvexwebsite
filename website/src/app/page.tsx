@@ -1,4 +1,5 @@
 import HeroSection from "../components/home/HeroSection/HeroSection";
+import OfflinePrograms from "../components/home/OfflinePrograms/OfflinePrograms";
 import OrvexaSection from "../components/home/OrvexaPromo/OrvexaPromo";
 import PartnersSection from "../components/home/PartnersSection/PartnersSection";
 import PopularPrograms from "../components/home/PopularPrograms/PopularPrograms";
@@ -13,6 +14,7 @@ export default function Home() {
       <OrvexaSection />
       <StatisticsSection />
       <PopularPrograms />
+      <OfflinePrograms />
       <WhyInnoknowvex />
       <PartnersSection />
       <TestimonialsSection />

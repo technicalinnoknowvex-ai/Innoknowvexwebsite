@@ -112,8 +112,9 @@ Run `supabase/partners_new.sql` in Supabase SQL Editor.
 Public:
 
 - `GET /api/partners`
+- Partner records include a `type`: `brand` or `hiring partners`.
 
 Admin routes require an admin bearer token:
 
-- `POST /api/admin/partners` with multipart fields `name` and `logo` (image file), or JSON with a `logo` URL
+- `POST /api/admin/partners` with `name`, optional `type` (`brand` by default, or `hiring partners`), and either a multipart `logo` image or a JSON `logo` URL
 - `DELETE /api/admin/partners/:id`

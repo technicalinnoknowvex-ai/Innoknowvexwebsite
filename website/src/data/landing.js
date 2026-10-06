@@ -11,6 +11,7 @@ import Razorpay from "@/components/Pages/Landing/Sections/OurPartners/Logos/Razo
 import RevaUni from "@/components/Pages/Landing/Sections/OurPartners/Logos/RevaUni";
 import Wipro from "@/components/Pages/Landing/Sections/OurPartners/Logos/Wipro";
 import Sona from "@/components/Pages/Landing/Sections/OurPartners/Logos/Sona";
+import offlineTrainingSection from "./offlinePrograms";
 
 export const landingPageData = {
   aboutSection: {
@@ -25,27 +26,7 @@ export const landingPageData = {
       "https://hfolrvqgjjontjmmaigh.supabase.co/storage/v1/object/public/Innoknowvex%20website%20content/About%20Us%20Images/Landing/about_us_cell_90%20(1).jpg",
     ],
   },
-  offlineTrainingSection:{
-    heading:"Announcements",
-    subHeading:"Offline Training Now Available",
-    images:[
-      "https://hfolrvqgjjontjmmaigh.supabase.co/storage/v1/object/public/Innoknowvex%20website%20content/offine/Copy%20of%20AI.png",
-      "https://hfolrvqgjjontjmmaigh.supabase.co/storage/v1/object/public/Innoknowvex%20website%20content/offine/Copy%20of%20AIML.png",
-      //"https://hfolrvqgjjontjmmaigh.supabase.co/storage/v1/object/public/Innoknowvex%20website%20content/offine/CLOUD%20COMPUTING.png",
-      //"https://hfolrvqgjjontjmmaigh.supabase.co/storage/v1/object/public/Innoknowvex%20website%20content/offine/CYBER%20SECURITY.png",
-      "https://hfolrvqgjjontjmmaigh.supabase.co/storage/v1/object/public/Innoknowvex%20website%20content/offine/Copy%20of%20DATA%20SCIENCE.png",
-      //"https://hfolrvqgjjontjmmaigh.supabase.co/storage/v1/object/public/Innoknowvex%20website%20content/offine/digital%20marketing%20offline%20.png",
-      //"https://hfolrvqgjjontjmmaigh.supabase.co/storage/v1/object/public/Innoknowvex%20website%20content/offine/FASHION%20TECHNOLOGY.png",
-      "https://hfolrvqgjjontjmmaigh.supabase.co/storage/v1/object/public/Innoknowvex%20website%20content/offine/Copy%20of%20FULLSTACK%20WEB%20DEVELOPMENT.jpg.jpeg",
-      //"https://hfolrvqgjjontjmmaigh.supabase.co/storage/v1/object/public/Innoknowvex%20website%20content/offine/HUMAN%20RESOURC.png",
-      //"https://hfolrvqgjjontjmmaigh.supabase.co/storage/v1/object/public/Innoknowvex%20website%20content/offine/Market%20&Stoc%20&%20mutual%20funds.png",
-      //"https://hfolrvqgjjontjmmaigh.supabase.co/storage/v1/object/public/Innoknowvex%20website%20content/offine/POWER%20BI%20OFFLINE%20.png",
-      //"https://hfolrvqgjjontjmmaigh.supabase.co/storage/v1/object/public/Innoknowvex%20website%20content/offine/Sales%20and%20Marketing%20%20POSTER%20.png",
-      //"https://hfolrvqgjjontjmmaigh.supabase.co/storage/v1/object/public/Innoknowvex%20website%20content/offine/UIUX.png",
-
-    ]
-
-  },
+  offlineTrainingSection,
   trainingsSection: {
     heading: "What",
     subheading: "Trainings We're Offering",

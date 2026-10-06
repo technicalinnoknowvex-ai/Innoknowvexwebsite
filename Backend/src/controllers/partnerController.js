@@ -19,9 +19,22 @@ function httpError(statusCode, message) {
 function partnerPayload(body) {
   const name = body?.name?.trim();
   const logo = body?.logo?.trim() || null;
+  const requestedType =
+    typeof body?.type === "string"
+      ? body.type.trim().toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " ")
+      : "";
+  const type =
+    requestedType === "" || requestedType === "brand"
+      ? "brand"
+      : ["hiring", "hiring partner", "hiring partners"].includes(requestedType)
+        ? "hiring partners"
+        : null;
 
   if (!name) throw httpError(400, "Partner name is required.");
-  return { name, logo };
+  if (!type) {
+    throw httpError(400, "Partner type must be brand or hiring partners.");
+  }
+  return { name, logo, type };
 }
 
 function toPartner(row) {
@@ -29,6 +42,7 @@ function toPartner(row) {
     id: row.id,
     name: row.name,
     logo: row.logo,
+    type: row.type,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
