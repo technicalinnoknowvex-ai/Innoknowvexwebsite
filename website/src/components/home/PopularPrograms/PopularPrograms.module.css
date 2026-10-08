@@ -1,5 +1,6 @@
 .section {
   width: 100%;
+  overflow-x: clip;
   background: #f8fbff;
 }
 

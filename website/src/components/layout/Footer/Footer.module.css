@@ -2,6 +2,7 @@
   position: relative;
   overflow: hidden;
   isolation: isolate;
+  scroll-margin-top: 68px;
   color: #dce8f7;
   background:
     radial-gradient(ellipse at 76% 0%, rgb(23 90 150 / 18%), transparent 34%),

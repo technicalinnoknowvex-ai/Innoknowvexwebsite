@@ -179,6 +179,14 @@ export default function BlogSection() {
               </div>
             </div>
 
+            <div className={styles.mobileCarousel} aria-label="Swipe through articles">
+              {orderedBlogs.map((blog) => (
+                <div className={styles.mobileSlide} key={blog.id}>
+                  <BlogCard blog={blog} />
+                </div>
+              ))}
+            </div>
+
             {pageCount > 1 && (
               <nav className={styles.navigation} aria-label="Blog pages">
                 <div className={styles.navigationButtons}>

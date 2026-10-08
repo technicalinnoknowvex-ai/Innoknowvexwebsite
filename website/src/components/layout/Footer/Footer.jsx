@@ -87,7 +87,7 @@ export default function Footer() {
   );
 
   return (
-    <footer className={styles.footer} aria-labelledby="footer-title">
+    <footer id="contact" className={styles.footer} aria-labelledby="footer-title">
       <div className={styles.glow} aria-hidden="true" />
       <div className={styles.inner}>
         <div className={styles.topGrid}>

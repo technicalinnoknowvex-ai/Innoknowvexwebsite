@@ -40,17 +40,72 @@ function getCategory(type) {
     : "brand";
 }
 
+function shufflePartners(partners) {
+  if (partners.length < 2) return partners;
+
+  let bestOrder = partners;
+  let fewestAdjacentDuplicates = Number.POSITIVE_INFINITY;
+
+  for (let attempt = 0; attempt < 40; attempt += 1) {
+    const order = [...partners];
+    for (let index = order.length - 1; index > 0; index -= 1) {
+      const randomIndex = Math.floor(Math.random() * (index + 1));
+      [order[index], order[randomIndex]] = [order[randomIndex], order[index]];
+    }
+
+    const adjacentDuplicates = order.reduce((count, partner, index) => {
+      const next = order[(index + 1) % order.length];
+      return partner.name.trim().toLowerCase() === next.name.trim().toLowerCase()
+        ? count + 1
+        : count;
+    }, 0);
+
+    if (adjacentDuplicates < fewestAdjacentDuplicates) {
+      bestOrder = order;
+      fewestAdjacentDuplicates = adjacentDuplicates;
+    }
+
+    if (adjacentDuplicates === 0) return order;
+  }
+
+  return bestOrder;
+}
+
+function PartnerLogo({ partner, category }) {
+  return (
+    <div
+      aria-label={`${partner.name}${category === "hiring_partner" ? ", hiring partner" : ", ecosystem partner"}`}
+      className={styles.partnerLogo}
+      role="img"
+      title={partner.name}
+    >
+      {partner.logo ? (
+        <Image
+          alt=""
+          className={styles.logoImage}
+          src={partner.logo}
+          width={180}
+          height={72}
+          unoptimized
+        />
+      ) : (
+        <span className={styles.logoName}>{partner.name}</span>
+      )}
+    </div>
+  );
+}
+
 function PartnerNode({ partner, index, category, position }) {
   return (
     <div
       aria-label={`${partner.name}${category === "hiring_partner" ? ", hiring partner" : ", ecosystem partner"}`}
-      className={styles.partnerNode}
+      className={styles.networkNode}
       role="img"
       style={{ ...position, "--node-index": index }}
       tabIndex={0}
       title={partner.name}
     >
-      <span className={styles.partnerLogo}>
+      <span className={styles.networkLogo}>
         {partner.logo ? (
           <Image
             alt=""
@@ -94,7 +149,6 @@ function PartnerVisualization({ partners, category, activeCategory }) {
       aria-label={`${activeCategory.label} network`}
       className={styles.visualization}
       data-category={category}
-      key={category}
       role="group"
     >
       <svg
@@ -182,7 +236,10 @@ export default function PartnersSection() {
     partners.forEach((partner) => {
       result[getCategory(partner.type)].push(partner);
     });
-    return result;
+    return {
+      brand: shufflePartners(result.brand),
+      hiring_partner: shufflePartners(result.hiring_partner),
+    };
   }, [partners]);
 
   useEffect(() => {
@@ -260,11 +317,41 @@ export default function PartnersSection() {
                   </div>
 
                   {categoryPartners.length ? (
-                    <PartnerVisualization
-                      activeCategory={category}
-                      category={category.id}
-                      partners={categoryPartners}
-                    />
+                    <>
+                      <PartnerVisualization
+                        activeCategory={category}
+                        category={category.id}
+                        partners={categoryPartners}
+                      />
+                      <div
+                        className={styles.partnerGrid}
+                        data-category={category.id}
+                        role="group"
+                        aria-label={`${category.label} logos`}
+                        tabIndex={0}
+                      >
+                        <div
+                          className={styles.partnerTrack}
+                          style={{ "--marquee-duration": `${Math.max(18, categoryPartners.length * 3)}s` }}
+                        >
+                          {[false, true].map((isDuplicate) => (
+                            <div
+                              aria-hidden={isDuplicate || undefined}
+                              className={styles.partnerSet}
+                              key={isDuplicate ? "duplicate" : "original"}
+                            >
+                              {categoryPartners.map((partner) => (
+                                <PartnerLogo
+                                  category={category.id}
+                                  key={partner.id}
+                                  partner={partner}
+                                />
+                              ))}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </>
                   ) : (
                     <p className={styles.message}>
                       {category.label} will be shown here soon.

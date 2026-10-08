@@ -68,11 +68,19 @@ export default function WhyInnoknowvex() {
     const banner = bannerRef.current;
     if (!banner) return undefined;
 
+    if (!("IntersectionObserver" in window)) {
+      const frame = window.requestAnimationFrame(() => setIsVisible(true));
+      return () => window.cancelAnimationFrame(frame);
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
-        setIsVisible(entry.isIntersecting);
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
       },
-      { threshold: 0.2 },
+      { threshold: 0.1 },
     );
 
     observer.observe(banner);

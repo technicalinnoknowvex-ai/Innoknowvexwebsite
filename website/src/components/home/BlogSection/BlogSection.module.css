@@ -51,6 +51,10 @@
   overflow: hidden;
 }
 
+.mobileCarousel {
+  display: none;
+}
+
 .carouselTrack {
   display: flex;
   transform: translateX(calc(var(--page-index, 0) * -100%));
@@ -388,6 +392,38 @@
   .grid {
     grid-template-columns: minmax(0, 1fr);
     gap: 15px;
+  }
+
+  .carousel {
+    display: none;
+  }
+
+  .mobileCarousel {
+    display: flex;
+    gap: 14px;
+    overflow-x: auto;
+    padding: 0 1px 14px;
+    scroll-padding-inline: 1px;
+    scroll-snap-type: x mandatory;
+    overscroll-behavior-x: contain;
+    scrollbar-color: #a9c9e8 transparent;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobileSlide {
+    min-width: 0;
+    flex: 0 0 100%;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+
+  .mobileSlide .card {
+    height: 100%;
+  }
+
+  .navigation {
+    display: none;
   }
 
   .card:last-child:nth-child(odd) {
