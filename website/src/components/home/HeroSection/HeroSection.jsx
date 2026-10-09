@@ -1,6 +1,7 @@
 import styles from "./HeroSection.module.css";
 import Header from "../../layout/Header/Header";
 import heroBackground from "../../../assets/images/hero/home.png";
+import mobileHeroBackground from "../../../assets/images/hero/homemobile.png";
 
 const learnerAvatars = [
   "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&crop=faces&w=96&h=96&q=85",
@@ -17,12 +18,22 @@ export default function HeroSection() {
       <header
         className={`relative overflow-hidden bg-white text-white ${styles.hero}`}
         style={{
-          backgroundImage: `url(${heroBackground.src})`,
+          "--hero-background": `url(${heroBackground.src})`,
+          "--mobile-hero-background": `url(${mobileHeroBackground.src})`,
         }}
       >
-        <div className="absolute inset-x-0 top-0 h-[92%] bg-[#031d47]/15 max-[900px]:h-full" />
+        <div className={`absolute inset-x-0 top-0 h-[92%] bg-[#031d47]/15 max-[900px]:h-full ${styles.overlay}`} />
 
-        <div className="relative z-10">
+        <div className={styles.mobileActions}>
+          <a className={styles.mobileExplore} href="#programs">
+            Explore Programs
+          </a>
+          <a className={styles.mobileAbout} href="/About/About">
+            About Us
+          </a>
+        </div>
+
+        <div className={`relative z-10 ${styles.content}`}>
           <div className="mx-auto max-w-[1280px] px-5 pb-6 pt-14 md:px-8 md:pb-1">
           <div className="relative min-h-[620px]">
             <div className="absolute inset-0" />

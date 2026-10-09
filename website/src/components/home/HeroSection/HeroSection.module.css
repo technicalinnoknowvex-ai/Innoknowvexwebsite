@@ -1,13 +1,75 @@
 .hero {
+  background-image: var(--hero-background);
   background-size: 100% 92%;
   background-position: center top;
   background-repeat: no-repeat;
 }
 
+.mobileActions {
+  display: none;
+}
+
 @media (max-width: 900px) {
   .hero {
+    background-image: var(--mobile-hero-background);
+    aspect-ratio: 2 / 3;
     background-size: 100% 100%;
+    background-position: center top;
+  }
+
+  .mobileActions {
+    position: absolute;
+    z-index: 2;
+    top: 16.8%;
+    left: calc(50% + 70px);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transform: translateX(-50%);
+    white-space: nowrap;
+  }
+
+  .mobileExplore,
+  .mobileAbout {
+    min-height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 13px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .mobileExplore {
+    border: 1px solid #02b1fc;
+    background: #02aaf0;
+    color: #fff;
+    box-shadow: 0 4px 12px rgb(0 45 105 / 32%);
+  }
+
+  .mobileAbout {
+    border: 1px solid rgb(255 255 255 / 62%);
+    background: rgb(3 29 71 / 72%);
+    color: #fff;
+  }
+
+  .content,
+  .overlay {
+    display: none;
   }
 }
 
+@media (max-width: 380px) {
+  .mobileActions {
+    gap: 6px;
+  }
 
+  .mobileExplore,
+  .mobileAbout {
+    min-height: 32px;
+    padding: 0 10px;
+    font-size: 11px;
+  }
+}

@@ -11,7 +11,7 @@ const navItems = [
   { label: "Home", href: "/" },
   { label: "Programs", href: "/#programs" },
   { label: "ORVEXA", href: "/#orvexa-title" },
-  { label: "About", href: "/#about" },
+  { label: "About", href: "/About/About" },
   { label: "Contact", href: "/#contact" },
 ];
 
