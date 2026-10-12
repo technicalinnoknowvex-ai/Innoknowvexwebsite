@@ -190,7 +190,6 @@ async function listPublicPrograms(request, response) {
   const { data, error } = await supabase
     .from("programs_new")
     .select()
-    .eq("status", "published")
     .order("created_at", { ascending: false });
 
   if (error) throw error;
@@ -202,11 +201,10 @@ async function getPublicProgram(request, response) {
     .from("programs_new")
     .select()
     .eq("slug", request.params.slug)
-    .eq("status", "published")
     .maybeSingle();
 
   if (error) throw error;
-  if (!data) throw httpError(404, "Published program not found.");
+  if (!data) throw httpError(404, "Program not found.");
   response.json({ data: toProgram(data) });
 }
 

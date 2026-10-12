@@ -1,1 +1,5 @@
-export const getPrograms = async () => null;
+import { getPublicCollection } from "./api";
+
+export function getPrograms() {
+  return getPublicCollection("programs");
+}

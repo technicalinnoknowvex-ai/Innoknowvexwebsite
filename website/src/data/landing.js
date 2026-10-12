@@ -153,6 +153,7 @@ export const landingPageData = {
     hiringPartners: [
       RangaswamyCollege,
       KLUni,
+      
       AmityUni,
       RevaUni,
       PresidencyUni,

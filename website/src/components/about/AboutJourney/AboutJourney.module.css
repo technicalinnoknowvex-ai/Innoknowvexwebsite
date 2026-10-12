@@ -5,7 +5,7 @@
 .eyebrow {
   margin: 0 0 18px;
   color: #087cf0;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.17em;
   line-height: 1.4;
@@ -71,14 +71,15 @@
 
 .milestone strong {
   color: #102c4c;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 820;
 }
 
 .milestone > span:last-child {
   max-width: 150px;
-  color: #61768d;
-  font-size: 12px;
+  color: #4f6680;
+  font-size: 13px;
+  font-weight: 500;
   line-height: 1.5;
 }
 

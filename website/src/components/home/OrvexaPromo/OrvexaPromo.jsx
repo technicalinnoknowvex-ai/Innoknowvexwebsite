@@ -46,7 +46,7 @@ export default function OrvexaSection() {
             Your AI companion for learning, careers, productivity and a brighter future.
           </p>
           <div className={styles.actions}>
-            <Link href="#orvexa-title" className={styles.exploreButton}>
+            <Link href="/Orvexa/Orvexa" className={styles.exploreButton}>
               Explore ORVEXA <span aria-hidden="true">→</span>
             </Link>
           </div>

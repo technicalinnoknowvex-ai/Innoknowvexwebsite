@@ -1,3 +1,57 @@
+import Image from "next/image";
+import Link from "next/link";
+import Footer from "../../components/layout/Footer/Footer";
+import Header from "../../components/layout/Header/Header";
+import orbitImage from "../../assets/images/orvexa/orbit-transparent.png";
+import robotImage from "../../assets/images/orvexa/robot-transparent.png";
+import styles from "./Orvexa.module.css";
+
 export default function Orvexa() {
-  return null;
+  return (
+    <>
+      <Header activeItem="ORVEXA" />
+      <main className={styles.page}>
+        <section className={styles.comingSoon} aria-labelledby="orvexa-title">
+          <div className={styles.glow} aria-hidden="true" />
+          <div className={styles.content}>
+            <p className={styles.eyebrow}>Introducing</p>
+            <div className={styles.brand}>
+              <Image
+                alt=""
+                className={styles.orbit}
+                height={1080}
+                src={orbitImage}
+                width={1456}
+              />
+              <h1 id="orvexa-title">
+                <span aria-hidden="true">RVEXA</span>
+                <span className={styles.visuallyHidden}>ORVEXA</span>
+              </h1>
+            </div>
+            <p className={styles.tagline}>AI that works with you</p>
+            <h2>Something exciting is on its way.</h2>
+            <p className={styles.description}>
+              ORVEXA is being built to help you learn smarter, plan your career,
+              and make more of every opportunity. Stay tuned.
+            </p>
+            <span className={styles.comingSoonLabel}>Coming soon</span>
+            <Link className={styles.homeLink} href="/">
+              <span aria-hidden="true">←</span> Back to home
+            </Link>
+          </div>
+          <div className={styles.robotFrame}>
+            <Image
+              alt="Friendly ORVEXA AI robot"
+              className={styles.robot}
+              fill
+              priority
+              sizes="(max-width: 700px) 76vw, 38vw"
+              src={robotImage}
+            />
+          </div>
+        </section>
+      </main>
+      <Footer />
+    </>
+  );
 }

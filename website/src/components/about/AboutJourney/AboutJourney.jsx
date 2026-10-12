@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import ScrollReveal from "../ScrollReveal/ScrollReveal";
 import styles from "./AboutJourney.module.css";
 
 const milestones = [
@@ -20,10 +21,7 @@ export default function AboutJourney() {
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
+        setIsVisible(entry.isIntersecting);
       },
       { threshold: 0.35 },
     );
@@ -44,12 +42,17 @@ export default function AboutJourney() {
         Our journey
       </h2>
       <ol className={styles.timeline}>
-        {milestones.map(({ year, copy }) => (
-          <li className={styles.milestone} key={`${year}-${copy}`}>
+        {milestones.map(({ year, copy }, index) => (
+          <ScrollReveal
+            as="li"
+            className={styles.milestone}
+            key={`${year}-${copy}`}
+            style={{ transitionDelay: `${index * 90}ms` }}
+          >
             <span className={styles.milestoneDot} aria-hidden="true" />
             <strong>{year}</strong>
             <span>{copy}</span>
-          </li>
+          </ScrollReveal>
         ))}
       </ol>
     </section>

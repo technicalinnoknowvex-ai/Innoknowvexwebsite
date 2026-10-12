@@ -1,9 +1,14 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import Header from "../../components/layout/Header/Header";
 import Footer from "../../components/layout/Footer/Footer";
 import PartnersSection from "../../components/home/PartnersSection/PartnersSection";
+import TestimonialsSection from "../../components/home/TestimonialsSection/TestimonialsSection";
 import AboutJourney from "../../components/about/AboutJourney/AboutJourney";
+import ScrollReveal from "../../components/about/ScrollReveal/ScrollReveal";
 import aboutHeroImage from "../../assets/images/about/aboutus1.png";
 import aboutStoryImage from "../../assets/images/about/aboutus2.png";
 import aboutCtaImage from "../../assets/images/about/aboutus3.png";
@@ -122,6 +127,73 @@ function ImpactIcon({ name }) {
   );
 }
 
+function AnimatedStatValue({ value }) {
+  const valueRef = useRef(null);
+  const [count, setCount] = useState(0);
+  const target = Number(value.replace(/[^\d]/g, ""));
+  const suffix = value.replace(/[\d,]/g, "");
+
+  useEffect(() => {
+    const element = valueRef.current;
+    if (!element) return undefined;
+
+    let animationFrame;
+    let startedAt;
+
+    const startCount = () => {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        setCount(target);
+        return;
+      }
+
+      const animate = (timestamp) => {
+        if (startedAt === undefined) startedAt = timestamp;
+        const progress = Math.min((timestamp - startedAt) / 1400, 1);
+        const easedProgress = 1 - (1 - progress) ** 3;
+        setCount(Math.round(target * easedProgress));
+
+        if (progress < 1) {
+          animationFrame = window.requestAnimationFrame(animate);
+        }
+      };
+
+      animationFrame = window.requestAnimationFrame(animate);
+    };
+
+    if (!("IntersectionObserver" in window)) {
+      startCount();
+      return undefined;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          startCount();
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.4 },
+    );
+
+    observer.observe(element);
+    return () => {
+      observer.disconnect();
+      if (animationFrame !== undefined) {
+        window.cancelAnimationFrame(animationFrame);
+      }
+    };
+  }, [target]);
+
+  return (
+    <strong ref={valueRef} aria-label={value}>
+      <span aria-hidden="true">
+        {count.toLocaleString("en-US")}
+        {suffix}
+      </span>
+    </strong>
+  );
+}
+
 export default function About() {
   return (
     <>
@@ -138,7 +210,7 @@ export default function About() {
           />
           <div className={styles.heroShade} />
           <div className={styles.heroInner}>
-            <div className={styles.heroCopy}>
+            <ScrollReveal className={styles.heroCopy}>
               <p className={styles.eyebrow}>About us</p>
               <h1 id="about-title">
                 Empowering People for a <span>Brighter Tomorrow</span>
@@ -152,14 +224,19 @@ export default function About() {
               <p className={styles.heroQuote}>
                 “A skilled world is a brighter world.”
               </p>
-            </div>
+            </ScrollReveal>
             <div className={styles.heroStats} aria-label="Our impact at a glance">
-              {impactStats.slice(0, 4).map(({ value, label, icon }) => (
-                <div className={styles.heroStat} key={label}>
+              {impactStats.slice(0, 4).map(({ value, label, icon }, index) => (
+                <ScrollReveal
+                  as="div"
+                  className={styles.heroStat}
+                  key={label}
+                  style={{ transitionDelay: `${index * 90}ms` }}
+                >
                   <ImpactIcon name={icon} />
-                  <strong>{value}</strong>
+                  <AnimatedStatValue value={value} />
                   <span>{label}</span>
-                </div>
+                </ScrollReveal>
               ))}
             </div>
           </div>
@@ -171,7 +248,7 @@ export default function About() {
             id="our-story"
             aria-labelledby="story-title"
           >
-            <div className={styles.storyImageWrap}>
+            <ScrollReveal as="div" className={styles.storyImageWrap}>
               <Image
                 alt="Learners collaborating on a practical project"
                 className={styles.storyImage}
@@ -182,8 +259,8 @@ export default function About() {
               <span className={styles.imageCaption}>
                 Skills. Opportunity. A brighter tomorrow.
               </span>
-            </div>
-            <div className={styles.storyCopy}>
+            </ScrollReveal>
+            <ScrollReveal as="div" className={styles.storyCopy}>
               <p className={styles.eyebrow}>Our story</p>
               <h2 id="story-title">From a Vision to a Movement</h2>
               <p>
@@ -204,36 +281,24 @@ export default function About() {
               <Link className={styles.storyButton} href="#our-journey">
                 Our Milestones <span aria-hidden="true">→</span>
               </Link>
-            </div>
+            </ScrollReveal>
           </section>
 
           <section className={styles.principles} aria-label="Our mission and values">
-            {principles.map((principle) => (
-              <article className={styles.principleCard} key={principle.title}>
+            {principles.map((principle, index) => (
+              <ScrollReveal
+                as="article"
+                className={styles.principleCard}
+                key={principle.title}
+                style={{ transitionDelay: `${index * 100}ms` }}
+              >
                 <PrincipleIcon name={principle.icon} />
                 <div>
                   <h3>{principle.title}</h3>
                   <p>{principle.description}</p>
                 </div>
-              </article>
+              </ScrollReveal>
             ))}
-          </section>
-
-          <section className={styles.impact} aria-labelledby="impact-title">
-            <h2 className={styles.eyebrow} id="impact-title">
-              Innoknowvex in numbers
-            </h2>
-            <div className={styles.impactGrid}>
-              {impactStats.map(({ value, label, icon }) => (
-                <div className={styles.impactItem} key={label}>
-                  <ImpactIcon name={icon} />
-                  <div>
-                    <strong>{value}</strong>
-                    <span>{label}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
           </section>
 
           <AboutJourney />
@@ -248,7 +313,7 @@ export default function About() {
             src={aboutCtaImage}
           />
           <div className={styles.ctaShade} />
-          <div className={styles.ctaInner}>
+          <ScrollReveal as="div" className={styles.ctaInner}>
             <p className={styles.eyebrow}>Together for a brighter tomorrow</p>
             <h2 id="cta-title">Let’s Build a More Skilled World</h2>
             <p>
@@ -263,10 +328,11 @@ export default function About() {
                 Partner With Us
               </Link>
             </div>
-          </div>
+          </ScrollReveal>
         </section>
 
         <PartnersSection />
+        <TestimonialsSection />
       </main>
       <Footer />
     </>

@@ -91,7 +91,7 @@ export default function PopularPrograms() {
               Industry-focused programs designed to make you future-ready.
             </p>
           </div>
-          <Link className={styles.viewAll} href="/programs">
+          <Link className={styles.viewAll} href="/Programs/Programs">
             View All Programs
             <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
               <path
@@ -113,7 +113,7 @@ export default function PopularPrograms() {
           {programs.map((program) => (
             <Link
               className={styles.programCard}
-              href="/programs"
+              href="/Programs/Programs"
               key={program.name}
             >
               <ProgramIcon type={program.icon} />
