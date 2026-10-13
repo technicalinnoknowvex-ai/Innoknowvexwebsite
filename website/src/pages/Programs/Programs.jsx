@@ -5,7 +5,100 @@ import { useMemo, useState } from "react";
 import Footer from "../../components/layout/Footer/Footer";
 import Header from "../../components/layout/Header/Header";
 import usePrograms from "../../hooks/usePrograms";
+import advancedFullStackWebDevelopment from "../../assets/images/programs/course-image-assets/advanced-full-stack-web-development.jpg";
+import androidDevelopment from "../../assets/images/programs/course-image-assets/android-development.png";
+import artificialIntelligence from "../../assets/images/programs/course-image-assets/artificial-intelligence.jpg";
+import autocad from "../../assets/images/programs/course-image-assets/autocad.jpg";
+import businessAnalytics from "../../assets/images/programs/course-image-assets/business-analytics.jpg";
+import cAndCppProgramming from "../../assets/images/programs/course-image-assets/c-and-cpp-programming.jpg";
+import clinicalTrainingAndResearch from "../../assets/images/programs/course-image-assets/clinical-training-and-research.jpg";
+import cloudComputing from "../../assets/images/programs/course-image-assets/cloud-computing.jpg";
+import corporateLaw from "../../assets/images/programs/course-image-assets/corporate-law.jpg";
+import cyberSecurity from "../../assets/images/programs/course-image-assets/cyber-security.jpg";
+import dataScience from "../../assets/images/programs/course-image-assets/data-science.jpg";
+import dataStructuresAndAlgorithms from "../../assets/images/programs/course-image-assets/data-structures-and-algorithms.jpg";
+import digitalMarketing from "../../assets/images/programs/course-image-assets/digital-marketing.jpg";
+import embeddedSystems from "../../assets/images/programs/course-image-assets/embedded-systems.jpg";
+import finance from "../../assets/images/programs/course-image-assets/finance.jpg";
+import humanResources from "../../assets/images/programs/course-image-assets/human-resources.jpg";
+import hybridElectricVehicles from "../../assets/images/programs/course-image-assets/hybrid-electric-vehicles.jpg";
+import internetOfThings from "../../assets/images/programs/course-image-assets/internet-of-things.jpg";
+import javaProgramming from "../../assets/images/programs/course-image-assets/java-programming.jpg";
+import machineLearning from "../../assets/images/programs/course-image-assets/machine-learning.jpg";
+import medicalCoding from "../../assets/images/programs/course-image-assets/medical-coding.jpg";
+import mernStack from "../../assets/images/programs/course-image-assets/mern-stack.jpg";
+import nanotechnology from "../../assets/images/programs/course-image-assets/nanotechnology.jpg";
+import offlineArtificialIntelligence from "../../assets/images/programs/course-image-assets/offline-artificial-intelligence.jpg";
+import offlineDataScience from "../../assets/images/programs/course-image-assets/offline-data-science.jpg";
+import offlineMachineLearning from "../../assets/images/programs/course-image-assets/offline-machine-learning.jpg";
+import offlineWebDevelopment from "../../assets/images/programs/course-image-assets/offline-web-development.jpg";
+import operationsAndSupplyChainManagement from "../../assets/images/programs/course-image-assets/operations-and-supply-chain-management.jpg";
+import psychology from "../../assets/images/programs/course-image-assets/psychology.jpg";
+import pythonProgramming from "../../assets/images/programs/course-image-assets/python-programming.jpg";
+import stockTrading from "../../assets/images/programs/course-image-assets/stock-trading.jpg";
+import uiUxDesign from "../../assets/images/programs/course-image-assets/ui-ux-design.jpg";
+import vlsi from "../../assets/images/programs/course-image-assets/vlsi.jpg";
 import styles from "./Programs.module.css";
+
+const courseImages = {
+  "advanced-full-stack-web-development": advancedFullStackWebDevelopment,
+  "web-development": advancedFullStackWebDevelopment,
+  "full-stack-web-development": advancedFullStackWebDevelopment,
+  "android-development": androidDevelopment,
+  "artificial-intelligence": artificialIntelligence,
+  autocad,
+  "business-analytics": businessAnalytics,
+  "c-and-cpp-programming": cAndCppProgramming,
+  "c-cpp-programming": cAndCppProgramming,
+  "c-cpp": cAndCppProgramming,
+  "clinical-training-and-research": clinicalTrainingAndResearch,
+  "clinical-training-research": clinicalTrainingAndResearch,
+  "clinical-trials-and-research": clinicalTrainingAndResearch,
+  "cloud-computing": cloudComputing,
+  "corporate-law": corporateLaw,
+  "cyber-security": cyberSecurity,
+  cybersecurity: cyberSecurity,
+  "data-science": dataScience,
+  "data-structures-and-algorithms": dataStructuresAndAlgorithms,
+  "data-structures-algorithms": dataStructuresAndAlgorithms,
+  dsa: dataStructuresAndAlgorithms,
+  "digital-marketing": digitalMarketing,
+  "embedded-systems": embeddedSystems,
+  finance,
+  "human-resources": humanResources,
+  "hybrid-electric-vehicles": hybridElectricVehicles,
+  hev: hybridElectricVehicles,
+  "internet-of-things": internetOfThings,
+  iot: internetOfThings,
+  "java-programming": javaProgramming,
+  java: javaProgramming,
+  "machine-learning": machineLearning,
+  "medical-coding": medicalCoding,
+  "mern-stack": mernStack,
+  nanotechnology,
+  "offline-artificial-intelligence": offlineArtificialIntelligence,
+  "offline-data-science": offlineDataScience,
+  "offline-machine-learning": offlineMachineLearning,
+  "offline-web-development": offlineWebDevelopment,
+  "operations-and-supply-chain-management": operationsAndSupplyChainManagement,
+  "operations-supply-chain-management": operationsAndSupplyChainManagement,
+  "supply-chain-management": operationsAndSupplyChainManagement,
+  psychology,
+  "python-programming": pythonProgramming,
+  python: pythonProgramming,
+  "stock-trading": stockTrading,
+  "ui-ux-design": uiUxDesign,
+  "vlsi": vlsi,
+};
+
+function normalizeProgramName(value) {
+  return value
+    ?.trim()
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
 
 function getCategoryPriority(category) {
   const normalized = category.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
@@ -17,18 +110,20 @@ function getCategoryPriority(category) {
   return 4;
 }
 
-function ProgramCard({ program }) {
+function ProgramCard({ program, cardImage }) {
+  const imageSource = cardImage || program.imageUrl;
+
   return (
     <article className={styles.programCard}>
       <div className={styles.cardImage}>
-        {program.imageUrl ? (
+        {imageSource ? (
           <Image
-            alt=""
+            alt={`${program.title} program`}
             className={styles.image}
             fill
             sizes="(max-width: 640px) 90vw, (max-width: 960px) 44vw, 30vw"
-            src={program.imageUrl}
-            unoptimized
+            src={imageSource}
+            unoptimized={typeof imageSource === "string"}
           />
         ) : (
           <div className={styles.imageFallback} aria-hidden="true">
@@ -74,11 +169,21 @@ export default function Programs() {
     });
   }, [programs]);
   const filters = useMemo(() => ["All programs", ...categories], [categories]);
+  const programsWithImages = useMemo(
+    () =>
+      programs.map((program) => ({
+        ...program,
+        cardImage:
+          courseImages[normalizeProgramName(program.slug)] ||
+          courseImages[normalizeProgramName(program.title)],
+      })),
+    [programs],
+  );
 
   const visiblePrograms = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
 
-    return programs.filter((program) => {
+    return programsWithImages.filter((program) => {
       const matchesCategory =
         activeCategory === "All programs" ||
         program.category?.trim() === activeCategory;
@@ -93,7 +198,7 @@ export default function Programs() {
 
       return matchesCategory && searchableText.includes(normalizedQuery);
     });
-  }, [activeCategory, programs, query]);
+  }, [activeCategory, programsWithImages, query]);
 
   return (
     <>
@@ -198,7 +303,11 @@ export default function Programs() {
                 {visiblePrograms.length > 0 ? (
                   <div className={styles.programGrid}>
                     {visiblePrograms.map((program) => (
-                      <ProgramCard key={program.id || program.slug || program.title} program={program} />
+                      <ProgramCard
+                        key={program.id || program.slug || program.title}
+                        program={program}
+                        cardImage={program.cardImage}
+                      />
                     ))}
                   </div>
                 ) : (
