@@ -208,6 +208,58 @@ async function getPublicProgram(request, response) {
   response.json({ data: toProgram(data) });
 }
 
+async function getPublicProgramPricing(request, response) {
+  const courseNames = [
+    ...new Set(
+      (Array.isArray(request.query.courseName)
+        ? request.query.courseName
+        : [request.query.courseName]
+      )
+        .filter((name) => typeof name === "string")
+        .map((name) => name.trim().toLowerCase())
+        .filter(Boolean),
+    ),
+  ];
+
+  if (!courseNames.length) {
+    throw httpError(400, "At least one course name is required.");
+  }
+
+  const { data, error } = await supabase
+    .from("program_pricing_new")
+    .select(
+      "course_name, self_actual_price, self_current_price, mentor_actual_price, mentor_current_price, professional_actual_price, professional_current_price, currency",
+    )
+    .in("course_name", courseNames);
+
+  if (error) throw error;
+
+  const pricing = courseNames
+    .map((courseName) => data.find((row) => row.course_name === courseName))
+    .find(Boolean);
+
+  if (!pricing) throw httpError(404, "Program pricing not found.");
+
+  response.json({
+    data: {
+      courseName: pricing.course_name,
+      currency: pricing.currency,
+      selfLearning: {
+        actualPrice: Number(pricing.self_actual_price),
+        currentPrice: Number(pricing.self_current_price),
+      },
+      mentorPaced: {
+        actualPrice: Number(pricing.mentor_actual_price),
+        currentPrice: Number(pricing.mentor_current_price),
+      },
+      professional: {
+        actualPrice: Number(pricing.professional_actual_price),
+        currentPrice: Number(pricing.professional_current_price),
+      },
+    },
+  });
+}
+
 module.exports = {
   createProgram,
   listAdminPrograms,
@@ -216,4 +268,5 @@ module.exports = {
   deleteProgram,
   listPublicPrograms,
   getPublicProgram,
+  getPublicProgramPricing,
 };

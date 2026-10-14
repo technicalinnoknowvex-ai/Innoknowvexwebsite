@@ -204,6 +204,7 @@
 }
 
 .programCard {
+  display: block;
   min-width: 0;
   overflow: hidden;
   border: 1px solid #e0eaf3;
@@ -217,6 +218,11 @@
   transform: translateY(-4px);
   border-color: #b4d9f3;
   box-shadow: 0 16px 34px rgb(17 54 89 / 12%);
+}
+
+.programCard:focus-visible {
+  outline: 3px solid #78baff;
+  outline-offset: 3px;
 }
 
 .cardImage {

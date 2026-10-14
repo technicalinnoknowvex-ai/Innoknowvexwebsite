@@ -2794,14 +2794,17 @@ const curriculumByProgramKey = {
   "human-resources":hrmCurriculum,
   "corporate-law": businessCurriculum,
   "java": javaCurriculum,
+  "java-programming": javaCurriculum,
   "mern-stack": webDevelopmentCurriculum,
   "business-management": businessCurriculum,
   "clinical-data-management": medicalCurriculum,
   "clinical-trials-and-research": medicalCurriculum,
   "c-cpp": programmingCurriculum,
+  "c-cpp-programming": programmingCurriculum,
   "autocad": autoCADCurriculum,
   "automobile-design": designCurriculum,
   "dsa": dsaCurriculum,
+  "data-structures-algorithms": dsaCurriculum,
   "advanced-data-science": dataScienceCurriculum,
   "advanced-web-development": webDevelopmentCurriculum,
   "full-stack-web-development": webDevelopmentCurriculum
@@ -2879,7 +2882,7 @@ export function getCurriculumForProgram(program) {
     return program.curriculum;
   }
 
-  const programKey = (program.id || program.slug || program.title || "")
+  const programKey = (program.slug || program.title || program.id || "")
     .toString()
     .trim()
     .toLowerCase();
@@ -2889,6 +2892,4 @@ export function getCurriculumForProgram(program) {
 
   return typeof selected === "function" ? selected(programKey) : selected;
 }
-
-
 

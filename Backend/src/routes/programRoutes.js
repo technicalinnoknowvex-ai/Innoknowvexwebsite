@@ -8,6 +8,7 @@ const router = express.Router();
 
 router.get("/categories", categoryController.listCategories);
 router.get("/programs", programController.listPublicPrograms);
+router.get("/program-pricing", programController.getPublicProgramPricing);
 router.get("/programs/:slug", programController.getPublicProgram);
 
 router.post("/admin/programs", authenticate, adminOnly, upload.fields([

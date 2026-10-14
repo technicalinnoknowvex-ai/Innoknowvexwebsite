@@ -4,14 +4,17 @@
 export const skillsDatabase = {
   // Web Development Skills
   "HTML": "Master semantic HTML for creating structured, accessible web content that follows modern best practices.",
+  "HTML5": "Build accessible web pages with modern HTML5 structure and browser features.",
   "HTML & HTML5": "Master semantic HTML5 for creating structured, accessible web content with modern markup standards.",
   "CSS": "Build beautiful user interfaces with advanced CSS techniques including Flexbox, Grid, and animations.",
+  "CSS3": "Style responsive interfaces with modern CSS3 layout, animation, and visual features.",
   "JavaScript": "Master the core language of web development with vanilla JavaScript and modern ES6+ features.",
   "React": "Build dynamic, interactive user interfaces with React's component-based architecture and state management.",
   "Vue.js": "Create modern web applications with Vue's progressive framework and intuitive reactive data binding.",
   "Angular": "Develop scalable enterprise applications with Angular's comprehensive framework and TypeScript support.",
   "Node.js": "Create scalable backend applications and APIs using Node.js with JavaScript on the server side.",
   "Express": "Build robust RESTful APIs and web servers using the Express.js framework and middleware ecosystem.",
+  "Express.js": "Build robust RESTful APIs and web servers using the Express.js framework and middleware ecosystem.",
   "MongoDB": "Design and manage NoSQL databases with MongoDB for flexible, document-based data storage.",
   "PostgreSQL": "Work with relational databases using PostgreSQL for reliable, structured data management.",
   "MySQL": "Build database-driven applications with MySQL, a powerful relational database management system.",
@@ -58,6 +61,8 @@ export const skillsDatabase = {
   "Deep Learning": "Implement neural networks and deep learning models for complex pattern recognition.",
   "TensorFlow": "Build and deploy machine learning models using the TensorFlow framework.",
   "PyTorch": "Create deep learning applications using PyTorch with dynamic computational graphs.",
+  "Hugging Face": "Use open-source machine learning models and datasets for natural language and AI applications.",
+  "OpenCV": "Build computer vision applications for image and video processing.",
   "AI": "Develop intelligent applications powered by artificial intelligence and machine learning algorithms.",
   "ML": "Build and train machine learning models to solve real-world problems with data.",
   "Neural Networks": "Design and implement artificial neural networks for various machine learning tasks.",
@@ -75,6 +80,8 @@ export const skillsDatabase = {
   "CI/CD": "Implement continuous integration and continuous deployment pipelines for automated workflows.",
   "Git": "Version control your code with Git and collaborate effectively on development projects.",
   "GitHub": "Use GitHub for version control, collaboration, and project management.",
+  "VS Code": "Use Visual Studio Code to write, debug, and manage application code.",
+  "Vercel": "Deploy and host modern web applications with previews and automated builds.",
   "Linux": "Master Linux systems administration and command-line operations.",
   "Microservices": "Design and build scalable applications using microservices architecture patterns.",
   "Server Management": "Configure, manage, and maintain servers for optimal performance and security.",
@@ -183,8 +190,8 @@ export const getSkillDescription = (skillName) => {
 // Get all skills grouped by category
 export const skillsByCategory = {
   "Web Development": [
-    "HTML", "HTML & HTML5", "CSS", "JavaScript", "React", "Vue.js", "Angular",
-    "Node.js", "Express", "Next.js", "TypeScript", "MERN Stack", "jQuery",
+    "HTML", "HTML5", "HTML & HTML5", "CSS", "CSS3", "JavaScript", "React", "Vue.js", "Angular",
+    "Node.js", "Express", "Express.js", "Next.js", "TypeScript", "MERN Stack", "jQuery",
     "Web Design", "Web Design Basics", "Web"
   ],
   "Mobile Development": [
@@ -201,12 +208,12 @@ export const skillsByCategory = {
     "Data Analysis", "Analytics", "Statistics", "Excel", "Power BI", "Tableau"
   ],
   "Machine Learning & AI": [
-    "Machine Learning", "Deep Learning", "TensorFlow", "PyTorch",
+    "Machine Learning", "Deep Learning", "TensorFlow", "PyTorch", "Hugging Face", "OpenCV",
     "AI", "ML", "Neural Networks", "NLP", "Computer Vision"
   ],
   "Cloud & DevOps": [
     "Cloud", "AWS", "Google Cloud", "Azure", "Docker", "Kubernetes",
-    "DevOps", "CI/CD", "Git", "GitHub", "Linux", "Server Management"
+    "DevOps", "CI/CD", "Git", "GitHub", "VS Code", "Docker", "Vercel", "Linux", "Server Management"
   ],
   "Security": [
     "Security", "Cybersecurity", "Ethical Hacking", "Network Security", "Error Handling"

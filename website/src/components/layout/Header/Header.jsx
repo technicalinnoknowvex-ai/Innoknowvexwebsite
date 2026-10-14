@@ -9,7 +9,7 @@ import styles from "./Header.module.css";
 
 const navItems = [
   { label: "Home", href: "/" },
-  { label: "Programs", href: "/Programs/Programs" },
+  { label: "Programs", href: "/programs" },
   { label: "ORVEXA", href: "/#orvexa-title" },
   { label: "About", href: "/About/About" },
   { label: "Contact", href: "/#contact" },

@@ -5,12 +5,12 @@ import { useEffect, useRef, useState } from "react";
 import styles from "./PopularPrograms.module.css";
 
 const programs = [
-  { name: "Web Development", icon: "code" },
-  { name: "Data Science & AI", icon: "analytics" },
-  { name: "Cyber Security", icon: "shield" },
-  { name: "Cloud Computing", icon: "cloud" },
-  { name: "Digital Marketing", icon: "megaphone" },
-  { name: "Business Analytics", icon: "chart" },
+  { name: "Web Development", slug: "web-development", icon: "code" },
+  { name: "Artificial Intelligence", slug: "artificial-intelligence", icon: "analytics" },
+  { name: "Cyber Security", slug: "cyber-security", icon: "shield" },
+  { name: "Cloud Computing", slug: "cloud-computing", icon: "cloud" },
+  { name: "Digital Marketing", slug: "digital-marketing", icon: "megaphone" },
+  { name: "Business Analytics", slug: "business-analytics", icon: "chart" },
 ];
 
 function ProgramIcon({ type }) {
@@ -91,7 +91,7 @@ export default function PopularPrograms() {
               Industry-focused programs designed to make you future-ready.
             </p>
           </div>
-          <Link className={styles.viewAll} href="/Programs/Programs">
+          <Link className={styles.viewAll} href="/programs">
             View All Programs
             <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
               <path
@@ -113,8 +113,8 @@ export default function PopularPrograms() {
           {programs.map((program) => (
             <Link
               className={styles.programCard}
-              href="/Programs/Programs"
-              key={program.name}
+              href={`/programs/${program.slug}`}
+              key={program.slug}
             >
               <ProgramIcon type={program.icon} />
               <span>{program.name}</span>

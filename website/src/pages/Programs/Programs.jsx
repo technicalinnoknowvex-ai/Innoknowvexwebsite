@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import Footer from "../../components/layout/Footer/Footer";
 import Header from "../../components/layout/Header/Header";
@@ -114,7 +115,11 @@ function ProgramCard({ program, cardImage }) {
   const imageSource = cardImage || program.imageUrl;
 
   return (
-    <article className={styles.programCard}>
+    <Link
+      aria-label={`Explore ${program.title}`}
+      className={styles.programCard}
+      href={`/programs/${encodeURIComponent(program.slug)}`}
+    >
       <div className={styles.cardImage}>
         {imageSource ? (
           <Image
@@ -145,7 +150,7 @@ function ProgramCard({ program, cardImage }) {
           <p className={styles.cardDescription}>{program.shortDescription}</p>
         )}
       </div>
-    </article>
+    </Link>
   );
 }
 
