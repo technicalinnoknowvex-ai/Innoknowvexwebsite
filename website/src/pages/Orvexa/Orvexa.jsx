@@ -3,7 +3,7 @@ import Link from "next/link";
 import Footer from "../../components/layout/Footer/Footer";
 import Header from "../../components/layout/Header/Header";
 import orbitImage from "../../assets/images/orvexa/orbit-transparent.png";
-import robotImage from "../../assets/images/orvexa/robot-transparent.png";
+import robotAnimation from "../../assets/images/orvexa/robot_transparent_hd.gif";
 import styles from "./Orvexa.module.css";
 
 export default function Orvexa() {
@@ -46,7 +46,8 @@ export default function Orvexa() {
               fill
               priority
               sizes="(max-width: 700px) 76vw, 38vw"
-              src={robotImage}
+              src={robotAnimation}
+              unoptimized
             />
           </div>
         </section>

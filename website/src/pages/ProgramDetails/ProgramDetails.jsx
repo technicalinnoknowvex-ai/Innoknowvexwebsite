@@ -7,6 +7,7 @@ import { getCurriculumForProgram } from "../../data/curriculum";
 import { getProjectsForProgram as getCourseProjects } from "../../data/courseProjects";
 import CertificateCarousel from "../../components/programs/CertificateCarousel/CertificateCarousel";
 import ProgramPricing from "../../components/programs/ProgramPricing/ProgramPricing";
+import TestimonialsSection from "../../components/home/TestimonialsSection/TestimonialsSection";
 import {
   getProgramToolIconColor,
   getProgramToolIconImage,
@@ -132,7 +133,7 @@ function ProjectCard({ index, project }) {
           fill
           loading="lazy"
           onError={() => setImageSrc(fallbackImage)}
-          sizes="(max-width: 430px) 100vw, (max-width: 700px) 50vw, (max-width: 980px) 33vw, 20vw"
+          sizes="(max-width: 700px) 50vw, (max-width: 980px) 33vw, 20vw"
           src={imageSrc}
           unoptimized
         />
@@ -235,6 +236,7 @@ export default function ProgramDetails({ slug }) {
   const programLookupSlug = sharedCourseSlug || routeProgramSlug;
   const { program, isLoading, error, retry } = useProgram(programLookupSlug);
   const [selectedModuleIndex, setSelectedModuleIndex] = useState(0);
+  const [isCarouselPaused, setIsCarouselPaused] = useState(false);
   const pageRef = useRef(null);
   const curriculum = useMemo(
     () => {
@@ -248,6 +250,22 @@ export default function ProgramDetails({ slug }) {
   );
   const activeModuleIndex = curriculum[selectedModuleIndex] ? selectedModuleIndex : 0;
   const selectedModule = curriculum[activeModuleIndex];
+  useEffect(() => {
+    if (
+      curriculum.length < 2 ||
+      isCarouselPaused ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      return undefined;
+    }
+
+    const rotationTimer = window.setTimeout(() => {
+      setSelectedModuleIndex((currentIndex) => (currentIndex + 1) % curriculum.length);
+    }, 5000);
+
+    return () => window.clearTimeout(rotationTimer);
+  }, [activeModuleIndex, curriculum.length, isCarouselPaused]);
+
   const tools = useMemo(
     () => (program ? getToolsForProgram(program, slug) : []),
     [program, slug],
@@ -295,9 +313,10 @@ export default function ProgramDetails({ slug }) {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (!entry.isIntersecting) return;
-          entry.target.setAttribute("data-revealed", "true");
-          observer.unobserve(entry.target);
+          entry.target.setAttribute(
+            "data-revealed",
+            entry.isIntersecting ? "true" : "false",
+          );
         });
       },
       { threshold: 0.12, rootMargin: "0px 0px -36px 0px" },
@@ -384,18 +403,14 @@ export default function ProgramDetails({ slug }) {
                 <Link className={styles.primaryButton} href="#pricing-title">
                   Enroll now <span aria-hidden="true">→</span>
                 </Link>
-                {program.brochureUrl ? (
+                {program.brochureUrl && (
                   <a
                     className={styles.secondaryButton}
                     href={program.brochureUrl}
                     rel="noreferrer"
                     target="_blank"
                   >
-                    <span aria-hidden="true">↓</span> Download curriculum
-                  </a>
-                ) : (
-                  <a className={styles.secondaryButton} href="#curriculum">
-                    Explore curriculum <span aria-hidden="true">↓</span>
+                    <span aria-hidden="true">↓</span> Download brochure
                   </a>
                 )}
               </div>
@@ -472,24 +487,107 @@ export default function ProgramDetails({ slug }) {
             )}
           </div>
           <div className={styles.curriculumExplorer}>
-            <div className={styles.moduleSelector} role="group" aria-label="Choose a curriculum module">
-              {curriculum.map((module, index) => (
-                <button
-                  aria-pressed={activeModuleIndex === index}
-                  className={styles.moduleOption}
-                  key={`${module.id || module.title}-${index}`}
-                  onClick={() => setSelectedModuleIndex(index)}
-                  onFocus={() => setSelectedModuleIndex(index)}
-                  onMouseEnter={() => setSelectedModuleIndex(index)}
-                  type="button"
-                >
-                  <span className={styles.moduleNumber}>{String(index + 1).padStart(2, "0")}</span>
-                  <span className={styles.moduleOptionTitle}>{module.title}</span>
-                  <span className={styles.moduleTopicCount}>
-                    {(module.topics || []).length} topics
-                  </span>
-                </button>
-              ))}
+            <div className={styles.moduleCarousel}>
+              <div
+                className={styles.carouselStage}
+                role="group"
+                aria-label="Curriculum modules carousel"
+                onMouseEnter={() => setIsCarouselPaused(true)}
+                onMouseLeave={() => setIsCarouselPaused(false)}
+                onFocusCapture={() => setIsCarouselPaused(true)}
+                onBlurCapture={(event) => {
+                  if (!event.currentTarget.contains(event.relatedTarget)) {
+                    setIsCarouselPaused(false);
+                  }
+                }}
+              >
+                {curriculum.map((module, index) => {
+                  const moduleCount = curriculum.length;
+                  let offset = index - activeModuleIndex;
+
+                  if (offset > moduleCount / 2) offset -= moduleCount;
+                  if (offset < -moduleCount / 2) offset += moduleCount;
+
+                  const isBackside =
+                    moduleCount > 3 &&
+                    index === (activeModuleIndex + Math.floor(moduleCount / 2)) % moduleCount;
+                  const isVisible = Math.abs(offset) <= 1;
+                  const angleStep = Math.max(
+                    48,
+                    Math.min(56, 360 / Math.max(moduleCount, 1)),
+                  );
+                  const isActive = activeModuleIndex === index;
+                  const isOnStage = isVisible || isBackside;
+
+                  return (
+                    <button
+                      aria-hidden={!isOnStage}
+                      aria-label={`Module ${String(index + 1).padStart(2, "0")}: ${module.title}`}
+                      aria-pressed={isActive}
+                      className={[
+                        styles.moduleCard,
+                        isActive ? styles.moduleCardActive : "",
+                        isBackside ? styles.moduleCardBackside : "",
+                        !isOnStage ? styles.moduleCardHidden : "",
+                      ].filter(Boolean).join(" ")}
+                      key={`${module.id || module.title}-${index}`}
+                      onClick={() => setSelectedModuleIndex(index)}
+                      onFocus={() => setSelectedModuleIndex(index)}
+                      style={{
+                        "--carousel-angle": isBackside
+                          ? "180deg"
+                          : `${offset * angleStep}deg`,
+                        zIndex: isBackside ? 0 : 3 - Math.abs(offset),
+                      }}
+                      tabIndex={isVisible ? 0 : -1}
+                      type="button"
+                    >
+                      <span className={styles.moduleNumber}>
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
+                      <span className={styles.moduleOptionTitle}>{module.title}</span>
+                      <span className={styles.moduleTopicCount}>
+                        {(module.topics || []).length} topics
+                      </span>
+                      <span className={styles.moduleTopicsMobile}>
+                        <span className={styles.mobileTopicsLabel}>Topics covered</span>
+                        {(module.topics || []).map((topic, topicIndex) => (
+                          <span className={styles.mobileTopic} key={`${topic}-${topicIndex}`}>
+                            <span aria-hidden="true">✓</span>
+                            {topic}
+                          </span>
+                        ))}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              {curriculum.length > 1 && (
+                <div className={styles.carouselControls}>
+                  <button
+                    aria-label="Previous curriculum module"
+                    className={styles.carouselArrow}
+                    onClick={() =>
+                      setSelectedModuleIndex(
+                        (activeModuleIndex - 1 + curriculum.length) % curriculum.length,
+                      )
+                    }
+                    type="button"
+                  >
+                    <span aria-hidden="true">←</span>
+                  </button>
+                  <button
+                    aria-label="Next curriculum module"
+                    className={styles.carouselArrow}
+                    onClick={() =>
+                      setSelectedModuleIndex((activeModuleIndex + 1) % curriculum.length)
+                    }
+                    type="button"
+                  >
+                    <span aria-hidden="true">→</span>
+                  </button>
+                </div>
+              )}
             </div>
             {selectedModule && (
               <article className={styles.moduleDetail} aria-live="polite" key={selectedModule.id || selectedModule.title}>
@@ -630,6 +728,7 @@ export default function ProgramDetails({ slug }) {
           isOffline={routeProgramSlug.startsWith("offline-")}
           programTitle={program.title}
         />
+        <TestimonialsSection />
       </main>
       <Footer />
     </>

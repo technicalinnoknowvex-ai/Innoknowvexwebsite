@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Dancing_Script } from "next/font/google";
 import orbitImage from "../../../assets/images/orvexa/orbit-transparent.png";
-import robotImage from "../../../assets/images/orvexa/robot-transparent.png";
+import robotAnimation from "../../../assets/images/orvexa/robot_transparent_hd.gif";
 import styles from "./OrvexaPromo.module.css";
 import RevealOnScroll from "./RevealOnScroll";
 
@@ -54,7 +54,8 @@ export default function OrvexaSection() {
 
         <div className={styles.robotFrame}>
           <Image
-            src={robotImage}
+            src={robotAnimation}
+            unoptimized
             alt="Friendly ORVEXA AI robot"
             fill
             sizes="(max-width: 700px) 80vw, 38vw"

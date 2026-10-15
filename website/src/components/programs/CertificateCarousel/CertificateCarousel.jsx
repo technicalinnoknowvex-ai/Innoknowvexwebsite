@@ -42,18 +42,20 @@ export default function CertificateCarousel() {
 
   return (
     <section className={styles.section} aria-labelledby="certificates-title">
-      <div className={styles.heading}>
+      <div className={styles.heading} data-scroll-reveal>
         <span className={styles.eyebrow}>RECOGNIZE EVERY MILESTONE</span>
         <h2 id="certificates-title">Your learning, recognized</h2>
         <p>Click a certificate to view the sample in a larger size.</p>
       </div>
       <div className={styles.certificateGrid}>
-        {certificates.map((certificate) => (
+        {certificates.map((certificate, index) => (
           <button
             aria-label={`View ${certificate.title} sample larger`}
             className={styles.certificateCard}
+            data-scroll-reveal
             key={certificate.title}
             onClick={() => setSelectedCertificate(certificate)}
+            style={{ "--reveal-index": index + 1 }}
             type="button"
           >
             <span className={styles.previewFrame}>
