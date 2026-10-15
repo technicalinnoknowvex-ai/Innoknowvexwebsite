@@ -4,9 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import styles from "../AuthForm.module.css";
+import { getSafePostAuthPath } from "../../../lib/checkout";
 import { loginWithPassword, persistAccessToken } from "../../../lib/auth-api";
 
-export default function LoginForm({ verificationPending = false }) {
+export default function LoginForm({ verificationPending = false, redirectTo }) {
   const router = useRouter();
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -28,7 +29,7 @@ export default function LoginForm({ verificationPending = false }) {
         throw new Error("Login succeeded, but no session was returned. Please try again.");
       }
 
-      router.replace("/auth/student/dashboard");
+      router.replace(getSafePostAuthPath(redirectTo));
     } catch (submitError) {
       setError(submitError.message || "Unable to sign in. Please try again.");
       setIsSubmitting(false);
@@ -76,7 +77,16 @@ export default function LoginForm({ verificationPending = false }) {
       </button>
 
       <p className={styles.switchPrompt}>
-        New to Innoknowvex? <Link href="/auth/student/signup">Create an account</Link>
+        New to Innoknowvex?{" "}
+        <Link
+          href={
+            redirectTo
+              ? `/auth/student/signup?next=${encodeURIComponent(redirectTo)}`
+              : "/auth/student/signup"
+          }
+        >
+          Create an account
+        </Link>
       </p>
     </form>
   );

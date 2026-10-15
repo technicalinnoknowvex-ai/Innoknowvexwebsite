@@ -1,7 +1,8 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { startCheckout } from "../../../lib/checkout";
 import { getProgramPricing } from "../../../services/programService";
 import styles from "./ProgramPricing.module.css";
 
@@ -44,7 +45,16 @@ function formatPrice(amount, currency) {
   }).format(amount);
 }
 
-function PricingCard({ benefits, currency, description, name, price, featured, flatRate }) {
+function PricingCard({
+  benefits,
+  currency,
+  description,
+  name,
+  price,
+  featured,
+  flatRate,
+  onEnroll,
+}) {
   return (
     <article className={`${styles.card} ${featured ? styles.featuredCard : ""}`}>
       {featured && <span className={styles.popularBadge}>CAREER-READY</span>}
@@ -59,9 +69,9 @@ function PricingCard({ benefits, currency, description, name, price, featured, f
         )}
       </div>
       <p className={styles.description}>{description}</p>
-      <Link className={styles.enrollButton} href="/signup">
+      <button className={styles.enrollButton} onClick={onEnroll} type="button">
         Enroll Now <span aria-hidden="true">→</span>
-      </Link>
+      </button>
       <ul className={styles.benefits} aria-label={`${name} benefits`}>
         {benefits.map(({ label, included }) => (
           <li className={included ? styles.included : styles.excluded} key={label}>
@@ -76,6 +86,7 @@ function PricingCard({ benefits, currency, description, name, price, featured, f
 }
 
 export default function ProgramPricing({ courseNames, isOffline, programTitle }) {
+  const router = useRouter();
   const [pricing, setPricing] = useState(null);
   const [error, setError] = useState("");
   const [retryCount, setRetryCount] = useState(0);
@@ -151,6 +162,12 @@ export default function ProgramPricing({ courseNames, isOffline, programTitle })
             description="Learn in person with hands-on practice, dedicated guidance, and complete career support."
             flatRate
             name="Complete Offline Program"
+            onEnroll={() => startCheckout({
+              courseName: pricing.courseName,
+              planKey: "offline_all_inclusive",
+              programTitle,
+              router,
+            })}
             price={pricing.selfLearning}
           />
           <aside className={styles.offlineCallout}>
@@ -179,6 +196,12 @@ export default function ProgramPricing({ courseNames, isOffline, programTitle })
             featured={plan.featured}
             key={plan.key}
             name={plan.name}
+            onEnroll={() => startCheckout({
+              courseName: pricing.courseName,
+              planKey: plan.key,
+              programTitle,
+              router,
+            })}
             price={pricing[plan.key]}
           />
         ))}

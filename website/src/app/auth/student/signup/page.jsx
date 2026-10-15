@@ -6,17 +6,23 @@ export const metadata = {
   description: "Create an Innoknowvex student account.",
 };
 
-export default function StudentSignupPage() {
+export default async function StudentSignupPage({ searchParams }) {
+  const params = searchParams ? await searchParams : {};
+  const redirectTo = typeof params.next === "string" ? params.next : "";
+  const alternateHref = redirectTo
+    ? `/auth/student/login?next=${encodeURIComponent(redirectTo)}`
+    : "/auth/student/login";
+
   return (
     <AuthLayout
       eyebrow="GET STARTED"
       title="Create your account"
       description="A few details are all you need to get started."
-      alternateHref="/auth/student/login"
+      alternateHref={alternateHref}
       alternatePrompt="Already registered?"
       alternateLabel="Sign in"
     >
-      <SignupForm />
+      <SignupForm redirectTo={redirectTo} />
     </AuthLayout>
   );
 }

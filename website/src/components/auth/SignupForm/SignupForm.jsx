@@ -4,9 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import styles from "../AuthForm.module.css";
+import { getSafePostAuthPath } from "../../../lib/checkout";
 import { persistAccessToken, registerWithPassword } from "../../../lib/auth-api";
 
-export default function SignupForm() {
+export default function SignupForm({ redirectTo }) {
   const router = useRouter();
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -41,11 +42,11 @@ export default function SignupForm() {
       }
 
       if (persistAccessToken(authData)) {
-        router.replace("/auth/student/dashboard");
+        router.replace(getSafePostAuthPath(redirectTo));
         return;
       }
-
-      router.replace("/auth/student/login?verification=pending");
+      const nextQuery = redirectTo ? `&next=${encodeURIComponent(redirectTo)}` : "";
+      router.replace(`/auth/student/login?verification=pending${nextQuery}`);
     } catch (submitError) {
       setError(submitError.message || "Unable to create your account. Please try again.");
       setIsSubmitting(false);
@@ -111,7 +112,16 @@ export default function SignupForm() {
       </button>
 
       <p className={styles.switchPrompt}>
-        Already have an account? <Link href="/auth/student/login">Sign in</Link>
+        Already have an account?{" "}
+        <Link
+          href={
+            redirectTo
+              ? `/auth/student/login?next=${encodeURIComponent(redirectTo)}`
+              : "/auth/student/login"
+          }
+        >
+          Sign in
+        </Link>
       </p>
     </form>
   );

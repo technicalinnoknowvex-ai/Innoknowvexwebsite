@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getCurriculumForProgram } from "../../data/curriculum";
 import { getProjectsForProgram as getCourseProjects } from "../../data/courseProjects";
+import CertificateCarousel from "../../components/programs/CertificateCarousel/CertificateCarousel";
 import ProgramPricing from "../../components/programs/ProgramPricing/ProgramPricing";
 import {
   getProgramToolIconColor,
@@ -380,7 +381,7 @@ export default function ProgramDetails({ slug }) {
               <h1 id="program-title">{program.title}</h1>
               <p className={styles.heroDescription}>{description}</p>
               <div className={styles.heroActions}>
-                <Link className={styles.primaryButton} href="/signup">
+                <Link className={styles.primaryButton} href="#pricing-title">
                   Enroll now <span aria-hidden="true">→</span>
                 </Link>
                 {program.brochureUrl ? (
@@ -621,6 +622,8 @@ export default function ProgramDetails({ slug }) {
             </p>
           </div>
         </section>
+
+        <CertificateCarousel />
 
         <ProgramPricing
           courseNames={pricingCourseNames}

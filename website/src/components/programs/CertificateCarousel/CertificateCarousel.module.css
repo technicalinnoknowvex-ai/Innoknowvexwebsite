@@ -1,0 +1,236 @@
+.section {
+  width: min(100% - 48px, 1240px);
+  margin: 0 auto;
+  padding: 58px 0 18px;
+  color: #10213e;
+}
+
+.heading {
+  max-width: 700px;
+  margin: 0 auto 26px;
+  text-align: center;
+}
+
+.eyebrow {
+  color: #087cf0;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+}
+
+.heading h2 {
+  margin: 10px 0;
+  color: #10213e;
+  font-size: clamp(27px, 4vw, 38px);
+  font-weight: 820;
+  letter-spacing: -0.045em;
+  line-height: 1.12;
+}
+
+.heading p {
+  margin: 0;
+  color: #536780;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.certificateGrid {
+  display: grid;
+  max-width: 1040px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+  margin: 0 auto;
+}
+
+.certificateCard {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #dce8f5;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 12px 32px rgb(16 48 83 / 7%);
+  color: #10213e;
+  cursor: zoom-in;
+  font: inherit;
+  text-align: left;
+  transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+}
+
+.certificateCard:hover {
+  transform: translateY(-4px);
+  border-color: #9bcaf4;
+  box-shadow: 0 18px 38px rgb(16 48 83 / 12%);
+}
+
+.previewFrame {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 1.6;
+  overflow: hidden;
+  border-radius: 9px;
+  background: #f4f8fc;
+}
+
+.certificateImage {
+  object-fit: contain;
+  transition: transform 300ms ease;
+}
+
+.certificateCard:hover .certificateImage {
+  transform: scale(1.025);
+}
+
+.zoomHint {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  padding: 7px 10px;
+  border: 1px solid rgb(255 255 255 / 35%);
+  border-radius: 999px;
+  background: rgb(3 26 50 / 78%);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.certificateCard:hover .zoomHint,
+.certificateCard:focus-visible .zoomHint {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.certificateTitle {
+  padding: 0 4px 3px;
+  font-size: 16px;
+  font-weight: 760;
+}
+
+.certificateCard:focus-visible,
+.closeButton:focus-visible {
+  outline: 3px solid #78baff;
+  outline-offset: 3px;
+}
+
+.lightbox {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgb(2 14 29 / 88%);
+  backdrop-filter: blur(7px);
+}
+
+.lightboxDialog {
+  width: min(1100px, 96vw);
+  max-height: 94vh;
+  padding: 12px;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 25%);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 24px 80px rgb(0 0 0 / 38%);
+}
+
+.lightboxHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 2px 2px 10px 6px;
+}
+
+.lightboxHeader h3 {
+  margin: 0;
+  color: #10213e;
+  font-size: 16px;
+  font-weight: 760;
+}
+
+.closeButton {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  place-items: center;
+  border: 1px solid #dce8f5;
+  border-radius: 50%;
+  background: #fff;
+  color: #10213e;
+  cursor: pointer;
+  font: inherit;
+}
+
+.closeButton:hover {
+  border-color: #087cf0;
+  background: #eef7ff;
+}
+
+.closeButton span {
+  font-size: 27px;
+  line-height: 1;
+}
+
+.enlargedPreview {
+  position: relative;
+  width: 100%;
+  max-height: calc(94vh - 78px);
+  aspect-ratio: 1.6;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #f4f8fc;
+}
+
+.enlargedImage {
+  object-fit: contain;
+}
+
+@media (max-width: 700px) {
+  .section {
+    width: min(100% - 32px, 540px);
+    padding-top: 44px;
+  }
+
+  .certificateGrid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .certificateCard {
+    padding: 9px;
+  }
+
+  .zoomHint {
+    opacity: 1;
+    transform: none;
+  }
+
+  .lightbox {
+    padding: 12px;
+  }
+
+  .lightboxDialog {
+    width: 100%;
+    padding: 9px;
+  }
+
+  .enlargedPreview {
+    aspect-ratio: 1.15;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .certificateCard,
+  .certificateImage,
+  .zoomHint {
+    transition: none;
+  }
+}
