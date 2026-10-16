@@ -2,8 +2,12 @@ import AuthLayout from "../../components/auth/AuthLayout/AuthLayout";
 import LoginForm from "../../components/auth/LoginForm/LoginForm";
 
 export const metadata = {
-  title: "Sign in | Innoknowvex",
+  title: "Sign in",
   description: "Sign in to your Innoknowvex account.",
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export default function LoginPage() {

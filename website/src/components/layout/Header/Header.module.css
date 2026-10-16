@@ -56,8 +56,34 @@
 	height: 100%;
 	display: flex;
 	align-items: center;
-	gap: 30px;
+	gap: 18px;
 	white-space: nowrap;
+}
+
+.navItem {
+	display: inline-flex;
+	align-items: center;
+	gap: 18px;
+}
+
+.navStar {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	color: #102f4d;
+	font-size: 15px;
+	line-height: 1;
+	transform-origin: center;
+}
+
+.navStar:hover {
+	animation: navStarSpin 800ms linear infinite;
+}
+
+@keyframes navStarSpin {
+	to {
+		transform: rotate(360deg);
+	}
 }
 
 .mobileMenuButton {
@@ -86,7 +112,11 @@
 
 @media (max-width: 1100px) {
 	.links {
-		gap: 18px;
+		gap: 12px;
+	}
+
+	.navItem {
+		gap: 12px;
 	}
 
 	.brand,
@@ -132,6 +162,14 @@
 		border-radius: 8px;
 		font-size: 15px;
 		text-shadow: none;
+	}
+
+	.navItem {
+		min-height: 44px;
+	}
+
+	.navStar {
+		display: none;
 	}
 
 	.links[data-open="true"] .link:hover,
@@ -236,5 +274,9 @@
 @media (prefers-reduced-motion: reduce) {
 	.mobileMenuButton span {
 		transition: none;
+	}
+
+	.navStar:hover {
+		animation: none;
 	}
 }

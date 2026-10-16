@@ -9,6 +9,7 @@ create table if not exists public.program_enrollments (
   email text not null,
   phone text not null,
   coupon_code text,
+  idempotency_key uuid,
   currency text not null default 'INR',
   amount_paise integer not null check (amount_paise > 0),
   razorpay_order_id text not null unique,
@@ -18,6 +19,13 @@ create table if not exists public.program_enrollments (
   updated_at timestamptz not null default now(),
   paid_at timestamptz
 );
+
+alter table public.program_enrollments
+  add column if not exists idempotency_key uuid;
+
+create unique index if not exists program_enrollments_user_idempotency_idx
+  on public.program_enrollments (user_id, idempotency_key)
+  where idempotency_key is not null;
 
 create index if not exists program_enrollments_user_created_idx
   on public.program_enrollments (user_id, created_at desc);

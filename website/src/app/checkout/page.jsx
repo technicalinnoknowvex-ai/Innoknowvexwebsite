@@ -2,8 +2,12 @@ import { Suspense } from "react";
 import CheckoutClient from "../../components/checkout/CheckoutClient";
 
 export const metadata = {
-  title: "Secure checkout | Innoknowvex",
+  title: "Secure checkout",
   description: "Complete your Innoknowvex program enrollment.",
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export default function CheckoutPage() {

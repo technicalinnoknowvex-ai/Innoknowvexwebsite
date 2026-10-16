@@ -3,9 +3,38 @@
 ## Setup
 
 1. Copy `.env.example` to `.env`.
-2. Put the Supabase URL and anon key in `.env`.
+2. Set the Supabase URL, anon key, and service-role key in `.env`.
 3. Run `supabase/auth_new.sql` in the Supabase SQL Editor.
 4. Start the backend with `npm run dev`.
+
+## Razorpay payments
+
+Set these variables in the **backend** environment; never put the secret or webhook
+secret in the frontend:
+
+- `NEXT_PUBLIC_RAZORPAY_KEY_ID`: the Razorpay Key ID shown in the same account and
+  mode (Test or Live) as the key secret. The `NEXT_PUBLIC_` prefix is retained as the
+  requested variable name, but this value is read by the backend and returned only as
+  the public Checkout key.
+- `RAZORPAY_KEY_SECRET`: the matching server-only Key Secret.
+- `RAZORPAY_WEBHOOK_SECRET`: a separate secret configured for the webhook endpoint.
+
+The backend still accepts the legacy backend-only `RAZORPAY_KEY_ID` variable as a
+fallback. Prefer `NEXT_PUBLIC_RAZORPAY_KEY_ID` for new configuration, and remove the
+legacy key if both variables are present. Use a matching Test pair for test payments
+and a matching Live pair for live payments. A Razorpay “Invalid API key” response
+means the configured ID and secret do not match or are from different modes; rotate
+any key that has been shared outside the backend environment.
+
+Apply `supabase/program_enrollments.sql` to create or update the enrollment table and
+its checkout idempotency index. Configure a Razorpay webhook for
+`POST /api/payments/webhook` with the `payment.captured` and `order.paid` events, and
+set the webhook's separate signing secret as `RAZORPAY_WEBHOOK_SECRET`.
+
+Create orders with authenticated `POST /api/payments/orders` and verify Checkout
+responses with authenticated `POST /api/payments/verify`. The server reads prices from
+`program_pricing_new`; client-provided prices are ignored. The webhook and authenticated
+verification endpoint both mark an enrollment paid only after validating the payment.
 
 ## Authentication routes
 

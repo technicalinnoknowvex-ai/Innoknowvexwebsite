@@ -2,8 +2,12 @@ import AuthLayout from "../../../../components/auth/AuthLayout/AuthLayout";
 import SignupForm from "../../../../components/auth/SignupForm/SignupForm";
 
 export const metadata = {
-  title: "Student account | Innoknowvex",
+  title: "Student account",
   description: "Create an Innoknowvex student account.",
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export default async function StudentSignupPage({ searchParams }) {

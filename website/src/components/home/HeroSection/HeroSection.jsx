@@ -28,9 +28,6 @@ export default function HeroSection() {
           <a className={styles.mobileExplore} href="#programs">
             Explore Programs
           </a>
-          <a className={styles.mobileAbout} href="/About/About">
-            About Us
-          </a>
         </div>
 
         <div className={`relative z-10 ${styles.content}`}>
@@ -61,9 +58,6 @@ export default function HeroSection() {
                 <div className="mt-8 flex flex-wrap items-center gap-4">
                   <button className="rounded-lg bg-[#02b1fc] px-6 py-3 text-base font-semibold text-white shadow-lg shadow-[#1ea6ff]/35 transition hover:bg-[#38b7ff]">
                     Explore Programs →
-                  </button>
-                  <button className="rounded-lg border border-white/30 bg-white/5 px-6 py-3 text-base font-semibold text-white backdrop-blur-sm transition hover:bg-white/10">
-                    About Us
                   </button>
                 </div>
 

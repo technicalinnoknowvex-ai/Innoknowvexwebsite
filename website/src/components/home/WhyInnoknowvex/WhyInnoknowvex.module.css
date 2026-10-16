@@ -141,20 +141,37 @@
 }
 
 .banner[data-revealed="true"] .benefit {
+  animation: benefitFloat 4.8s ease-in-out infinite;
   opacity: 1;
   transform: translateX(0) rotate(0) scale(1);
+}
+
+.banner[data-revealed="true"] .benefit:nth-child(1) {
+  animation-delay: 700ms;
 }
 
 .benefit:nth-child(2) {
   transition-delay: 100ms;
 }
 
+.banner[data-revealed="true"] .benefit:nth-child(2) {
+  animation-delay: 1.2s;
+}
+
 .benefit:nth-child(3) {
   transition-delay: 200ms;
 }
 
+.banner[data-revealed="true"] .benefit:nth-child(3) {
+  animation-delay: 1.7s;
+}
+
 .benefit:nth-child(4) {
   transition-delay: 300ms;
+}
+
+.banner[data-revealed="true"] .benefit:nth-child(4) {
+  animation-delay: 2.2s;
 }
 
 .icon {
@@ -231,6 +248,21 @@
     opacity: 0.55;
     transform: scale(1);
     text-shadow: 0 1px 2px rgb(0 12 30 / 95%);
+  }
+}
+
+@keyframes benefitFloat {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0) scale(1);
+    box-shadow: inset 0 0 18px rgb(32 133 219 / 8%);
+  }
+
+  50% {
+    transform: translateY(-5px) rotate(0) scale(1.015);
+    box-shadow:
+      inset 0 0 18px rgb(32 133 219 / 12%),
+      0 8px 20px rgb(0 10 30 / 20%);
   }
 }
 
@@ -361,6 +393,7 @@
   .benefit {
     opacity: 1;
     transform: none;
+    animation: none;
     transition: none;
   }
 

@@ -29,8 +29,7 @@
     white-space: nowrap;
   }
 
-  .mobileExplore,
-  .mobileAbout {
+  .mobileExplore {
     min-height: 34px;
     display: inline-flex;
     align-items: center;
@@ -49,12 +48,6 @@
     box-shadow: 0 4px 12px rgb(0 45 105 / 32%);
   }
 
-  .mobileAbout {
-    border: 1px solid rgb(255 255 255 / 62%);
-    background: rgb(3 29 71 / 72%);
-    color: #fff;
-  }
-
   .content,
   .overlay {
     display: none;
@@ -66,8 +59,7 @@
     gap: 6px;
   }
 
-  .mobileExplore,
-  .mobileAbout {
+  .mobileExplore {
     min-height: 32px;
     padding: 0 10px;
     font-size: 11px;

@@ -66,19 +66,25 @@ export default function Header({ fixed = false, activeItem = "" }) {
           data-open={menuOpen}
           aria-label="Main navigation"
         >
-          {navItems.map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              className={item.label === selectedItem ? styles.activeLink : styles.link}
-              aria-current={item.label === selectedItem ? "page" : undefined}
-              onClick={() => {
-                setSelectedItem(item.label);
-                setMenuOpen(false);
-              }}
-            >
-              {item.label}
-            </Link>
+          {navItems.map((item, index) => (
+            <span className={styles.navItem} key={item.label}>
+              <Link
+                href={item.href}
+                className={item.label === selectedItem ? styles.activeLink : styles.link}
+                aria-current={item.label === selectedItem ? "page" : undefined}
+                onClick={() => {
+                  setSelectedItem(item.label);
+                  setMenuOpen(false);
+                }}
+              >
+                {item.label}
+              </Link>
+              {index < navItems.length - 1 && (
+                <span className={styles.navStar} aria-hidden="true">
+                  ✦
+                </span>
+              )}
+            </span>
           ))}
         </nav>
 

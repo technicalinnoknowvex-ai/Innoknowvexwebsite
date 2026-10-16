@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Head from "next/head";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import Header from "../../components/layout/Header/Header";
@@ -197,6 +198,27 @@ function AnimatedStatValue({ value }) {
 export default function About() {
   return (
     <>
+      <Head>
+        <title>About Innoknowvex | Practical Learning & Career Growth</title>
+        <meta
+          name="description"
+          content="Learn about Innoknowvex and our mission to make industry-ready education, real-world experience, and career opportunities accessible."
+        />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="Innoknowvex" />
+        <meta
+          property="og:title"
+          content="About Innoknowvex | Practical Learning & Career Growth"
+        />
+        <meta
+          property="og:description"
+          content="Learn about Innoknowvex and our mission to make industry-ready education, real-world experience, and career opportunities accessible."
+        />
+        <link
+          rel="canonical"
+          href={`${(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/+$/, "")}/About/About`}
+        />
+      </Head>
       <Header activeItem="About" />
       <main className={styles.page}>
         <section className={styles.hero} aria-labelledby="about-title">

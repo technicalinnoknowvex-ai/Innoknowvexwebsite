@@ -9,6 +9,15 @@ import TestimonialsSection from "../components/home/TestimonialsSection/Testimon
 import WhyInnoknowvex from "../components/home/WhyInnoknowvex/WhyInnoknowvex";
 import Footer from "../components/layout/Footer/Footer";
 
+export const metadata = {
+  title: "Practical Training, Internships & Career Programs",
+  description:
+    "Learn by doing with practical training, real-world projects, and career-focused internship programs from Innoknowvex.",
+  alternates: {
+    canonical: "/",
+  },
+};
+
 export default function Home() {
   return (
     <>

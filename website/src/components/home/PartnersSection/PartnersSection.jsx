@@ -209,15 +209,6 @@ function PartnerVisualization({ partners, category, activeCategory }) {
       <div className={styles.center} aria-label={activeCategory.centerTitle}>
         <span className={styles.centerRing} aria-hidden="true" />
         <span className={styles.centerMark}>
-          {category === "hiring_partner" ? (
-            <span className={styles.careerArrow} aria-hidden="true">
-              ↗
-            </span>
-          ) : (
-            <span className={styles.centerMonogram} aria-hidden="true">
-              I
-            </span>
-          )}
           <strong>{activeCategory.centerTitle}</strong>
           <small>{activeCategory.centerCaption}</small>
         </span>

@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Dancing_Script } from "next/font/google";
 import orbitImage from "../../../assets/images/orvexa/orbit-transparent.png";
-import robotAnimation from "../../../assets/images/orvexa/robot_transparent_hd.gif";
+import robotAnimation from "../../../assets/images/orvexa/robot-animation-optimized.webp";
 import styles from "./OrvexaPromo.module.css";
 import RevealOnScroll from "./RevealOnScroll";
 

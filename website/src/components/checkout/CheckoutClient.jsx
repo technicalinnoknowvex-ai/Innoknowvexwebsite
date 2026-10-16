@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { clearAuthStorage, getCurrentUser } from "../../lib/auth-api";
 import { createPaymentOrder, verifyPayment } from "../../services/paymentService";
 import styles from "./CheckoutClient.module.css";
@@ -48,6 +48,9 @@ export default function CheckoutClient() {
   const [error, setError] = useState("");
   const [isPaid, setIsPaid] = useState(false);
   const [details, setDetails] = useState({ fullName: "", email: "", phone: "", couponCode: "" });
+  const submitInProgress = useRef(false);
+  const idempotencyKey = useRef("");
+  const idempotencyContext = useRef("");
 
   useEffect(() => {
     let isCurrent = true;
@@ -93,11 +96,25 @@ export default function CheckoutClient() {
 
   async function handleSubmit(event) {
     event.preventDefault();
+    if (submitInProgress.current) return;
+    submitInProgress.current = true;
     setError("");
     setIsSubmitting(true);
 
     try {
       await loadRazorpayScript();
+      const currentCheckoutContext = JSON.stringify([
+        courseName,
+        planKey,
+        details.fullName,
+        details.email,
+        details.phone,
+        details.couponCode,
+      ]);
+      if (idempotencyContext.current !== currentCheckoutContext) {
+        idempotencyKey.current = window.crypto.randomUUID();
+        idempotencyContext.current = currentCheckoutContext;
+      }
       const order = await createPaymentOrder(accessToken, {
         courseName,
         planKey,
@@ -105,6 +122,7 @@ export default function CheckoutClient() {
         email: details.email,
         phone: details.phone,
         couponCode: details.couponCode,
+        idempotencyKey: idempotencyKey.current,
       });
 
       const checkout = new window.Razorpay({
@@ -122,21 +140,31 @@ export default function CheckoutClient() {
         theme: { color: "#087cf0" },
         handler: async (paymentResponse) => {
           try {
-            await verifyPayment(accessToken, {
+            const verification = await verifyPayment(accessToken, {
               enrollmentId: order.enrollmentId,
               ...paymentResponse,
             });
+            if (
+              verification.status !== "paid" ||
+              verification.enrollmentId !== order.enrollmentId
+            ) {
+              throw new Error("The server could not confirm this payment. Please contact support.");
+            }
             setIsPaid(true);
           } catch (verificationError) {
             setError(
               `${verificationError.message} If your account was charged, please contact support with your payment ID.`,
             );
           } finally {
+            submitInProgress.current = false;
             setIsSubmitting(false);
           }
         },
         modal: {
-          ondismiss: () => setIsSubmitting(false),
+          ondismiss: () => {
+            submitInProgress.current = false;
+            setIsSubmitting(false);
+          },
         },
       });
 
@@ -145,11 +173,13 @@ export default function CheckoutClient() {
           paymentFailure.error?.description ||
             "The payment did not complete. You can try again.",
         );
+        submitInProgress.current = false;
         setIsSubmitting(false);
       });
       checkout.open();
     } catch (checkoutError) {
       setError(checkoutError.message || "Unable to start checkout. Please try again.");
+      submitInProgress.current = false;
       setIsSubmitting(false);
     }
   }
