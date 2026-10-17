@@ -113,7 +113,7 @@ function getCategoryPriority(category) {
 }
 
 function ProgramCard({ program, cardImage }) {
-  const imageSource = cardImage || program.imageUrl;
+  const imageSource = program.imageUrl || cardImage;
 
   return (
     <Link

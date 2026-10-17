@@ -69,9 +69,11 @@ Run `supabase/programs_new.sql` in Supabase SQL Editor before using these routes
 Run `supabase/program_pricing_new.sql` as well to create and seed the pricing table from the supplied CSV. Rows where all six prices are `0.00` were intentionally excluded.
 Run `supabase/storage_new.sql` to create the public media buckets and admin-only upload policies.
 
-Admin media uploads use `multipart/form-data`, with a maximum file size of 10 MB. Program uploads use `image` for an image and `brochure` for a PDF. Testimonial uploads use `profileImage`, and partner uploads use `logo`. The resulting public Storage URLs are saved in the related table.
+Admin media uploads use `multipart/form-data`, with a maximum file size of 10 MB. Program uploads use `image` for an image and `brochure` for a PDF. Blog image uploads use `image` and the `blog_images` bucket. Testimonial uploads use `profileImage`, and partner uploads use `logo`. The resulting public Storage URLs are saved in the related table.
 
 When replacing a program image or brochure, the backend reuses the existing object path in its Storage bucket and upserts the new file there. This keeps the file in the same program folder and updates the program row's public URL with a cache-busting query value. The admin Storage `SELECT`, `INSERT`, and `UPDATE` policies from `supabase/storage_new.sql` must be applied for replacements to work.
+
+Blog images use the same Storage replacement flow: a replacement reuses the existing object path in `blog_images`, and its public URL is saved to `blogs_new.image_url`.
 
 Public routes:
 

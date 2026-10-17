@@ -1,6 +1,7 @@
 const { createClient } = require("@supabase/supabase-js");
 const supabase = require("../config/supabaseClient");
 const { supabaseUrl, supabaseAnonKey } = require("../config/env");
+const { uploadToStorage, assertFileType } = require("../utils/storageUpload");
 
 function createAuthenticatedClient(accessToken) {
   return createClient(supabaseUrl, supabaseAnonKey, {
@@ -63,6 +64,13 @@ function toBlog(row) {
   };
 }
 
+function blogFolder(title) {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "") || "blog";
+}
+
 async function listPublicBlogs(request, response) {
   const { data, error } = await supabase
     .from("blogs_new")
@@ -97,6 +105,16 @@ async function listAdminBlogs(request, response) {
 
 async function createBlog(request, response) {
   const payload = blogPayload(request.body);
+  const image = request.files?.image?.[0];
+  if (image) {
+    assertFileType(image, "image");
+    payload.image_url = await uploadToStorage({
+      client: createAuthenticatedClient(request.accessToken),
+      bucket: "blog_images",
+      folder: blogFolder(payload.title),
+      file: image,
+    });
+  }
 
   const { data, error } = await createAuthenticatedClient(request.accessToken)
     .from("blogs_new")
@@ -110,8 +128,31 @@ async function createBlog(request, response) {
 
 async function updateBlog(request, response) {
   const payload = blogPayload(request.body, true);
+  const image = request.files?.image?.[0];
+  const client = createAuthenticatedClient(request.accessToken);
 
-  const { data, error } = await createAuthenticatedClient(request.accessToken)
+  if (image) {
+    assertFileType(image, "image");
+    const { data: existingBlog, error: fetchError } = await client
+      .from("blogs_new")
+      .select("image_url, title")
+      .eq("id", request.params.id)
+      .maybeSingle();
+
+    if (fetchError) throw fetchError;
+    if (!existingBlog) throw httpError(404, "Blog not found.");
+
+    payload.image_url = await uploadToStorage({
+      client,
+      bucket: "blog_images",
+      folder: blogFolder(payload.title || existingBlog.title || request.params.id),
+      file: image,
+      existingUrl: existingBlog.image_url,
+      supabaseUrl,
+    });
+  }
+
+  const { data, error } = await client
     .from("blogs_new")
     .update({ ...payload, updated_at: new Date().toISOString() })
     .eq("id", request.params.id)

@@ -29,20 +29,12 @@ const sections = {
       { name: "internship", label: "Includes internship", type: "checkbox" },
     ],
   },
-  categories: {
-    label: "Categories",
-    path: "admin/categories",
-    fields: [
-      { name: "name", label: "Category name", required: true },
-      { name: "slug", label: "URL slug", required: true },
-    ],
-  },
   blogs: {
     label: "Blog posts",
     path: "admin/blogs",
     fields: [
       { name: "title", label: "Title", required: true },
-      { name: "imageUrl", label: "Image URL", type: "url" },
+      { name: "image", label: "Blog image", type: "file", accept: "image/*", hint: "Choose an image to upload to Supabase Storage. Leave empty to keep the current image." },
       { name: "description", label: "Description", type: "textarea", required: true },
       { name: "link", label: "Article URL", type: "url", required: true },
     ],
@@ -77,9 +69,10 @@ const sections = {
   },
 };
 
-const editableSections = new Set(["programs", "categories", "blogs", "testimonials"]);
+const editableSections = new Set(["programs", "blogs", "testimonials"]);
 const fileFieldsBySection = {
   programs: ["image", "brochure"],
+  blogs: ["image"],
   testimonials: ["profileImageFile"],
   partners: ["logoFile"],
 };
@@ -89,7 +82,6 @@ const apiFileFieldsBySection = {
 };
 const singularLabels = {
   programs: "Program",
-  categories: "Category",
   blogs: "Blog post",
   testimonials: "Testimonial",
   partners: "Partner",
@@ -402,14 +394,14 @@ export default function AdminDashboard() {
                     ) : (
                       <>
                         <span>{field.label}{field.required ? " *" : ""}</span>
-                        {field.type === "file" && activeSection === "programs" && editingRecord && (
-                          (field.name === "image" && editingRecord.imageUrl) ||
-                          (field.name === "brochure" && editingRecord.brochureUrl) ? (
+                        {field.type === "file" &&
+                          editingRecord &&
+                          ((field.name === "image" && editingRecord.imageUrl) ||
+                            (field.name === "brochure" && editingRecord.brochureUrl)) && (
                             <span className={styles.currentAsset}>
-                              Current {field.name === "image" ? "image" : "brochure"} is saved. Choose a new file only if you want to replace it.
+                              Current {field.name === "brochure" ? "brochure" : activeSection === "blogs" ? "blog image" : "program image"} is saved. Choose a new file only if you want to replace it.
                             </span>
-                          ) : null
-                        )}
+                          )}
                         {field.type === "textarea" ? (
                           <textarea
                             name={field.name}
