@@ -73,7 +73,7 @@ Admin media uploads use `multipart/form-data`, with a maximum file size of 10 MB
 
 When replacing a program image or brochure, the backend reuses the existing object path in its Storage bucket and upserts the new file there. This keeps the file in the same program folder and updates the program row's public URL with a cache-busting query value. The admin Storage `SELECT`, `INSERT`, and `UPDATE` policies from `supabase/storage_new.sql` must be applied for replacements to work.
 
-Blog images use the same Storage replacement flow: a replacement reuses the existing object path in `blog_images`, and its public URL is saved to `blogs_new.image_url`.
+Blog images use the same Storage replacement flow: a replacement reuses the existing object path in `blog_images`, and its public URL is saved to `blogs_new.image_url`. Testimonial profile image replacements reuse the existing object path in `testimonial-images` and update `testimonials_new.profile_image`.
 
 Public routes:
 

@@ -112,9 +112,34 @@ async function listAdminTestimonials(request, response) {
 }
 
 async function updateTestimonial(request, response) {
-  const { data, error } = await createAuthenticatedClient(request.accessToken)
+  const client = createAuthenticatedClient(request.accessToken);
+  const payload = testimonialPayload(request.body, true);
+  const profileImage = request.files?.profileImage?.[0];
+
+  if (profileImage) {
+    assertFileType(profileImage, "image");
+    const { data: existingTestimonial, error: fetchError } = await client
+      .from("testimonials_new")
+      .select("profile_image")
+      .eq("id", request.params.id)
+      .maybeSingle();
+
+    if (fetchError) throw fetchError;
+    if (!existingTestimonial) throw httpError(404, "Testimonial not found.");
+
+    payload.profile_image = await uploadToStorage({
+      client,
+      bucket: "testimonial-images",
+      folder: "profiles",
+      file: profileImage,
+      existingUrl: existingTestimonial.profile_image,
+      supabaseUrl,
+    });
+  }
+
+  const { data, error } = await client
     .from("testimonials_new")
-    .update({ ...testimonialPayload(request.body, true), updated_at: new Date().toISOString() })
+    .update({ ...payload, updated_at: new Date().toISOString() })
     .eq("id", request.params.id)
     .select()
     .maybeSingle();

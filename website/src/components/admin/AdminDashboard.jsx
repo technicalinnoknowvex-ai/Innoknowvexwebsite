@@ -44,8 +44,7 @@ const sections = {
     path: "admin/testimonials",
     fields: [
       { name: "name", label: "Learner name", required: true },
-      { name: "profileImage", label: "Profile image URL", type: "url" },
-      { name: "profileImageFile", label: "Upload profile image", type: "file", accept: "image/*", createOnly: true },
+      { name: "profileImage", label: "Profile image", type: "file", accept: "image/*", hint: "Choose an image to upload to Supabase Storage. Leave empty to keep the current image." },
       { name: "designation", label: "Designation" },
       { name: "program", label: "Program" },
       { name: "rating", label: "Rating (1–5)", type: "number", min: 1, max: 5, step: 0.5, required: true },
@@ -73,11 +72,10 @@ const editableSections = new Set(["programs", "blogs", "testimonials"]);
 const fileFieldsBySection = {
   programs: ["image", "brochure"],
   blogs: ["image"],
-  testimonials: ["profileImageFile"],
+  testimonials: ["profileImage"],
   partners: ["logoFile"],
 };
 const apiFileFieldsBySection = {
-  testimonials: { profileImageFile: "profileImage" },
   partners: { logoFile: "logo" },
 };
 const singularLabels = {
@@ -397,9 +395,10 @@ export default function AdminDashboard() {
                         {field.type === "file" &&
                           editingRecord &&
                           ((field.name === "image" && editingRecord.imageUrl) ||
-                            (field.name === "brochure" && editingRecord.brochureUrl)) && (
+                            (field.name === "brochure" && editingRecord.brochureUrl) ||
+                            (field.name === "profileImage" && editingRecord.profileImage)) && (
                             <span className={styles.currentAsset}>
-                              Current {field.name === "brochure" ? "brochure" : activeSection === "blogs" ? "blog image" : "program image"} is saved. Choose a new file only if you want to replace it.
+                              Current {field.name === "brochure" ? "brochure" : field.name === "profileImage" ? "profile image" : activeSection === "blogs" ? "blog image" : "program image"} is saved. Choose a new file only if you want to replace it.
                             </span>
                           )}
                         {field.type === "textarea" ? (

@@ -11,7 +11,9 @@ router.post("/admin/testimonials", authenticate, adminOnly, upload.fields([
 	{ name: "profileImage", maxCount: 1 },
 ]), testimonialController.createTestimonial);
 router.get("/admin/testimonials", authenticate, adminOnly, testimonialController.listAdminTestimonials);
-router.put("/admin/testimonials/:id", authenticate, adminOnly, testimonialController.updateTestimonial);
+router.put("/admin/testimonials/:id", authenticate, adminOnly, upload.fields([
+	{ name: "profileImage", maxCount: 1 },
+]), testimonialController.updateTestimonial);
 router.delete("/admin/testimonials/:id", authenticate, adminOnly, testimonialController.deleteTestimonial);
 
 module.exports = router;
