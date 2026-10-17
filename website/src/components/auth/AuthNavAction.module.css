@@ -1,0 +1,54 @@
+.profileMenu {
+  position: relative;
+}
+
+.menuPanel {
+  position: absolute;
+  z-index: 60;
+  top: calc(100% + 12px);
+  right: 0;
+  display: grid;
+  width: min(280px, calc(100vw - 24px));
+  gap: 4px;
+  padding: 8px;
+  border: 1px solid #dce7f0;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 14px 34px rgb(16 50 80 / 18%);
+}
+
+.accountDetails {
+  display: grid;
+  gap: 4px;
+  padding: 10px 11px 12px;
+  border-bottom: 1px solid #e8eef4;
+  color: #18334f;
+  overflow-wrap: anywhere;
+}
+
+.accountDetails strong {
+  font-size: 14px;
+}
+
+.accountDetails span {
+  color: #718198;
+  font-size: 12px;
+}
+
+.menuPanel a {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  padding: 0 11px;
+  border-radius: 8px;
+  color: #29415c;
+  font-size: 13px;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.menuPanel a:hover,
+.menuPanel a:focus-visible {
+  background: #edf7ff;
+  color: #0876c3;
+}

@@ -15,7 +15,7 @@ export default async function AdminLoginPage({ searchParams }) {
       description="Sign in with an account approved for admin access."
       alternateHref="/"
       alternatePrompt="Innoknowvex"
-      alternateLabel="Visit website"
+      alternateLabel="Home"
     >
       <AdminLoginForm accessPending={params.access === "pending"} />
     </AuthLayout>

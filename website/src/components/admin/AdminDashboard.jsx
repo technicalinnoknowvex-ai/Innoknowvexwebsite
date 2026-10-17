@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import LoadingIndicator from "../common/LoadingIndicator/LoadingIndicator";
@@ -84,6 +84,13 @@ const singularLabels = {
   testimonials: "Testimonial",
   partners: "Partner",
 };
+const websiteNavLinks = [
+  { label: "Home", href: "/" },
+  { label: "Programs", href: "/programs" },
+  { label: "ORVEXA", href: "/#orvexa-title" },
+  { label: "About", href: "/About/About" },
+  { label: "Contact", href: "/#contact" },
+];
 
 function emptyValues(section) {
   return Object.fromEntries(
@@ -125,6 +132,7 @@ function recordSummary(section, record) {
 
 export default function AdminDashboard() {
   const router = useRouter();
+  const editorRef = useRef(null);
   const [accessToken, setAccessToken] = useState("");
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isCheckingAccess, setIsCheckingAccess] = useState(true);
@@ -139,6 +147,25 @@ export default function AdminDashboard() {
   const [notice, setNotice] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  useEffect(() => {
+    if (!isEditorOpen) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      editorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [formKey, isEditorOpen]);
+
+  useEffect(() => {
+    if (!error && !notice) return;
+
+    const timeout = window.setTimeout(() => {
+      setError("");
+      setNotice("");
+    }, error ? 8000 : 4500);
+    return () => window.clearTimeout(timeout);
+  }, [error, notice]);
 
   useEffect(() => {
     let mounted = true;
@@ -319,8 +346,12 @@ export default function AdminDashboard() {
           <Image src="/3d.png" alt="" width={42} height={42} />
           <span><strong>INNOKNOWVEX</strong><small>Website administration</small></span>
         </Link>
+        <nav className={styles.siteNav} aria-label="Website navigation">
+          {websiteNavLinks.map((item) => (
+            <Link href={item.href} key={item.label}>{item.label}</Link>
+          ))}
+        </nav>
         <div className={styles.topActions}>
-          <Link href="/" className={styles.viewSite}>View website</Link>
           <button className={styles.logout} type="button" onClick={handleLogout} disabled={isLoggingOut}>
             {isLoggingOut ? "Signing out…" : "Sign out"}
           </button>
@@ -361,11 +392,27 @@ export default function AdminDashboard() {
             )}
           </div>
 
-          {error && <div className={styles.alert} role="alert">{error}</div>}
-          {notice && <div className={styles.notice} role="status">{notice}</div>}
+          {(error || notice) && (
+            <div className={styles.toastRegion}>
+              <div className={`${styles.toast} ${error ? styles.errorToast : styles.successToast}`} role={error ? "alert" : "status"}>
+                <span>{error || notice}</span>
+                <button
+                  aria-label="Dismiss notification"
+                  className={styles.dismissToast}
+                  onClick={() => {
+                    setError("");
+                    setNotice("");
+                  }}
+                  type="button"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          )}
 
           {isEditorOpen ? (
-            <form className={styles.editor} key={formKey} onSubmit={handleSave}>
+            <form className={styles.editor} key={formKey} onSubmit={handleSave} ref={editorRef}>
               <div className={styles.editorHeading}>
                 <div>
                   <h2>{editingRecord ? `Edit ${recordTitle(editingRecord)}` : `New ${singularLabels[activeSection].toLowerCase()}`}</h2>
