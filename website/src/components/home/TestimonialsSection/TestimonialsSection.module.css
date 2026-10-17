@@ -427,42 +427,13 @@
 }
 
 .loading {
-  display: grid;
+  display: flex;
   min-height: 360px;
-  grid-template-columns: minmax(240px, 0.8fr) 1.2fr;
   align-items: center;
-  gap: 8%;
-  padding: 24px 6%;
+  justify-content: center;
   border: 1px solid #e5edf7;
   border-radius: 20px;
   background: #fff;
-}
-
-.loadingPortrait,
-.loadingStory {
-  display: block;
-  border-radius: 18px;
-  background: linear-gradient(100deg, #eff4fa 25%, #f8fbff 40%, #eff4fa 65%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s ease-in-out infinite;
-}
-
-.loadingPortrait {
-  height: 250px;
-}
-
-.loadingStory {
-  height: 180px;
-}
-
-.loadingLabel {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  clip-path: inset(50%);
 }
 
 @keyframes revealLine {
@@ -512,12 +483,6 @@
   to {
     opacity: 1;
     transform: scale(1);
-  }
-}
-
-@keyframes shimmer {
-  to {
-    background-position-x: -200%;
   }
 }
 
@@ -674,20 +639,6 @@
     justify-self: center;
   }
 
-  .loading {
-    min-height: 420px;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 16px;
-    padding: 16px;
-  }
-
-  .loadingPortrait {
-    height: 220px;
-  }
-
-  .loadingStory {
-    height: 100px;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -701,9 +652,7 @@
   .experience[data-visible="true"] .story,
   .experience[data-visible="true"] .quoteLine,
   .experience[data-visible="true"] .studentDetails,
-  .experience[data-visible="true"] .badges,
-  .loadingPortrait,
-  .loadingStory {
+  .experience[data-visible="true"] .badges {
     animation: none;
   }
 

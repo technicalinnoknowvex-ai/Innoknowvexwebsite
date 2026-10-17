@@ -55,6 +55,10 @@
   display: none;
 }
 
+.loading {
+  min-height: 260px;
+}
+
 .carouselTrack {
   display: flex;
   transform: translateX(calc(var(--page-index, 0) * -100%));
@@ -319,47 +323,6 @@
   cursor: pointer;
 }
 
-.skeletonCard {
-  overflow: hidden;
-  padding-bottom: 20px;
-  border: 1px solid #e3ecf6;
-  border-radius: 17px;
-  background: #fff;
-}
-
-.skeletonImage,
-.skeletonTitle,
-.skeletonText {
-  display: block;
-  background: linear-gradient(100deg, #eff4fa 25%, #f8fbff 40%, #eff4fa 65%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s ease-in-out infinite;
-}
-
-.skeletonImage {
-  aspect-ratio: 1.72 / 1;
-}
-
-.skeletonTitle {
-  width: 72%;
-  height: 18px;
-  margin: 18px;
-  border-radius: 5px;
-}
-
-.skeletonText {
-  width: 84%;
-  height: 12px;
-  margin: 0 18px;
-  border-radius: 5px;
-}
-
-@keyframes shimmer {
-  to {
-    background-position-x: -200%;
-  }
-}
-
 @media (max-width: 900px) {
   .inner {
     padding: 54px 24px 60px;
@@ -450,10 +413,7 @@
   .card,
   .image,
   .readLink,
-  .navButton,
-  .skeletonImage,
-  .skeletonTitle,
-  .skeletonText {
+  .navButton {
     animation: none;
     transition: none;
   }

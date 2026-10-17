@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { startCheckout } from "../../../lib/checkout";
 import { getProgramPricing } from "../../../services/programService";
+import LoadingIndicator from "../../common/LoadingIndicator/LoadingIndicator";
 import styles from "./ProgramPricing.module.css";
 
 const planBenefits = [
@@ -140,7 +141,10 @@ export default function ProgramPricing({ courseNames, isOffline, programTitle })
           <span className={styles.eyebrow}>CHOOSE YOUR LEARNING PATH</span>
           <h2 id="pricing-title">Program pricing</h2>
         </div>
-        <p className={styles.loadingState}>Loading pricing for {programTitle}…</p>
+        <LoadingIndicator
+          className={styles.loadingState}
+          label={`Loading pricing for ${programTitle}…`}
+        />
       </section>
     );
   }

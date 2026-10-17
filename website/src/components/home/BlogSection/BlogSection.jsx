@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useMemo, useState } from "react";
 import useBlogs from "../../../hooks/useBlogs";
+import LoadingIndicator from "../../common/LoadingIndicator/LoadingIndicator";
 import styles from "./BlogSection.module.css";
 
 const BLOGS_PER_PAGE = 3;
@@ -123,15 +124,10 @@ export default function BlogSection() {
         </header>
 
         {isLoading && (
-          <div className={styles.grid} role="status" aria-label="Loading articles">
-            {Array.from({ length: BLOGS_PER_PAGE }, (_, index) => (
-              <div className={styles.skeletonCard} key={index}>
-                <span className={styles.skeletonImage} />
-                <span className={styles.skeletonTitle} />
-                <span className={styles.skeletonText} />
-              </div>
-            ))}
-          </div>
+          <LoadingIndicator
+            className={styles.loading}
+            label="Loading articles…"
+          />
         )}
 
         {error && (

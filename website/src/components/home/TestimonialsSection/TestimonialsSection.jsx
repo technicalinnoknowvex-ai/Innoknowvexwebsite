@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import useTestimonials from "../../../hooks/useTestimonials";
+import LoadingIndicator from "../../common/LoadingIndicator/LoadingIndicator";
 import styles from "./TestimonialsSection.module.css";
 
 function getInitials(name) {
@@ -285,11 +286,10 @@ export default function TestimonialsSection() {
         </div>
 
         {isLoading && (
-          <div className={styles.loading} role="status">
-            <span className={styles.loadingPortrait} />
-            <span className={styles.loadingStory} />
-            <span className={styles.loadingLabel}>Loading learner stories…</span>
-          </div>
+          <LoadingIndicator
+            className={styles.loading}
+            label="Loading learner stories…"
+          />
         )}
 
         {error && (

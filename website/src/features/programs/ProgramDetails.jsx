@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getCurriculumForProgram } from "../../data/curriculum";
 import { getProjectsForProgram as getCourseProjects } from "../../data/courseProjects";
+import LoadingIndicator from "../../components/common/LoadingIndicator/LoadingIndicator";
 import CertificateCarousel from "../../components/programs/CertificateCarousel/CertificateCarousel";
 import ProgramPricing from "../../components/programs/ProgramPricing/ProgramPricing";
 import TestimonialsSection from "../../components/home/TestimonialsSection/TestimonialsSection";
@@ -223,10 +224,10 @@ function BenefitIcon({ name, className }) {
 
 function ProgramLoading() {
   return (
-    <main className={styles.statePage} role="status">
-      <span className={styles.spinner} aria-hidden="true" />
-      <p>Loading program details…</p>
-    </main>
+    <LoadingIndicator
+      className={styles.statePage}
+      label="Loading program details…"
+    />
   );
 }
 

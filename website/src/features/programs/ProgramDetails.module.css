@@ -1064,19 +1064,6 @@
   margin-top: 8px;
 }
 
-.spinner {
-  width: 34px;
-  height: 34px;
-  border: 3px solid #d6e9fb;
-  border-top-color: #087cf0;
-  border-radius: 50%;
-  animation: spin 750ms linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
 .page a:focus-visible,
 .page button:focus-visible,
 .statePage a:focus-visible,
@@ -1473,9 +1460,6 @@
   .moduleCard,
   .carouselArrow {
     transition: none;
-  }
-  .spinner {
-    animation-duration: 2s;
   }
 
   .page[data-scroll-reveal-ready="true"] [data-scroll-reveal] {

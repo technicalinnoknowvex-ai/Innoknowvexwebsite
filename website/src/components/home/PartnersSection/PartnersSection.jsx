@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import usePartners from "../../../hooks/usePartners";
+import LoadingIndicator from "../../common/LoadingIndicator/LoadingIndicator";
 import styles from "./PartnersSection.module.css";
 
 const partnerCategories = [
@@ -272,11 +273,10 @@ export default function PartnersSection() {
         </header>
 
         {isLoading && (
-          <div className={styles.loading} aria-label="Loading partners" role="status">
-            <span className={styles.loadingLogo} />
-            <span className={styles.loadingLogo} />
-            <span className={styles.loadingLogo} />
-          </div>
+          <LoadingIndicator
+            className={styles.loading}
+            label="Loading partners…"
+          />
         )}
 
         {error && (

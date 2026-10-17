@@ -1,6 +1,4 @@
-const API_BASE_URL = (
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
-).replace(/\/+$/, "");
+import { API_BASE_URL } from "../services/api";
 
 async function postAuthRequest(endpoint, body) {
   let response;

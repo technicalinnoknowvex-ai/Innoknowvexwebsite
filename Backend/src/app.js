@@ -11,6 +11,13 @@ const blogRoutes = require("./routes/blogRoutes");
 
 const app = express();
 
+function getErrorStatusCode(error, fallback) {
+  const statusCode = Number(error.statusCode ?? error.status);
+  return Number.isInteger(statusCode) && statusCode >= 400 && statusCode <= 599
+    ? statusCode
+    : fallback;
+}
+
 app.use(cors({ origin: frontendUrl }));
 app.post(
   "/api/payments/webhook",
@@ -44,16 +51,16 @@ app.use((error, request, response, next) => {
       providerError?.reason ||
       "Unexpected server error.";
   const errorCode = isPaymentRequest ? undefined : error.code || providerError?.code;
-  const statusCode = isPaymentRequest
-    ? error.statusCode ||
-      (error.type === "entity.parse.failed"
-        ? 400
-        : error.type === "entity.too.large"
-          ? 413
-          : 500)
-    : error.statusCode ||
-      error.status ||
-      (errorCode === "LIMIT_FILE_SIZE" ? 400 : 500);
+  const fallbackStatusCode = isPaymentRequest
+    ? error.type === "entity.parse.failed"
+      ? 400
+      : error.type === "entity.too.large"
+        ? 413
+        : 500
+    : errorCode === "LIMIT_FILE_SIZE"
+      ? 400
+      : 500;
+  const statusCode = getErrorStatusCode(error, fallbackStatusCode);
   const responseMessage =
     isPaymentRequest && !error.statusCode && statusCode >= 500
       ? "Payment could not be confirmed. Please try again or contact support if you were charged."

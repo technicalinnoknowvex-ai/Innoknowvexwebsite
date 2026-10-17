@@ -58,12 +58,16 @@ async function updateAuthenticatedUser(accessToken, updates) {
 
 async function register(request, response) {
   const { fullName, email, password } = requireRegistration(request);
+  const emailRedirectPath =
+    request.body?.redirectTo === "/auth/admin/login"
+      ? "/auth/admin/login"
+      : "/auth/student/login";
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
       data: { full_name: fullName },
-      emailRedirectTo: new URL("/auth/student/login", frontendUrl).toString(),
+      emailRedirectTo: new URL(emailRedirectPath, frontendUrl).toString(),
     },
   });
 

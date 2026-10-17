@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import Footer from "../../components/layout/Footer/Footer";
 import Header from "../../components/layout/Header/Header";
+import LoadingIndicator from "../../components/common/LoadingIndicator/LoadingIndicator";
 import usePrograms from "../../hooks/usePrograms";
 import advancedFullStackWebDevelopment from "../../assets/images/programs/course-image-assets/advanced-full-stack-web-development.jpg";
 import androidDevelopment from "../../assets/images/programs/course-image-assets/android-development.png";
@@ -273,19 +274,10 @@ export default function ProgramCatalog() {
             )}
 
             {isLoading && (
-              <div
-                aria-label="Loading programs"
-                className={styles.programGrid}
-                role="status"
-              >
-                {Array.from({ length: 6 }, (_, index) => (
-                  <div className={styles.skeletonCard} key={index}>
-                    <span className={styles.skeletonImage} />
-                    <span className={styles.skeletonLine} />
-                    <span className={styles.skeletonLineShort} />
-                  </div>
-                ))}
-              </div>
+              <LoadingIndicator
+                className={styles.loading}
+                label="Loading programs…"
+              />
             )}
 
             {error && (

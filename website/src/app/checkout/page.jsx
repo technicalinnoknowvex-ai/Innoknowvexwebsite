@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import CheckoutClient from "../../components/checkout/CheckoutClient";
+import LoadingIndicator from "../../components/common/LoadingIndicator/LoadingIndicator";
 
 export const metadata = {
   title: "Secure checkout",
@@ -12,7 +13,7 @@ export const metadata = {
 
 export default function CheckoutPage() {
   return (
-    <Suspense fallback={<main aria-busy="true">Loading secure checkout…</main>}>
+    <Suspense fallback={<LoadingIndicator label="Loading secure checkout…" />}>
       <CheckoutClient />
     </Suspense>
   );

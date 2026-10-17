@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Header from "../../../../components/layout/Header/Header";
+import LoadingIndicator from "../../../../components/common/LoadingIndicator/LoadingIndicator";
 import {
   clearAuthStorage,
   getCurrentUser,
@@ -198,9 +199,10 @@ export default function StudentDashboardPage() {
 
   if (isLoading) {
     return (
-      <main className={styles.loadingPage}>
-        <p>Loading your student profile...</p>
-      </main>
+      <LoadingIndicator
+        className={styles.loadingPage}
+        label="Loading your student profile…"
+      />
     );
   }
 
