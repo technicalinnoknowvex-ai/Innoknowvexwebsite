@@ -71,6 +71,8 @@ Run `supabase/storage_new.sql` to create the public media buckets and admin-only
 
 Admin media uploads use `multipart/form-data`, with a maximum file size of 10 MB. Program uploads use `image` for an image and `brochure` for a PDF. Testimonial uploads use `profileImage`, and partner uploads use `logo`. The resulting public Storage URLs are saved in the related table.
 
+When replacing a program image or brochure, the backend reuses the existing object path in its Storage bucket and upserts the new file there. This keeps the file in the same program folder and updates the program row's public URL with a cache-busting query value. The admin Storage `SELECT`, `INSERT`, and `UPDATE` policies from `supabase/storage_new.sql` must be applied for replacements to work.
+
 Public routes:
 
 - `GET /api/programs`

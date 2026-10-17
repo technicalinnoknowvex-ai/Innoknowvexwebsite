@@ -141,27 +141,46 @@ async function getAdminProgram(request, response) {
 async function updateProgram(request, response) {
   const payload = programPayload(request.body, true);
   const files = request.files || {};
+  const client = requestClient(request);
   const folder = payload.slug || request.params.id;
+  let existingProgram;
+
+  if (files.image?.[0] || files.brochure?.[0]) {
+    const { data, error } = await client
+      .from("programs_new")
+      .select("image_url, brochure_url")
+      .eq("id", request.params.id)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) throw httpError(404, "Program not found.");
+    existingProgram = data;
+  }
+
   if (files.image?.[0]) {
     assertFileType(files.image[0], "image");
     payload.image_url = await uploadToStorage({
-      client: requestClient(request),
+      client,
       bucket: "program-images",
       folder,
       file: files.image[0],
+      existingUrl: existingProgram.image_url,
+      supabaseUrl,
     });
   }
   if (files.brochure?.[0]) {
     assertFileType(files.brochure[0], "pdf");
     payload.brochure_url = await uploadToStorage({
-      client: requestClient(request),
+      client,
       bucket: "program-brochures",
       folder,
       file: files.brochure[0],
+      existingUrl: existingProgram.brochure_url,
+      supabaseUrl,
     });
   }
 
-  const { data, error } = await requestClient(request)
+  const { data, error } = await client
     .from("programs_new")
     .update({ ...payload, updated_at: new Date().toISOString() })
     .eq("id", request.params.id)
