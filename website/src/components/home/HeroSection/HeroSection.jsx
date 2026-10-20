@@ -1,7 +1,8 @@
+import Image from "next/image";
 import styles from "./HeroSection.module.css";
 import Header from "../../layout/Header/Header";
-import heroBackground from "../../../assets/images/hero/home.png";
-import mobileHeroBackground from "../../../assets/images/hero/homemobile.png";
+import heroBackground from "../../../assets/images/hero/home.webp";
+import mobileHeroBackground from "../../../assets/images/hero/homemobile.webp";
 
 const learnerAvatars = [
   "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&crop=faces&w=96&h=96&q=85",
@@ -17,11 +18,20 @@ export default function HeroSection() {
 
       <header
         className={`relative overflow-hidden bg-white text-white ${styles.hero}`}
-        style={{
-          "--hero-background": `url(${heroBackground.src})`,
-          "--mobile-hero-background": `url(${mobileHeroBackground.src})`,
-        }}
       >
+        <picture className={styles.background}>
+          <source
+            media="(max-width: 900px)"
+            srcSet={mobileHeroBackground.src}
+          />
+          <img
+            alt=""
+            className={styles.backgroundImage}
+            decoding="async"
+            fetchPriority="high"
+            src={heroBackground.src}
+          />
+        </picture>
         <div className={`absolute inset-x-0 top-0 h-[92%] bg-[#031d47]/15 max-[900px]:h-full ${styles.overlay}`} />
 
         <div className={styles.mobileActions}>
@@ -64,11 +74,15 @@ export default function HeroSection() {
                 <div className="mt-8 flex items-center gap-4">
                   <div className="flex -space-x-2">
                     {learnerAvatars.map((avatar) => (
-                      <img
+                      <Image
                         key={avatar}
-                        src={avatar}
                         alt="Learner portrait"
                         className="h-10 w-10 rounded-full border-2 border-[#031d47] object-cover"
+                        height={40}
+                        loading="lazy"
+                        src={avatar}
+                        unoptimized
+                        width={40}
                       />
                     ))}
                   </div>
