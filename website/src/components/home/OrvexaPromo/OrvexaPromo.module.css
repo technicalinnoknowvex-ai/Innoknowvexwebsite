@@ -1,7 +1,7 @@
 .section {
 	width: 100%;
 	max-width: none;
-	padding: 8px 12px 0;
+	padding: 28px 12px 0;
 	background: #fff;
 }
 
@@ -313,7 +313,7 @@
 
 @media (max-width: 680px) {
 	.section {
-		padding: 14px 12px 0;
+		padding: 24px 12px 0;
 	}
 
 	.promo {

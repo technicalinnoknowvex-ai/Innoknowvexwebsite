@@ -5,8 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { submitStudentLead } from "../../../services/studentLeadService";
 import styles from "./StudentGuidancePopup.module.css";
 
-const AUTO_OPEN_DELAY_MS = 12000;
-const DISMISSAL_KEY = "student-guidance-dismissed-at";
+const AUTO_OPEN_DELAY_MS = 5500;
 const SUBMISSION_KEY = "student-guidance-submitted";
 const SESSION_SHOWN_KEY = "student-guidance-auto-shown";
 
@@ -23,15 +22,7 @@ const languageOptions = ["English", "Hindi", "Telugu", "Other"];
 
 function shouldAutoOpen() {
   if (window.sessionStorage.getItem(SESSION_SHOWN_KEY)) return false;
-  if (window.localStorage.getItem(SUBMISSION_KEY)) return false;
-
-  const dismissedAt = Number(window.localStorage.getItem(DISMISSAL_KEY));
-  const dismissalIsRecent =
-    Number.isFinite(dismissedAt) &&
-    dismissedAt > 0 &&
-    Date.now() - dismissedAt < 7 * 24 * 60 * 60 * 1000;
-
-  return !dismissalIsRecent;
+  return !window.localStorage.getItem(SUBMISSION_KEY);
 }
 
 export default function StudentGuidancePopup() {
@@ -49,11 +40,8 @@ export default function StudentGuidancePopup() {
     pathname === "/checkout" ||
     pathname?.startsWith("/admin");
 
-  const closePopup = useCallback((markDismissed = true) => {
+  const closePopup = useCallback(() => {
     window.clearTimeout(autoOpenTimeoutRef.current);
-    if (markDismissed && !window.localStorage.getItem(SUBMISSION_KEY)) {
-      window.localStorage.setItem(DISMISSAL_KEY, String(Date.now()));
-    }
     setIsOpen(false);
   }, []);
 
@@ -70,12 +58,21 @@ export default function StudentGuidancePopup() {
     if (isHiddenPage || !shouldAutoOpen()) return undefined;
 
     autoOpenTimeoutRef.current = window.setTimeout(() => {
-      window.sessionStorage.setItem(SESSION_SHOWN_KEY, "true");
       openPopup();
     }, AUTO_OPEN_DELAY_MS);
 
     return () => window.clearTimeout(autoOpenTimeoutRef.current);
   }, [isHiddenPage, openPopup, pathname]);
+
+  useEffect(() => {
+    function handleContactRequest() {
+      openPopup();
+    }
+
+    window.addEventListener("open-student-guidance", handleContactRequest);
+    return () =>
+      window.removeEventListener("open-student-guidance", handleContactRequest);
+  }, [openPopup]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -140,7 +137,6 @@ export default function StudentGuidancePopup() {
         website: formData.get("website"),
       });
       window.localStorage.setItem(SUBMISSION_KEY, "true");
-      window.localStorage.removeItem(DISMISSAL_KEY);
       setSuccessMessage(result.message || "Thank you. A counselor will contact you soon.");
       form.reset();
     } catch (submitError) {
@@ -158,16 +154,6 @@ export default function StudentGuidancePopup() {
 
   return (
     <>
-      <button
-        aria-haspopup="dialog"
-        className={styles.launcher}
-        onClick={openPopup}
-        type="button"
-      >
-        <span aria-hidden="true" className={styles.launcherIcon}>✦</span>
-        <span>Free course guidance</span>
-      </button>
-
       {isOpen && (
         <div
           className={styles.backdrop}
@@ -222,7 +208,7 @@ export default function StudentGuidancePopup() {
                   <p>{successMessage}</p>
                   <button
                     className={styles.submitButton}
-                    onClick={() => closePopup(false)}
+                    onClick={closePopup}
                     type="button"
                   >
                     Done
