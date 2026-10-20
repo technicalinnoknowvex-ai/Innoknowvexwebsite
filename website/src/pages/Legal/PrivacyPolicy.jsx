@@ -7,12 +7,12 @@ const policySections = [
   {
     title: "1. Information We Collect",
     content:
-      "We may collect information such as your name, email address, phone number, course preference, preferred language, academic details, and communication history when you fill forms, enquire about programs, or interact with our services. When you submit the optional student guidance form, we store the details you provide and your contact consent so a counselor can respond to your request.",
+      "We may collect information such as your name, email address, phone number, course preference, preferred language, academic details, institution name, city, state, and communication history when you fill forms, enquire about programs, or interact with our services. When you submit a student guidance or college partnership form, we store the details you provide and your contact consent so our team can respond to your request.",
   },
   {
     title: "2. How We Use Your Information",
     content:
-      "We use your information to respond to your enquiries, provide course information, process enrollments, support admissions, improve student experience, and maintain communication related to our services. Details from the student guidance form are used to contact you about the training guidance you requested.",
+      "We use your information to respond to your enquiries, provide course information, process enrollments, support admissions, improve student experience, and maintain communication related to our services. Details from student guidance and college partnership forms are used to respond to the guidance or institutional collaboration you requested.",
   },
   {
     title: "3. Sharing of Information",

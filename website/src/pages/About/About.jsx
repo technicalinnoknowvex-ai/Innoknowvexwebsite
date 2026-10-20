@@ -10,6 +10,7 @@ import PartnersSection from "../../components/home/PartnersSection/PartnersSecti
 import TestimonialsSection from "../../components/home/TestimonialsSection/TestimonialsSection";
 import AboutJourney from "../../components/about/AboutJourney/AboutJourney";
 import ScrollReveal from "../../components/about/ScrollReveal/ScrollReveal";
+import CollegePartnershipInquiry from "../../components/about/CollegePartnershipInquiry/CollegePartnershipInquiry";
 import aboutHeroImage from "../../assets/images/about/aboutus1.png";
 import aboutStoryImage from "../../assets/images/about/aboutus2.png";
 import aboutCtaImage from "../../assets/images/about/aboutus3.png";
@@ -349,9 +350,7 @@ export default function About() {
               <Link className={styles.primaryButton} href="/#programs">
                 Get Started <span aria-hidden="true">→</span>
               </Link>
-              <Link className={styles.secondaryButton} href="/#contact">
-                Partner With Us
-              </Link>
+              <CollegePartnershipInquiry className={styles.secondaryButton} />
             </div>
           </ScrollReveal>
         </section>

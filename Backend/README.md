@@ -18,6 +18,13 @@ Run `supabase/student_guidance_leads.sql` in the Supabase SQL Editor. The option
 website counselor form submits to `POST /api/leads`; the public API only inserts
 validated leads and the table does not allow public reads.
 
+## College partnership inquiries
+
+Run `supabase/college_partnership_inquiries.sql` in the Supabase SQL Editor. The
+About page's “Partner With Us” form submits to `POST /api/partnership-inquiries`.
+Public access is limited to validated inserts; inquiry records cannot be read by
+anonymous website visitors.
+
 ## Razorpay payments
 
 Set these variables in the **backend** environment; never put the secret or webhook
