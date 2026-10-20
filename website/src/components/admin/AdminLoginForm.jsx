@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { clearAuthStorage, getCurrentUser, loginWithPassword, persistAccessToken } from "../../lib/auth-api";
 import styles from "../auth/AuthForm.module.css";
+import PasswordInput from "../auth/PasswordInput";
 
 export default function AdminLoginForm({ accessPending = false }) {
   const router = useRouter();
@@ -56,10 +57,10 @@ export default function AdminLoginForm({ accessPending = false }) {
         <span>Admin email</span>
         <input name="email" type="email" autoComplete="username" required />
       </label>
-      <label className={styles.field}>
-        <span>Password</span>
-        <input name="password" type="password" autoComplete="current-password" minLength={6} required />
-      </label>
+      <div className={styles.field}>
+        <label htmlFor="admin-login-password">Password</label>
+        <PasswordInput id="admin-login-password" name="password" autoComplete="current-password" minLength={6} required />
+      </div>
       {error && <p className={styles.error} role="alert">{error}</p>}
       <button className={styles.submit} type="submit" disabled={isSubmitting}>
         {isSubmitting ? "Checking access…" : "Sign in to admin"}

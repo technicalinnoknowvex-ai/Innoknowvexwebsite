@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { registerWithPassword } from "../../lib/auth-api";
 import styles from "../auth/AuthForm.module.css";
+import PasswordInput from "../auth/PasswordInput";
 
 export default function AdminSignupForm() {
   const [error, setError] = useState("");
@@ -66,14 +67,14 @@ export default function AdminSignupForm() {
         <span>Email address</span>
         <input name="email" type="email" autoComplete="email" required />
       </label>
-      <label className={styles.field}>
-        <span>Password</span>
-        <input name="password" type="password" autoComplete="new-password" minLength={6} required />
-      </label>
-      <label className={styles.field}>
-        <span>Confirm password</span>
-        <input name="confirmPassword" type="password" autoComplete="new-password" minLength={6} required />
-      </label>
+      <div className={styles.field}>
+        <label htmlFor="admin-signup-password">Password</label>
+        <PasswordInput id="admin-signup-password" name="password" autoComplete="new-password" minLength={6} required />
+      </div>
+      <div className={styles.field}>
+        <label htmlFor="admin-signup-confirm-password">Confirm password</label>
+        <PasswordInput id="admin-signup-confirm-password" name="confirmPassword" autoComplete="new-password" minLength={6} required />
+      </div>
       {error && <p className={styles.error} role="alert">{error}</p>}
       <button className={styles.submit} type="submit" disabled={isSubmitting}>
         {isSubmitting ? "Submitting request…" : "Request admin access"}

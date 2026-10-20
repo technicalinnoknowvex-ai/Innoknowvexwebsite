@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import styles from "../AuthForm.module.css";
+import PasswordInput from "../PasswordInput";
 import { getSafePostAuthPath } from "../../../lib/checkout";
 import { loginWithPassword, persistAccessToken } from "../../../lib/auth-api";
 
@@ -49,17 +50,17 @@ export default function LoginForm({ verificationPending = false, redirectTo }) {
         />
       </label>
 
-      <label className={styles.field}>
-        <span>Password</span>
-        <input
-          type="password"
+      <div className={styles.field}>
+        <label htmlFor="login-password">Password</label>
+        <PasswordInput
+          id="login-password"
           name="password"
           autoComplete="current-password"
           placeholder="Enter your password"
           minLength={6}
           required
         />
-      </label>
+      </div>
 
       {error && (
         <p className={styles.error} role="alert">

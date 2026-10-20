@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import styles from "../AuthForm.module.css";
+import PasswordInput from "../PasswordInput";
 import { getSafePostAuthPath } from "../../../lib/checkout";
 import { persistAccessToken, registerWithPassword } from "../../../lib/auth-api";
 
@@ -78,29 +79,28 @@ export default function SignupForm({ redirectTo }) {
         />
       </label>
 
-      <label className={styles.field}>
-        <span>Password</span>
-        <input
-          type="password"
+      <div className={styles.field}>
+        <label htmlFor="signup-password">Password</label>
+        <PasswordInput
+          id="signup-password"
           name="password"
           autoComplete="new-password"
           placeholder="At least 6 characters"
           minLength={6}
           required
         />
-      </label>
-
-      <label className={styles.field}>
-        <span>Confirm password</span>
-        <input
-          type="password"
+      </div>
+      <div className={styles.field}>
+        <label htmlFor="signup-confirm-password">Confirm password</label>
+        <PasswordInput
+          id="signup-confirm-password"
           name="confirmPassword"
           autoComplete="new-password"
           placeholder="Enter your password again"
           minLength={6}
           required
         />
-      </label>
+      </div>
 
       {error && (
         <p className={styles.error} role="alert">
