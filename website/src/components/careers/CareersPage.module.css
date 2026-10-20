@@ -170,6 +170,7 @@
   margin: 0;
   color: #142442;
   font-size: clamp(1.35rem, 3vw, 1.8rem);
+  font-weight: 800;
   letter-spacing: -0.025em;
 }
 
@@ -245,6 +246,7 @@
   margin: 22px 0 8px;
   color: #1d2c46;
   font-size: 0.95rem;
+  font-weight: 750;
 }
 
 .jobContent h4:first-child {

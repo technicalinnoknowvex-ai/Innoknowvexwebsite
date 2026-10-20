@@ -25,7 +25,7 @@ export default function AuthLayout({
           {children}
         </div>
 
-        <p className={styles.legal}>© 2026 INNOKNOWVEX</p>
+        <p className={styles.legal}>© 2025 INNOKNOWVEX. All rights reserved.</p>
       </section>
     </main>
   );
