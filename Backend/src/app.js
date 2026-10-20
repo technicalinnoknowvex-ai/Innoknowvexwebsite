@@ -4,6 +4,7 @@ const { frontendUrl } = require("./config/env");
 const paymentController = require("./controllers/paymentController");
 const studentLeadRoutes = require("./routes/studentLeadRoutes");
 const partnershipInquiryRoutes = require("./routes/partnershipInquiryRoutes");
+const careerRoutes = require("./routes/careerRoutes");
 const authRoutes = require("./routes/authRoutes");
 const programRoutes = require("./routes/programRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
@@ -45,6 +46,7 @@ app.get("/health", (request, response) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/leads", studentLeadRoutes);
 app.use("/api/partnership-inquiries", partnershipInquiryRoutes);
+app.use("/api/careers", careerRoutes);
 app.use("/api", programRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api", testimonialRoutes);

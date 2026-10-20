@@ -35,7 +35,7 @@ const footerSection = {
         {
           label: "About Us",
           type: "section",
-          href: "/About/About",
+          href: "/about",
           sectionId: "about-us",
         },
         {
@@ -55,6 +55,10 @@ const footerSection = {
           type: "section",
           href: "/#testimonials",
           sectionId: "testimonials",
+        },
+        {
+          label: "Careers",
+          href: "/careers",
         },
       ],
     },

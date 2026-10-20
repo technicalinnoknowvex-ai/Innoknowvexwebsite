@@ -11,6 +11,8 @@ const nextConfig: NextConfig = {
       { source: "/Signup/Signup", destination: "/auth/student/signup", permanent: true },
       { source: "/Programs/Programs", destination: "/programs", permanent: true },
       { source: "/ProgramDetails/ProgramDetails", destination: "/programs", permanent: true },
+      { source: "/About/About", destination: "/about", permanent: true },
+      { source: "/Orvexa/Orvexa", destination: "/orvexa", permanent: true },
     ];
   },
 };

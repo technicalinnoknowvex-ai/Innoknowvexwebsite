@@ -66,9 +66,23 @@ const sections = {
       { name: "logoFile", label: "Upload logo", type: "file", accept: "image/*", createOnly: true },
     ],
   },
+  careers: {
+    label: "Career openings",
+    path: "careers/admin",
+    fields: [
+      { name: "title", label: "Job title", required: true },
+      { name: "department", label: "Department", required: true },
+      { name: "location", label: "Location", required: true },
+      { name: "employmentType", label: "Employment type", type: "select", options: ["Full-time", "Part-time", "Internship", "Contract"], required: true },
+      { name: "description", label: "Job description", type: "textarea", required: true },
+      { name: "requirements", label: "Requirements (one per line)", type: "textarea", required: true },
+      { name: "applicationDeadline", label: "Application deadline", type: "date" },
+      { name: "status", label: "Publication status", type: "select", options: ["draft", "published", "archived"] },
+    ],
+  },
 };
 
-const editableSections = new Set(["programs", "blogs", "testimonials"]);
+const editableSections = new Set(["programs", "blogs", "testimonials", "careers"]);
 const fileFieldsBySection = {
   programs: ["image", "brochure"],
   blogs: ["image"],
@@ -83,12 +97,14 @@ const singularLabels = {
   blogs: "Blog post",
   testimonials: "Testimonial",
   partners: "Partner",
+  careers: "Job posting",
 };
 const websiteNavLinks = [
   { label: "Home", href: "/" },
   { label: "Programs", href: "/programs" },
   { label: "ORVEXA", href: "/#orvexa-title" },
-  { label: "About", href: "/About/About" },
+  { label: "About", href: "/about" },
+  { label: "Careers", href: "/careers" },
   { label: "Contact", href: "/#contact" },
 ];
 
@@ -102,6 +118,8 @@ function emptyValues(section) {
           ? false
           : field.name === "status"
             ? "draft"
+            : field.name === "employmentType"
+              ? "Full-time"
             : field.name === "type"
               ? "brand"
               : "",
@@ -127,6 +145,7 @@ function recordSummary(section, record) {
   if (section === "blogs") return record.link || "No article link";
   if (section === "testimonials") return `${record.program || "General"} · ${record.status || "draft"}`;
   if (section === "partners") return record.type || "brand";
+  if (section === "careers") return `${record.department || "General"} · ${record.location || "Location not set"} · ${record.status || "draft"}`;
   return record.slug || "";
 }
 
@@ -460,6 +479,7 @@ export default function AdminDashboard() {
                           <select
                             name={field.name}
                             onChange={(event) => updateField(field.name, event.target.value)}
+                            required={field.required}
                             value={formValues[field.name] ?? ""}
                           >
                             {field.options.map((option) => <option key={option} value={option}>{option}</option>)}

@@ -217,7 +217,7 @@ export default function About() {
         />
         <link
           rel="canonical"
-          href={`${(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/+$/, "")}/About/About`}
+          href={`${(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/+$/, "")}/about`}
         />
       </Head>
       <Header activeItem="About" />

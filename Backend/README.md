@@ -25,6 +25,14 @@ About page's “Partner With Us” form submits to `POST /api/partnership-inquir
 Public access is limited to validated inserts; inquiry records cannot be read by
 anonymous website visitors.
 
+## Careers and job applications
+
+Run `supabase/careers.sql` in the Supabase SQL Editor. Admin users can create, edit,
+publish, and archive jobs in the website admin dashboard. The public Careers page
+shows open published jobs and accepts applications at `POST /api/careers/applications`.
+Applicants can submit a resume URL and contact details; only admins can read
+applications.
+
 ## Razorpay payments
 
 Set these variables in the **backend** environment; never put the secret or webhook

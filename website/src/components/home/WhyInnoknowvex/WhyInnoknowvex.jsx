@@ -112,7 +112,7 @@ export default function WhyInnoknowvex() {
             We combine education, experience and technology to help you achieve
             real career growth.
           </p>
-          <Link className={styles.impactLink} href="/About/About">
+          <Link className={styles.impactLink} href="/about">
             Our Impact <span aria-hidden="true">→</span>
           </Link>
         </div>

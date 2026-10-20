@@ -8,8 +8,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const publicPages: MetadataRoute.Sitemap = [
     { url: `${siteUrl}/`, changeFrequency: "weekly", priority: 1 },
     { url: `${siteUrl}/programs`, changeFrequency: "weekly", priority: 0.9 },
-    { url: `${siteUrl}/About/About`, changeFrequency: "monthly", priority: 0.6 },
-    { url: `${siteUrl}/Orvexa/Orvexa`, changeFrequency: "monthly", priority: 0.5 },
+    { url: `${siteUrl}/careers`, changeFrequency: "weekly", priority: 0.6 },
+    { url: `${siteUrl}/about`, changeFrequency: "monthly", priority: 0.6 },
+    { url: `${siteUrl}/orvexa`, changeFrequency: "monthly", priority: 0.5 },
     { url: `${siteUrl}/Legal/PrivacyPolicy`, changeFrequency: "yearly", priority: 0.2 },
     { url: `${siteUrl}/Legal/RefundPolicy`, changeFrequency: "yearly", priority: 0.2 },
   ];
