@@ -2,10 +2,10 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## SEO deployment settings
 
-Set `NEXT_PUBLIC_SITE_URL` to the canonical, public HTTPS origin before deployment
-(for example, `https://www.example.com`). The sitemap, robots file, canonical links,
-Open Graph URLs, and structured data use this setting. The local default is
-`http://localhost:3000` and must not be used for a public deployment.
+Set `NEXT_PUBLIC_SITE_URL` to `https://www.innoknowvex.in` for production. The sitemap,
+robots file, canonical links, Open Graph URLs, and structured data use this setting.
+The local default is `http://localhost:3000` and must not be used for a public
+deployment.
 
 The App Router exposes `/sitemap.xml` and `/robots.txt`. Submit the sitemap URL in
 Google Search Console and Bing Webmaster Tools after the public domain is live.

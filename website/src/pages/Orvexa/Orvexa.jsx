@@ -25,7 +25,7 @@ export default function Orvexa() {
         />
         <link
           rel="canonical"
-          href={`${(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/+$/, "")}/orvexa`}
+          href={`${(process.env.NEXT_PUBLIC_SITE_URL || "https://www.innoknowvex.in").replace(/\/+$/, "")}/orvexa`}
         />
       </Head>
       <Header activeItem="ORVEXA" />

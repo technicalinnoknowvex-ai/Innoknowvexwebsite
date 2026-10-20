@@ -7,10 +7,11 @@
 3. Run `supabase/auth_new.sql` in the Supabase SQL Editor.
 4. Start the backend with `npm run dev`.
 
-The API allows requests from `http://localhost:3000` and the deployed site at
-`https://innoknowvexwebsite.vercel.app` by default. Set `FRONTEND_URL` to the
-frontend URL used for authentication redirects, and use the optional comma-separated
-`CORS_ORIGINS` variable to allow additional frontend origins.
+The API allows requests from `http://localhost:3000`, the deployed site at
+`https://www.innoknowvex.in`, and the previous Vercel deployment URL by default.
+Set `FRONTEND_URL=https://www.innoknowvex.in` in production for authentication
+redirects, and use the optional comma-separated `CORS_ORIGINS` variable to allow
+additional frontend origins.
 
 ## Student guidance leads
 

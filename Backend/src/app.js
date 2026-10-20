@@ -17,6 +17,7 @@ const app = express();
 const allowedOrigins = [
   frontendUrl,
   "http://localhost:3000",
+  "https://www.innoknowvex.in",
   "https://innoknowvexwebsite.vercel.app",
   ...(process.env.CORS_ORIGINS || "")
     .split(",")
