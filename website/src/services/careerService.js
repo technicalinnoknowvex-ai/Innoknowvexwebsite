@@ -39,7 +39,6 @@ export async function getOpenCareerJobs() {
 export function submitCareerApplication(application) {
   return requestCareerApi("applications", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(application),
+    body: application,
   });
 }

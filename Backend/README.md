@@ -28,10 +28,13 @@ anonymous website visitors.
 ## Careers and job applications
 
 Run `supabase/careers.sql` in the Supabase SQL Editor. Admin users can create, edit,
-publish, and archive jobs in the website admin dashboard. The public Careers page
-shows open published jobs and accepts applications at `POST /api/careers/applications`.
-Applicants can submit a resume URL and contact details; only admins can read
-applications.
+publish, and archive jobs in the website admin dashboard. Job postings do not have
+application deadlines. The public Careers page shows published jobs and accepts
+applications at `POST /api/careers/applications`. Applicants must upload a PDF resume
+(up to 5 MB); the backend stores it in the private `job_resumes` Supabase Storage
+bucket using `SUPABASE_SERVICE_ROLE_KEY`, then stores its object path in
+`career_applications.resume_path`. Keep the service-role key configured only on the
+backend. The bucket is private so resume files are not exposed as public URLs.
 
 ## Razorpay payments
 

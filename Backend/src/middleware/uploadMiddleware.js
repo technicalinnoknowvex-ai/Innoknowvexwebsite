@@ -14,4 +14,19 @@ const upload = multer({
   },
 });
 
+const resumeUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024, files: 1 },
+  fileFilter: (request, file, callback) => {
+    if (file.mimetype === "application/pdf" && /\.pdf$/i.test(file.originalname)) {
+      return callback(null, true);
+    }
+
+    const error = new Error("Upload your resume as a PDF file.");
+    error.statusCode = 400;
+    return callback(error);
+  },
+});
+
 module.exports = upload;
+module.exports.resumeUpload = resumeUpload;

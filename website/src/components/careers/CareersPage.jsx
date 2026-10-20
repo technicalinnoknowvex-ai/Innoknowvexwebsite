@@ -7,17 +7,6 @@ import LoadingIndicator from "../common/LoadingIndicator/LoadingIndicator";
 import { getOpenCareerJobs, submitCareerApplication } from "../../services/careerService";
 import styles from "./CareersPage.module.css";
 
-function formatDeadline(value) {
-  if (!value) return "";
-  const date = new Date(`${value}T00:00:00`);
-  if (Number.isNaN(date.getTime())) return "";
-  return new Intl.DateTimeFormat("en-IN", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  }).format(date);
-}
-
 function JobApplicationForm({ job, onCancel }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -31,17 +20,8 @@ function JobApplicationForm({ job, onCancel }) {
     const form = event.currentTarget;
     const values = new FormData(form);
     try {
-      await submitCareerApplication({
-        jobId: job.id,
-        fullName: values.get("fullName"),
-        email: values.get("email"),
-        phone: values.get("phone"),
-        resumeUrl: values.get("resumeUrl"),
-        linkedinUrl: values.get("linkedinUrl"),
-        message: values.get("message"),
-        contactConsent: values.get("contactConsent") === "on",
-        website: values.get("website"),
-      });
+      values.set("jobId", job.id);
+      await submitCareerApplication(values);
       setSuccess(true);
       form.reset();
     } catch (submitError) {
@@ -103,8 +83,8 @@ function JobApplicationForm({ job, onCancel }) {
 
       <div className={styles.formRow}>
         <label className={styles.field}>
-          <span>Resume link <small>Optional</small></span>
-          <input maxLength={2048} name="resumeUrl" placeholder="https://…" type="url" />
+          <span>Upload resume (PDF, up to 5 MB) *</span>
+          <input accept="application/pdf,.pdf" name="resume" required type="file" />
         </label>
         <label className={styles.field}>
           <span>LinkedIn profile <small>Optional</small></span>
@@ -243,7 +223,6 @@ export default function CareersPage() {
             <div className={styles.jobList}>
               {jobs.map((job) => {
                 const isApplying = applicationJobId === job.id;
-                const deadline = formatDeadline(job.applicationDeadline);
                 return (
                   <article className={styles.jobCard} key={job.id}>
                     <div className={styles.jobHeader}>
@@ -253,7 +232,6 @@ export default function CareersPage() {
                         <div className={styles.jobMeta}>
                           <span><span aria-hidden="true">⌖</span> {job.location}</span>
                           <span><span aria-hidden="true">◷</span> {job.employmentType}</span>
-                          {deadline && <span>Apply by {deadline}</span>}
                         </div>
                       </div>
                       <button

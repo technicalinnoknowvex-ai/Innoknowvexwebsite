@@ -7,7 +7,7 @@ const policySections = [
   {
     title: "1. Information We Collect",
     content:
-      "We may collect information such as your name, email address, phone number, course preference, preferred language, academic details, institution name, city, state, resume or LinkedIn URL, and communication history when you fill forms, apply for a job, enquire about programs, or interact with our services. When you submit a student guidance, college partnership, or job application form, we store the details you provide and your contact consent so our team can respond to your request.",
+      "We may collect information such as your name, email address, phone number, course preference, preferred language, academic details, institution name, city, state, resume file, LinkedIn URL, and communication history when you fill forms, apply for a job, enquire about programs, or interact with our services. When you submit a student guidance, college partnership, or job application form, we store the details you provide and your contact consent so our team can respond to your request.",
   },
   {
     title: "2. How We Use Your Information",

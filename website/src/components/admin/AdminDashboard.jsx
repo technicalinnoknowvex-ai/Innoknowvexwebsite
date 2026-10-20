@@ -76,7 +76,6 @@ const sections = {
       { name: "employmentType", label: "Employment type", type: "select", options: ["Full-time", "Part-time", "Internship", "Contract"], required: true },
       { name: "description", label: "Job description", type: "textarea", required: true },
       { name: "requirements", label: "Requirements (one per line)", type: "textarea", required: true },
-      { name: "applicationDeadline", label: "Application deadline", type: "date" },
       { name: "status", label: "Publication status", type: "select", options: ["draft", "published", "archived"] },
     ],
   },

@@ -1,10 +1,12 @@
 const { createClient } = require("@supabase/supabase-js");
+const crypto = require("node:crypto");
 const supabase = require("../config/supabaseClient");
-const { supabaseUrl, supabaseAnonKey } = require("../config/env");
+const { supabaseUrl, supabaseAnonKey, supabaseServiceRoleKey } = require("../config/env");
 
 const jobStatuses = new Set(["draft", "published", "archived"]);
 const employmentTypes = new Set(["Full-time", "Part-time", "Internship", "Contract"]);
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const RESUME_BUCKET = "job_resumes";
 
 function httpError(statusCode, message) {
   const error = new Error(message);
@@ -19,6 +21,15 @@ function authenticatedClient(accessToken) {
   });
 }
 
+function careerStorageClient() {
+  if (!supabaseServiceRoleKey) {
+    throw httpError(503, "Resume storage is not configured. Please contact support.");
+  }
+  return createClient(supabaseUrl, supabaseServiceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false },
+  });
+}
+
 function jobPayload(body, partial = false) {
   const payload = {};
   const fields = {
@@ -28,7 +39,6 @@ function jobPayload(body, partial = false) {
     employmentType: "employment_type",
     description: "description",
     requirements: "requirements",
-    applicationDeadline: "application_deadline",
     status: "status",
   };
 
@@ -72,19 +82,6 @@ function jobPayload(body, partial = false) {
     throw httpError(400, "Choose a valid job status.");
   }
 
-  if (payload.application_deadline === "") payload.application_deadline = null;
-  if (payload.application_deadline !== undefined && payload.application_deadline !== null) {
-    const dateValue = payload.application_deadline;
-    if (
-      typeof dateValue !== "string" ||
-      !/^\d{4}-\d{2}-\d{2}$/.test(dateValue) ||
-      Number.isNaN(Date.parse(`${dateValue}T00:00:00Z`)) ||
-      new Date(`${dateValue}T00:00:00Z`).toISOString().slice(0, 10) !== dateValue
-    ) {
-      throw httpError(400, "Enter a valid application deadline.");
-    }
-  }
-
   return payload;
 }
 
@@ -97,7 +94,6 @@ function toJob(row) {
     employmentType: row.employment_type,
     description: row.description,
     requirements: row.requirements,
-    applicationDeadline: row.application_deadline,
     status: row.status,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -113,7 +109,6 @@ function validateApplication(body) {
   const fullName = typeof body?.fullName === "string" ? body.fullName.trim() : "";
   const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
   const phone = typeof body?.phone === "string" ? body.phone.trim() : "";
-  const resumeUrl = typeof body?.resumeUrl === "string" ? body.resumeUrl.trim() : "";
   const linkedinUrl = typeof body?.linkedinUrl === "string" ? body.linkedinUrl.trim() : "";
   const message = typeof body?.message === "string" ? body.message.trim() : "";
   const phoneDigits = phone.replace(/\D/g, "");
@@ -129,18 +124,16 @@ function validateApplication(body) {
     throw httpError(400, "Enter a valid phone number with country code if needed.");
   }
 
-  for (const [label, value] of [["Resume", resumeUrl], ["LinkedIn", linkedinUrl]]) {
-    if (value) {
+  if (linkedinUrl) {
       try {
-        const url = new URL(value);
+        const url = new URL(linkedinUrl);
         if (url.protocol !== "https:" && url.protocol !== "http:") throw new Error();
       } catch {
-        throw httpError(400, `Enter a valid ${label.toLowerCase()} URL.`);
+        throw httpError(400, "Enter a valid LinkedIn URL.");
       }
-    }
   }
   if (message.length > 2000) throw httpError(400, "Message must be 2000 characters or less.");
-  if (body?.contactConsent !== true) {
+  if (body?.contactConsent !== true && body?.contactConsent !== "true" && body?.contactConsent !== "on") {
     throw httpError(400, "Please agree to be contacted about your application.");
   }
 
@@ -149,11 +142,21 @@ function validateApplication(body) {
     full_name: fullName,
     email,
     phone,
-    resume_url: resumeUrl || null,
     linkedin_url: linkedinUrl || null,
     message: message || null,
     contact_consent: true,
   };
+}
+
+function validateResumeFile(file) {
+  if (!file) throw httpError(400, "Please attach your resume as a PDF file.");
+  if (
+    file.mimetype !== "application/pdf" ||
+    !/\.pdf$/i.test(file.originalname) ||
+    file.buffer?.subarray(0, 5).toString() !== "%PDF-"
+  ) {
+    throw httpError(400, "Upload your resume as a PDF file.");
+  }
 }
 
 async function listPublicJobs(request, response) {
@@ -161,7 +164,6 @@ async function listPublicJobs(request, response) {
     .from("career_jobs")
     .select()
     .eq("status", "published")
-    .or(`application_deadline.is.null,application_deadline.gte.${new Date().toISOString().slice(0, 10)}`)
     .order("created_at", { ascending: false });
 
   if (error) throw error;
@@ -170,19 +172,45 @@ async function listPublicJobs(request, response) {
 
 async function createApplication(request, response) {
   const application = validateApplication(request.body);
+  validateResumeFile(request.file);
   const { data: job, error: jobError } = await supabase
     .from("career_jobs")
     .select("id")
     .eq("id", application.job_id)
     .eq("status", "published")
-    .or(`application_deadline.is.null,application_deadline.gte.${new Date().toISOString().slice(0, 10)}`)
     .maybeSingle();
 
   if (jobError) throw jobError;
   if (!job) throw httpError(404, "This job is no longer accepting applications.");
 
-  const { error } = await supabase.from("career_applications").insert(application);
-  if (error) throw error;
+  const storage = careerStorageClient();
+  const resumePath = `${application.job_id}/${crypto.randomUUID()}.pdf`;
+  const { error: uploadError } = await storage.storage
+    .from(RESUME_BUCKET)
+    .upload(resumePath, request.file.buffer, {
+      contentType: "application/pdf",
+      cacheControl: "3600",
+      upsert: false,
+    });
+
+  if (uploadError) {
+    console.error("Career resume upload failed:", uploadError.message);
+    throw httpError(503, "We couldn't save your resume. Please try again.");
+  }
+
+  const { error } = await supabase
+    .from("career_applications")
+    .insert({ ...application, resume_path: resumePath });
+  if (error) {
+    const { error: cleanupError } = await storage.storage
+      .from(RESUME_BUCKET)
+      .remove([resumePath]);
+    if (cleanupError) {
+      console.error("Career resume cleanup failed:", cleanupError.message);
+    }
+    throw error;
+  }
+
   response.status(201).json({ message: "Your application has been submitted successfully." });
 }
 
@@ -245,4 +273,5 @@ module.exports = {
   deleteJob,
   jobPayload,
   validateApplication,
+  validateResumeFile,
 };
