@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const { frontendUrl } = require("./config/env");
 const paymentController = require("./controllers/paymentController");
+const studentLeadRoutes = require("./routes/studentLeadRoutes");
 const authRoutes = require("./routes/authRoutes");
 const programRoutes = require("./routes/programRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
@@ -41,6 +42,7 @@ app.get("/health", (request, response) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/leads", studentLeadRoutes);
 app.use("/api", programRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api", testimonialRoutes);

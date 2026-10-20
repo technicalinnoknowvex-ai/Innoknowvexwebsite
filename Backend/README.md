@@ -12,6 +12,12 @@ The API allows requests from `http://localhost:3000` and the deployed site at
 frontend URL used for authentication redirects, and use the optional comma-separated
 `CORS_ORIGINS` variable to allow additional frontend origins.
 
+## Student guidance leads
+
+Run `supabase/student_guidance_leads.sql` in the Supabase SQL Editor. The optional
+website counselor form submits to `POST /api/leads`; the public API only inserts
+validated leads and the table does not allow public reads.
+
 ## Razorpay payments
 
 Set these variables in the **backend** environment; never put the secret or webhook

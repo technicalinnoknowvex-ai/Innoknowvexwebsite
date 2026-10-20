@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import ScrollToTopOnReload from "../components/common/ScrollToTopOnReload/ScrollToTopOnReload";
+import StudentGuidancePopup from "../components/common/StudentGuidancePopup/StudentGuidancePopup";
 import { getSiteUrl } from "../lib/seo";
 import "./globals.css";
 
@@ -64,6 +65,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">
         <ScrollToTopOnReload />
+        <StudentGuidancePopup />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
