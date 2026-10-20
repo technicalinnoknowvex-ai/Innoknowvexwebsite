@@ -11,6 +11,16 @@ const blogRoutes = require("./routes/blogRoutes");
 
 const app = express();
 
+const allowedOrigins = [
+  frontendUrl,
+  "http://localhost:3000",
+  "https://innoknowvexwebsite.vercel.app",
+  ...(process.env.CORS_ORIGINS || "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean),
+];
+
 function getErrorStatusCode(error, fallback) {
   const statusCode = Number(error.statusCode ?? error.status);
   return Number.isInteger(statusCode) && statusCode >= 400 && statusCode <= 599
@@ -18,7 +28,7 @@ function getErrorStatusCode(error, fallback) {
     : fallback;
 }
 
-app.use(cors({ origin: frontendUrl }));
+app.use(cors({ origin: [...new Set(allowedOrigins)] }));
 app.post(
   "/api/payments/webhook",
   express.raw({ type: "application/json", limit: "100kb" }),

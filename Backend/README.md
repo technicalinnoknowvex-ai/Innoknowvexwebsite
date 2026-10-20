@@ -7,6 +7,11 @@
 3. Run `supabase/auth_new.sql` in the Supabase SQL Editor.
 4. Start the backend with `npm run dev`.
 
+The API allows requests from `http://localhost:3000` and the deployed site at
+`https://innoknowvexwebsite.vercel.app` by default. Set `FRONTEND_URL` to the
+frontend URL used for authentication redirects, and use the optional comma-separated
+`CORS_ORIGINS` variable to allow additional frontend origins.
+
 ## Razorpay payments
 
 Set these variables in the **backend** environment; never put the secret or webhook
