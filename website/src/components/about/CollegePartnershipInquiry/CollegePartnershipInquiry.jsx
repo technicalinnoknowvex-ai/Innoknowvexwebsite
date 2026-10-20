@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { submitCollegePartnershipInquiry } from "../../../services/collegePartnershipService";
 import { userFacingError } from "../../../lib/user-facing-error";
 import styles from "./CollegePartnershipInquiry.module.css";
+import footerStyles from "../../layout/Footer/Footer.module.css";
 
 const partnershipOptions = [
   "Student training programs",
@@ -14,7 +15,7 @@ const partnershipOptions = [
   "Other",
 ];
 
-export default function CollegePartnershipInquiry({ className = "" }) {
+export default function CollegePartnershipInquiry({ className = "", variant = "default" }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -117,11 +118,18 @@ export default function CollegePartnershipInquiry({ className = "" }) {
     <>
       <button
         aria-haspopup="dialog"
-        className={`${styles.trigger} ${className}`.trim()}
+        className={`${styles.trigger} ${variant === "contact" ? footerStyles.contactItem : ""} ${className}`.trim()}
         onClick={openForm}
         type="button"
       >
-        Partner With Us
+        {variant === "contact" && (
+          <span className={footerStyles.contactIcon} aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M3 21h18M5 21V7l7-4 7 4v14M9 10h1m4 0h1m-6 4h1m4 0h1m-5 7v-4h4v4" />
+            </svg>
+          </span>
+        )}
+        <span>Partner with us</span>
       </button>
 
       {isOpen &&

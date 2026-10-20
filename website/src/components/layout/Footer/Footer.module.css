@@ -211,7 +211,9 @@
 }
 
 a.contactItem:hover,
-a.contactItem:focus-visible {
+a.contactItem:focus-visible,
+button.contactItem:hover,
+button.contactItem:focus-visible {
   color: #55c4fa;
 }
 

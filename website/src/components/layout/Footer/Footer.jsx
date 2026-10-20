@@ -1,6 +1,7 @@
 import Link from "next/link";
 import footerSection from "../../../data/footer";
 import StudentGuidanceContactButton from "../../common/StudentGuidancePopup/StudentGuidanceContactButton";
+import CollegePartnershipInquiry from "../../about/CollegePartnershipInquiry/CollegePartnershipInquiry";
 import styles from "./Footer.module.css";
 
 function SocialIcon({ platform }) {
@@ -133,6 +134,7 @@ export default function Footer() {
                 <span>{footerSection.email}</span>
               </a>
               <StudentGuidanceContactButton />
+              <CollegePartnershipInquiry variant="contact" />
               <div className={`${styles.contactItem} ${styles.addressItem}`}>
                 <span className={styles.contactIcon}>
                   <ContactIcon type="location" />
