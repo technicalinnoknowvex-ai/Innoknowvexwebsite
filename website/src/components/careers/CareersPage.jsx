@@ -5,6 +5,7 @@ import Header from "../layout/Header/Header";
 import Footer from "../layout/Footer/Footer";
 import LoadingIndicator from "../common/LoadingIndicator/LoadingIndicator";
 import { getOpenCareerJobs, submitCareerApplication } from "../../services/careerService";
+import { userFacingError } from "../../lib/user-facing-error";
 import styles from "./CareersPage.module.css";
 
 function JobApplicationForm({ job, onCancel }) {
@@ -25,11 +26,7 @@ function JobApplicationForm({ job, onCancel }) {
       setSuccess(true);
       form.reset();
     } catch (submitError) {
-      setError(
-        submitError instanceof Error
-          ? submitError.message
-          : "We couldn't submit your application. Please try again.",
-      );
+      setError(userFacingError(submitError, "We couldn’t submit your application. Please try again."));
     } finally {
       setIsSubmitting(false);
     }
@@ -133,11 +130,7 @@ export default function CareersPage() {
     try {
       setJobs(await getOpenCareerJobs());
     } catch (loadError) {
-      setError(
-        loadError instanceof Error
-          ? loadError.message
-          : "We couldn't load current openings.",
-      );
+      setError(userFacingError(loadError, "We couldn’t load current openings. Please try again."));
     } finally {
       setIsLoading(false);
     }
@@ -157,11 +150,7 @@ export default function CareersPage() {
       })
       .catch((loadError) => {
         if (isMounted) {
-          setError(
-            loadError instanceof Error
-              ? loadError.message
-              : "We couldn't load current openings.",
-          );
+          setError(userFacingError(loadError, "We couldn’t load current openings. Please try again."));
         }
       })
       .finally(() => {

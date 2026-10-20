@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { userFacingError } from "../lib/user-facing-error";
 
 export default function usePublicCollection(loadCollection) {
   const [items, setItems] = useState([]);
@@ -20,11 +21,7 @@ export default function usePublicCollection(loadCollection) {
         if (isCurrent) setItems(result);
       } catch (loadError) {
         if (isCurrent) {
-          setError(
-            loadError instanceof Error
-              ? loadError.message
-              : "Unable to load this content. Please try again.",
-          );
+          setError(userFacingError(loadError, "We couldn’t load this content. Please try again."));
         }
       } finally {
         if (isCurrent) setIsLoading(false);

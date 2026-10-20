@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { submitStudentLead } from "../../../services/studentLeadService";
+import { userFacingError } from "../../../lib/user-facing-error";
 import styles from "./StudentGuidancePopup.module.css";
 
 const AUTO_OPEN_DELAY_MS = 5500;
@@ -140,11 +141,7 @@ export default function StudentGuidancePopup() {
       setSuccessMessage(result.message || "Thank you. A counselor will contact you soon.");
       form.reset();
     } catch (submitError) {
-      setError(
-        submitError instanceof Error
-          ? submitError.message
-          : "We couldn't send your request. Please try again.",
-      );
+      setError(userFacingError(submitError, "We couldn’t send your request. Please try again."));
     } finally {
       setIsSubmitting(false);
     }

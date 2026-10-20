@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { userFacingError } from "../lib/user-facing-error";
 import { getProgramBySlug } from "../services/programService";
 
 export default function useProgram(slug) {
@@ -29,10 +30,7 @@ export default function useProgram(slug) {
           slug,
           program: null,
           isLoading: false,
-          error:
-          loadError instanceof Error
-            ? loadError.message
-            : "Unable to load this program. Please try again.",
+          error: userFacingError(loadError, "We couldn’t load this program. Please try again."),
         });
       });
 

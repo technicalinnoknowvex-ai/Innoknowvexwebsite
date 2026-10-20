@@ -7,6 +7,7 @@ import styles from "../AuthForm.module.css";
 import PasswordInput from "../PasswordInput";
 import { getSafePostAuthPath } from "../../../lib/checkout";
 import { persistAccessToken, registerWithPassword } from "../../../lib/auth-api";
+import { userFacingError } from "../../../lib/user-facing-error";
 
 export default function SignupForm({ redirectTo }) {
   const router = useRouter();
@@ -49,7 +50,7 @@ export default function SignupForm({ redirectTo }) {
       const nextQuery = redirectTo ? `&next=${encodeURIComponent(redirectTo)}` : "";
       router.replace(`/auth/student/login?verification=pending${nextQuery}`);
     } catch (submitError) {
-      setError(submitError.message || "Unable to create your account. Please try again.");
+      setError(userFacingError(submitError, "We couldn’t create your account. Please try again."));
       setIsSubmitting(false);
     }
   }

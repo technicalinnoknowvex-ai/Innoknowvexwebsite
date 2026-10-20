@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { submitCollegePartnershipInquiry } from "../../../services/collegePartnershipService";
+import { userFacingError } from "../../../lib/user-facing-error";
 import styles from "./CollegePartnershipInquiry.module.css";
 
 const partnershipOptions = [
@@ -106,11 +107,7 @@ export default function CollegePartnershipInquiry({ className = "" }) {
       form.reset();
       setSubmitted(true);
     } catch (submitError) {
-      setError(
-        submitError instanceof Error
-          ? submitError.message
-          : "We couldn't send your inquiry. Please try again.",
-      );
+      setError(userFacingError(submitError, "We couldn’t send your inquiry. Please try again."));
     } finally {
       setIsSubmitting(false);
     }

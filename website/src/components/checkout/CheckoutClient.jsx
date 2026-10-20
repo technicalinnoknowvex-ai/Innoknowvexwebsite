@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { clearAuthStorage, getCurrentUser } from "../../lib/auth-api";
 import { createPaymentOrder, verifyPayment } from "../../services/paymentService";
+import { userFacingError } from "../../lib/user-facing-error";
 import styles from "./CheckoutClient.module.css";
 
 const razorpayScriptUrl = "https://checkout.razorpay.com/v1/checkout.js";
@@ -83,7 +84,7 @@ export default function CheckoutClient() {
           router.replace(`/auth/student/login?next=${encodeURIComponent(nextPath)}`);
           return;
         }
-        setError(userError.message || "Unable to verify your account.");
+        setError(userFacingError(userError, "We couldn’t verify your account. Please sign in again."));
       })
       .finally(() => {
         if (isCurrent) setIsLoadingUser(false);
@@ -153,7 +154,7 @@ export default function CheckoutClient() {
             setIsPaid(true);
           } catch (verificationError) {
             setError(
-              `${verificationError.message} If your account was charged, please contact support with your payment ID.`,
+              `${userFacingError(verificationError, "We couldn’t confirm your payment.")} If your account was charged, please contact support with your payment ID.`,
             );
           } finally {
             submitInProgress.current = false;
@@ -170,15 +171,17 @@ export default function CheckoutClient() {
 
       checkout.on("payment.failed", (paymentFailure) => {
         setError(
-          paymentFailure.error?.description ||
-            "The payment did not complete. You can try again.",
+          userFacingError(
+            paymentFailure.error?.description,
+            "The payment didn’t complete. You can try again.",
+          ),
         );
         submitInProgress.current = false;
         setIsSubmitting(false);
       });
       checkout.open();
     } catch (checkoutError) {
-      setError(checkoutError.message || "Unable to start checkout. Please try again.");
+      setError(userFacingError(checkoutError, "We couldn’t start checkout. Please try again."));
       submitInProgress.current = false;
       setIsSubmitting(false);
     }

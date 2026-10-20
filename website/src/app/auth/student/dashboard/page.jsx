@@ -14,6 +14,7 @@ import {
   updateStudentProfile,
 } from "../../../../lib/auth-api";
 import styles from "./page.module.css";
+import { userFacingError } from "../../../../lib/user-facing-error";
 
 const EMPTY_PORTFOLIO = { skills: [], projects: [] };
 
@@ -77,7 +78,7 @@ export default function StudentDashboardPage() {
           router.replace("/auth/student/login");
           return;
         }
-        if (isCurrent) setError(profileError.message || "Unable to load your profile.");
+        if (isCurrent) setError(userFacingError(profileError, "We couldn’t load your profile. Please try again."));
       } finally {
         if (isCurrent) setIsLoading(false);
       }
@@ -122,7 +123,7 @@ export default function StudentDashboardPage() {
         router.replace("/auth/student/login");
         return;
       }
-      setError(profileError.message || "Unable to update your profile.");
+      setError(userFacingError(profileError, "We couldn’t update your profile. Please try again."));
     } finally {
       setIsSaving(false);
     }
@@ -170,7 +171,7 @@ export default function StudentDashboardPage() {
         router.replace("/auth/student/login");
         return;
       }
-      setError(portfolioError.message || "Unable to update your skills and projects.");
+      setError(userFacingError(portfolioError, "We couldn’t update your skills and projects. Please try again."));
     } finally {
       setIsSavingPortfolio(false);
     }

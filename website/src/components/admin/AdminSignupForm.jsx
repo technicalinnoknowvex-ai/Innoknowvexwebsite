@@ -5,6 +5,7 @@ import { useState } from "react";
 import { registerWithPassword } from "../../lib/auth-api";
 import styles from "../auth/AuthForm.module.css";
 import PasswordInput from "../auth/PasswordInput";
+import { userFacingError } from "../../lib/user-facing-error";
 
 export default function AdminSignupForm() {
   const [error, setError] = useState("");
@@ -37,7 +38,7 @@ export default function AdminSignupForm() {
       }
       setSubmitted(true);
     } catch (submitError) {
-      setError(submitError.message || "Unable to create your account. Please try again.");
+      setError(userFacingError(submitError, "We couldn’t submit your request. Please try again."));
     } finally {
       setIsSubmitting(false);
     }
@@ -47,7 +48,7 @@ export default function AdminSignupForm() {
     return (
       <div className={styles.form}>
         <p className={styles.success} role="status">
-          Your account request was created. Verify your email if Supabase asks you to. In Supabase Dashboard, an administrator must open Authentication → Users, select your account, and set <code>app_metadata.role</code> to <code>admin</code>. Admin access is not granted automatically.
+          Your request has been submitted. Our administration team will review it and contact you about your admin access.
         </p>
         <p className={styles.switchPrompt}><Link href="/auth/admin/login">Continue to admin sign in</Link></p>
       </div>
@@ -57,7 +58,7 @@ export default function AdminSignupForm() {
   return (
     <form className={styles.form} onSubmit={handleSubmit}>
       <p className={styles.success} role="note">
-        Signup only creates an account request. A trusted administrator must approve it in Supabase (Authentication → Users → select account → set <code>app_metadata.role</code> to <code>admin</code>) before admin features are available.
+        Admin access is available after approval by our administration team. We’ll review your request and contact you with an update.
       </p>
       <label className={styles.field}>
         <span>Full name</span>

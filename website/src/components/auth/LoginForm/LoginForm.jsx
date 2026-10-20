@@ -7,6 +7,7 @@ import styles from "../AuthForm.module.css";
 import PasswordInput from "../PasswordInput";
 import { getSafePostAuthPath } from "../../../lib/checkout";
 import { loginWithPassword, persistAccessToken } from "../../../lib/auth-api";
+import { userFacingError } from "../../../lib/user-facing-error";
 
 export default function LoginForm({ verificationPending = false, redirectTo }) {
   const router = useRouter();
@@ -32,7 +33,7 @@ export default function LoginForm({ verificationPending = false, redirectTo }) {
 
       router.replace(getSafePostAuthPath(redirectTo));
     } catch (submitError) {
-      setError(submitError.message || "Unable to sign in. Please try again.");
+      setError(userFacingError(submitError, "We couldn’t sign you in. Check your details and try again."));
       setIsSubmitting(false);
     }
   }

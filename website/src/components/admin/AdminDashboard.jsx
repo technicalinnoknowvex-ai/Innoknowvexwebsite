@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import LoadingIndicator from "../common/LoadingIndicator/LoadingIndicator";
 import { adminRequest } from "../../lib/admin-api";
+import { userFacingError } from "../../lib/user-facing-error";
 import {
   clearAuthStorage,
   getCurrentUser,
@@ -213,7 +214,7 @@ export default function AdminDashboard() {
             router.replace("/auth/admin/login?access=pending");
             return;
           }
-          setError(loadError.message || "Unable to load programs.");
+          setError(userFacingError(loadError, "We couldn’t load programs. Please try again."));
         }
       } catch (authError) {
         if (!mounted) return;
@@ -242,7 +243,7 @@ export default function AdminDashboard() {
         router.replace("/auth/admin/login?access=pending");
         return;
       }
-      setError(loadError.message || `Unable to load ${sections[section].label.toLowerCase()}.`);
+      setError(userFacingError(loadError, `We couldn’t load ${sections[section].label.toLowerCase()}. Please try again.`));
     } finally {
       setIsLoading(false);
     }
@@ -322,7 +323,7 @@ export default function AdminDashboard() {
       setNotice(`${singularLabels[activeSection]} ${editing ? "updated" : "created"} successfully.`);
       await loadRecords(activeSection);
     } catch (saveError) {
-      setError(saveError.message || "Unable to save changes.");
+      setError(userFacingError(saveError, "We couldn’t save your changes. Please try again."));
     } finally {
       setIsSaving(false);
     }
@@ -337,7 +338,7 @@ export default function AdminDashboard() {
       setNotice("Item deleted.");
       await loadRecords(activeSection);
     } catch (deleteError) {
-      setError(deleteError.message || "Unable to delete this item.");
+      setError(userFacingError(deleteError, "We couldn’t delete this item. Please try again."));
     }
   }
 

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { startCheckout } from "../../../lib/checkout";
 import { getProgramPricing } from "../../../services/programService";
 import LoadingIndicator from "../../common/LoadingIndicator/LoadingIndicator";
+import { userFacingError } from "../../../lib/user-facing-error";
 import styles from "./ProgramPricing.module.css";
 
 const planBenefits = [
@@ -104,11 +105,7 @@ export default function ProgramPricing({ courseNames, isOffline, programTitle })
       })
       .catch((loadError) => {
         if (isCurrent) {
-          setError(
-            loadError instanceof Error
-              ? loadError.message
-              : "Unable to load pricing. Please try again.",
-          );
+          setError(userFacingError(loadError, "We couldn’t load pricing. Please try again."));
         }
       });
 
