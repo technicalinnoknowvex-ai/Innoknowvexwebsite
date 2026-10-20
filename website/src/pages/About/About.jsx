@@ -229,6 +229,7 @@ export default function About() {
             priority
             sizes="100vw"
             src={aboutHeroImage}
+            unoptimized
           />
           <div className={styles.heroShade} />
           <div className={styles.heroInner}>
@@ -277,6 +278,7 @@ export default function About() {
                 fill
                 sizes="(max-width: 760px) 100vw, 45vw"
                 src={aboutStoryImage}
+                unoptimized
               />
               <span className={styles.imageCaption}>
                 Skills. Opportunity. A brighter tomorrow.
@@ -333,6 +335,7 @@ export default function About() {
             fill
             sizes="100vw"
             src={aboutCtaImage}
+            unoptimized
           />
           <div className={styles.ctaShade} />
           <ScrollReveal as="div" className={styles.ctaInner}>

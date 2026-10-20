@@ -687,6 +687,7 @@ export default function ProgramDetails({ slug }) {
               fill
               sizes="(max-width: 700px) 100vw, 96vw"
               src={whyInnoknowvexImage}
+              unoptimized
             />
             <div className={styles.whyOverlay} aria-hidden="true" />
             <div className={styles.whyContent}>

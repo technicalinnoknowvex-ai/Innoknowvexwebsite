@@ -97,6 +97,7 @@ export default function WhyInnoknowvex() {
           alt=""
           fill
           sizes="(max-width: 700px) 100vw, 96vw"
+          unoptimized
         />
         <div className={styles.overlay} aria-hidden="true" />
 

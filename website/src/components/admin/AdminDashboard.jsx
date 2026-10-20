@@ -343,7 +343,7 @@ export default function AdminDashboard() {
     <main className={styles.page}>
       <header className={styles.topbar}>
         <Link className={styles.brand} href="/" aria-label="Innoknowvex website home">
-          <Image src="/3d.png" alt="" width={42} height={42} />
+          <Image src="/3d.png" alt="" width={42} height={42} unoptimized />
           <span><strong>INNOKNOWVEX</strong><small>Website administration</small></span>
         </Link>
         <nav className={styles.siteNav} aria-label="Website navigation">

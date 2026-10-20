@@ -65,6 +65,7 @@ export default function CertificateCarousel() {
                 fill
                 sizes="(max-width: 700px) 90vw, 560px"
                 src={certificate.image}
+                unoptimized
               />
               <span className={styles.zoomHint} aria-hidden="true">Click to enlarge ↗</span>
             </span>
@@ -104,6 +105,7 @@ export default function CertificateCarousel() {
                 fill
                 sizes="95vw"
                 src={selectedCertificate.image}
+                unoptimized
               />
             </div>
           </div>

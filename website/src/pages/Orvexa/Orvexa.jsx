@@ -3,7 +3,7 @@ import Head from "next/head";
 import Link from "next/link";
 import Footer from "../../components/layout/Footer/Footer";
 import Header from "../../components/layout/Header/Header";
-import orbitImage from "../../assets/images/orvexa/orbit-transparent.png";
+import orbitImage from "../../assets/images/orvexa/orbit-transparent.webp";
 import robotAnimation from "../../assets/images/orvexa/robot-animation-optimized.webp";
 import styles from "./Orvexa.module.css";
 
@@ -38,9 +38,10 @@ export default function Orvexa() {
               <Image
                 alt=""
                 className={styles.orbit}
-                height={1080}
+                height={475}
                 src={orbitImage}
-                width={1456}
+                unoptimized
+                width={640}
               />
               <h1 id="orvexa-title">
                 <span aria-hidden="true">RVEXA</span>

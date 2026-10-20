@@ -129,7 +129,7 @@ function ProgramCard({ program, cardImage }) {
             fill
             sizes="(max-width: 640px) 90vw, (max-width: 960px) 44vw, 30vw"
             src={imageSource}
-            unoptimized={typeof imageSource === "string"}
+            unoptimized
           />
         ) : (
           <div className={styles.imageFallback} aria-hidden="true">

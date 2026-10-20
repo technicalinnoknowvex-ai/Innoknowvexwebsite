@@ -56,6 +56,7 @@ export default function Header({ fixed = false, activeItem = "" }) {
             width={400}
             height={70}
             priority
+            unoptimized
             className={styles.logo}
           />
         </Link>

@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Dancing_Script } from "next/font/google";
-import orbitImage from "../../../assets/images/orvexa/orbit-transparent.png";
+import orbitImage from "../../../assets/images/orvexa/orbit-transparent.webp";
 import robotAnimation from "../../../assets/images/orvexa/robot-animation-optimized.webp";
 import styles from "./OrvexaPromo.module.css";
 import RevealOnScroll from "./RevealOnScroll";
@@ -30,8 +30,9 @@ export default function OrvexaSection() {
             <Image
               src={orbitImage}
               alt=""
-              width={1456}
-              height={1080}
+              width={640}
+              height={475}
+              unoptimized
               className={styles.orbitImage}
             />
             <h2 id="orvexa-title" aria-label="ORVEXA">

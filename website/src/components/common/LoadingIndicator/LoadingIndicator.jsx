@@ -16,6 +16,7 @@ export default function LoadingIndicator({ label = "Loading…", className = "" 
           height={112}
           priority
           src="/3d.png"
+          unoptimized
           width={112}
         />
         <span className={styles.ring} />
