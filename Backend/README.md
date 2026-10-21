@@ -9,9 +9,11 @@
 
 The API allows requests from `http://localhost:3000`, the deployed site at
 `https://www.innoknowvex.in`, and the previous Vercel deployment URL by default.
-Set `FRONTEND_URL=https://www.innoknowvex.in` in production for authentication
-redirects, and use the optional comma-separated `CORS_ORIGINS` variable to allow
-additional frontend origins.
+Set `FRONTEND_URL=https://www.innoknowvex.in` in the production backend environment
+for authentication redirects, and use the optional comma-separated `CORS_ORIGINS`
+variable to allow additional frontend origins. A loopback `FRONTEND_URL` is ignored
+when `NODE_ENV=production` or the backend is running on Render, preventing
+verification links from pointing to localhost.
 
 ## Student guidance leads
 
@@ -75,7 +77,20 @@ verification endpoint both mark an enrollment paid only after validating the pay
 - `POST /api/auth/forgot-password` with `{ "email", "redirectTo"? }`
 - `POST /api/auth/reset-password` with `{ "password" }` and `Authorization: Bearer <access_token>`
 
-To require email verification before login, enable email confirmations in Supabase Auth settings and add `${FRONTEND_URL}/auth/student/login` and `${FRONTEND_URL}/auth/admin/login` to the allowed redirect URLs. The backend uses `FRONTEND_URL` (default `http://localhost:3000`) as the verification email destination. Admin signup may request the `/auth/admin/login` verification destination; all other signups use the student login page.
+To require email verification before login:
+
+1. Set the backend's production `FRONTEND_URL` to `https://www.innoknowvex.in`.
+2. In Supabase Dashboard → Authentication → URL Configuration, set the Site URL to
+   `https://www.innoknowvex.in`.
+3. Add these exact URLs to Supabase's allowed Redirect URLs:
+   `https://www.innoknowvex.in/auth/student/login` and
+   `https://www.innoknowvex.in/auth/admin/login`. Add the Vercel deployment URLs only
+   if they are intentionally used for testing.
+4. Enable email confirmations in Supabase Auth.
+
+The backend sends student and admin verification links to the corresponding
+production login page. Admin signup may request `/auth/admin/login`; all other
+signups use `/auth/student/login`.
 
 ## Roles
 
