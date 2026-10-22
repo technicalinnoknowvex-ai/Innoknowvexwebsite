@@ -31,6 +31,14 @@ function careerStorageClient() {
   });
 }
 
+function publicResumeUrl(projectUrl, resumePath) {
+  const storagePath = resumePath
+    .split("/")
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");
+  return `${projectUrl.replace(/\/+$/, "")}/storage/v1/object/public/${RESUME_BUCKET}/${storagePath}`;
+}
+
 function jobPayload(body, partial = false) {
   const payload = {};
   const fields = {
@@ -199,9 +207,10 @@ async function createApplication(request, response) {
     throw httpError(503, "We couldn't save your resume. Please try again.");
   }
 
+  const resumeUrl = publicResumeUrl(supabaseUrl, resumePath);
   const { error } = await supabase
     .from("career_applications")
-    .insert({ ...application, resume_path: resumePath });
+    .insert({ ...application, resume_path: resumeUrl });
   if (error) {
     const { error: cleanupError } = await storage.storage
       .from(RESUME_BUCKET)
@@ -214,7 +223,7 @@ async function createApplication(request, response) {
 
   await syncGoogleSheetSubmission({
     type: "job_application",
-    data: { ...application, resume_path: resumePath },
+    data: { ...application, resume_path: resumeUrl },
   });
   response.status(201).json({ message: "Your application has been submitted successfully." });
 }
@@ -279,4 +288,5 @@ module.exports = {
   jobPayload,
   validateApplication,
   validateResumeFile,
+  publicResumeUrl,
 };

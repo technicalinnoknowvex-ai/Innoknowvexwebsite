@@ -1,6 +1,10 @@
 const assert = require("node:assert/strict");
 const test = require("node:test");
-const { jobPayload, validateApplication } = require("./careerController");
+const {
+  jobPayload,
+  validateApplication,
+  publicResumeUrl,
+} = require("./careerController");
 
 const job = {
   title: "Frontend Developer",
@@ -63,6 +67,16 @@ test("requires a valid PDF resume upload", () => {
   assert.throws(() => validateResumeFile(null), { statusCode: 400 });
   assert.throws(() => validateResumeFile({ ...pdf, mimetype: "text/plain" }), { statusCode: 400 });
   assert.throws(() => validateResumeFile({ ...pdf, buffer: Buffer.from("not a pdf") }), { statusCode: 400 });
+});
+
+test("builds a public Supabase resume URL for database and spreadsheet storage", () => {
+  assert.equal(
+    publicResumeUrl(
+      "https://example-project.supabase.co/",
+      "2a719d42-bd9b-4aa3-8c0e-b23e6228cd7d/440d39cc-48ce-463c-afe4-c6cf3c4845bd.pdf",
+    ),
+    "https://example-project.supabase.co/storage/v1/object/public/job_resumes/2a719d42-bd9b-4aa3-8c0e-b23e6228cd7d/440d39cc-48ce-463c-afe4-c6cf3c4845bd.pdf",
+  );
 });
 
 test("rejects invalid application details, unsafe URLs, missing consent, and spam", () => {
