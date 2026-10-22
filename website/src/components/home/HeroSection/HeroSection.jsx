@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import styles from "./HeroSection.module.css";
 import Header from "../../layout/Header/Header";
 import heroBackground from "../../../assets/images/hero/home.webp";
@@ -35,9 +36,9 @@ export default function HeroSection() {
         <div className={`absolute inset-x-0 top-0 h-[92%] bg-[#031d47]/15 max-[900px]:h-full ${styles.overlay}`} />
 
         <div className={styles.mobileActions}>
-          <a className={styles.mobileExplore} href="#programs">
+          <Link className={styles.mobileExplore} href="/programs">
             Explore Programs
-          </a>
+          </Link>
         </div>
 
         <div className={`relative z-10 ${styles.content}`}>
@@ -66,9 +67,12 @@ export default function HeroSection() {
                 </p>
 
                 <div className="mt-8 flex flex-wrap items-center gap-4">
-                  <button className="rounded-lg bg-[#02b1fc] px-6 py-3 text-base font-semibold text-white shadow-lg shadow-[#1ea6ff]/35 transition hover:bg-[#38b7ff]">
+                  <Link
+                    className="rounded-lg bg-[#02b1fc] px-6 py-3 text-base font-semibold text-white shadow-lg shadow-[#1ea6ff]/35 transition hover:bg-[#38b7ff]"
+                    href="/programs"
+                  >
                     Explore Programs →
-                  </button>
+                  </Link>
                 </div>
 
                 <div className="mt-8 flex items-center gap-4">

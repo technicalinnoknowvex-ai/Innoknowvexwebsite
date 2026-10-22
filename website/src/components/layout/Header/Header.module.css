@@ -250,6 +250,16 @@
 
 	.actions {
 		gap: 7px;
+		min-height: 40px;
+	}
+
+	.actions > a,
+	.profileMenu > button {
+		min-height: 40px;
+	}
+
+	.profileMenu > button {
+		width: 40px;
 	}
 
 	.brand,
@@ -258,11 +268,11 @@
 	}
 
 	.logo {
-		transform: scale(1.7);
+		transform: translateY(12px) scale(1.7);
 	}
 
 	.brand {
-		flex-basis: 0;
+		flex: 1 1 0;
 	}
 
 	.links[data-open="true"] {
