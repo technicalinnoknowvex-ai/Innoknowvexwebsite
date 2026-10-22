@@ -14,13 +14,19 @@ function jsonResponse(payload, status = 200) {
 
 test("sends a configured submission to Apps Script and accepts its acknowledgement", async () => {
   let request;
+  const logged = [];
   const syncSubmission = createGoogleSheetsSync({
     webhookUrl: "https://script.google.com/macros/s/sheets-router/exec",
     fetchImpl: async (url, options) => {
       request = { url, options, body: JSON.parse(options.body) };
       return jsonResponse({ ok: true });
     },
-    logger: { error() {} },
+    logger: {
+      error() {},
+      info(message, details) {
+        logged.push({ message, details });
+      },
+    },
   });
   assert.equal(
     await syncSubmission({
@@ -35,6 +41,9 @@ test("sends a configured submission to Apps Script and accepts its acknowledgeme
   assert.equal(request.body.data.email, "student@example.com");
   assert.match(request.body.syncId, /^[0-9a-f-]{36}$/i);
   assert.ok(request.body.submittedAt);
+  assert.equal(logged[0].message, "Google Sheets submission synced.");
+  assert.equal(logged[0].details.type, "guidance");
+  assert.equal(logged[0].details.syncId, request.body.syncId);
 });
 
 test("logs Sheets failures and returns false without throwing", async () => {

@@ -47,6 +47,7 @@ function createGoogleSheetsSync({
         );
       }
 
+      logger.info?.("Google Sheets submission synced.", { syncId, type });
       return true;
     } catch (error) {
       logger.error("Google Sheets submission sync failed.", {
