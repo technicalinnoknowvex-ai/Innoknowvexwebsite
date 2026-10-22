@@ -28,6 +28,15 @@ About page's “Partner With Us” form submits to `POST /api/partnership-inquir
 Public access is limited to validated inserts; inquiry records cannot be read by
 anonymous website visitors.
 
+## Google Sheets form sync
+
+To mirror successful form submissions into the `Student_leads`, `College_leads`, and
+`Job_applications` tabs, follow the single Apps Script deployment steps in
+[`google-apps-script/README.md`](./google-apps-script/README.md). Configure
+`GOOGLE_SHEETS_WEB_APP_URL` on the backend service only. Supabase remains the primary
+database; if Sheets is unavailable, the form submission remains successful and the
+backend records a sync failure in its logs.
+
 ## Careers and job applications
 
 Run `supabase/careers.sql` in the Supabase SQL Editor. Admin users can create, edit,

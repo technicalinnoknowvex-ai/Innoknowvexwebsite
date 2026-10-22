@@ -1,3 +1,5 @@
+const { syncGoogleSheetSubmission } = require("../services/googleSheetsSync");
+
 const allowedPartnershipInterests = new Set([
   "Student training programs",
   "Internships and projects",
@@ -87,7 +89,10 @@ function validatePartnershipInquiry(body) {
   };
 }
 
-function createPartnershipInquiryController({ supabase }) {
+function createPartnershipInquiryController({
+  supabase,
+  syncSubmission = syncGoogleSheetSubmission,
+}) {
   return async function createPartnershipInquiry(request, response) {
     const inquiry = validatePartnershipInquiry(request.body);
     const { error } = await supabase
@@ -95,6 +100,7 @@ function createPartnershipInquiryController({ supabase }) {
       .insert(inquiry);
 
     if (error) throw error;
+    await syncSubmission({ type: "partnership", data: inquiry });
     response.status(201).json({
       message: "Thank you. Our partnerships team will contact you soon.",
     });

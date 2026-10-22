@@ -64,7 +64,12 @@ test("rejects honeypot submissions", () => {
 
 test("stores a validated lead and returns a created response", async () => {
   let inserted;
+  let synced;
   const controller = createStudentLeadController({
+    async syncSubmission(submission) {
+      synced = submission;
+      return false;
+    },
     supabase: {
       from(table) {
         assert.equal(table, "student_guidance_leads");
@@ -84,6 +89,9 @@ test("stores a validated lead and returns a created response", async () => {
   assert.equal(response.statusCode, 201);
   assert.equal(inserted.email, "aarav@example.com");
   assert.equal(inserted.training_interest, "AI & Data Science");
+  assert.equal(synced.type, "guidance");
+  assert.equal(synced.data.email, "aarav@example.com");
+  assert.equal(response.body.message, "Thank you. A counselor will contact you soon.");
 });
 
 test("surfaces database errors instead of reporting a successful submission", async () => {

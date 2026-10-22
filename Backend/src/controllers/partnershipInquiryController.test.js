@@ -65,7 +65,12 @@ test("rejects invalid email, phone, partnership area, consent, or spam", () => {
 
 test("stores a validated inquiry and returns a created response", async () => {
   let inserted;
+  let synced;
   const controller = createPartnershipInquiryController({
+    async syncSubmission(submission) {
+      synced = submission;
+      return false;
+    },
     supabase: {
       from(table) {
         assert.equal(table, "college_partnership_inquiries");
@@ -85,6 +90,12 @@ test("stores a validated inquiry and returns a created response", async () => {
   assert.equal(response.statusCode, 201);
   assert.equal(inserted.college_name, validInquiry.collegeName);
   assert.equal(inserted.official_email, "partnerships@city.edu");
+  assert.equal(synced.type, "partnership");
+  assert.equal(synced.data.college_name, validInquiry.collegeName);
+  assert.equal(
+    response.body.message,
+    "Thank you. Our partnerships team will contact you soon.",
+  );
 });
 
 test("surfaces database errors without returning success", async () => {

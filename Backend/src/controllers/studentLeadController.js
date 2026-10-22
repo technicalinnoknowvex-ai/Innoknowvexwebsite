@@ -1,3 +1,5 @@
+const { syncGoogleSheetSubmission } = require("../services/googleSheetsSync");
+
 const allowedTrainingInterests = new Set([
   "AI & Data Science",
   "Web Development",
@@ -65,12 +67,16 @@ function validateStudentLead(body) {
   };
 }
 
-function createStudentLeadController({ supabase }) {
+function createStudentLeadController({
+  supabase,
+  syncSubmission = syncGoogleSheetSubmission,
+}) {
   return async function createStudentLead(request, response) {
     const lead = validateStudentLead(request.body);
     const { error } = await supabase.from("student_guidance_leads").insert(lead);
 
     if (error) throw error;
+    await syncSubmission({ type: "guidance", data: lead });
     response.status(201).json({
       message: "Thank you. A counselor will contact you soon.",
     });

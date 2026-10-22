@@ -2,6 +2,7 @@ const { createClient } = require("@supabase/supabase-js");
 const crypto = require("node:crypto");
 const supabase = require("../config/supabaseClient");
 const { supabaseUrl, supabaseAnonKey, supabaseServiceRoleKey } = require("../config/env");
+const { syncGoogleSheetSubmission } = require("../services/googleSheetsSync");
 
 const jobStatuses = new Set(["draft", "published", "archived"]);
 const employmentTypes = new Set(["Full-time", "Part-time", "Internship", "Contract"]);
@@ -211,6 +212,10 @@ async function createApplication(request, response) {
     throw error;
   }
 
+  await syncGoogleSheetSubmission({
+    type: "job_application",
+    data: { ...application, resume_path: resumePath },
+  });
   response.status(201).json({ message: "Your application has been submitted successfully." });
 }
 
