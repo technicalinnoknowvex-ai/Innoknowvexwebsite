@@ -69,50 +69,52 @@
 .programGrid {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  width: 100%;
-  gap: 8px;
-  margin-top: 11px;
+  gap: 14px;
+  margin: 26px 0 18px;
+  perspective: 1100px;
+  perspective-origin: 50% 25%;
 }
-
 .programCard {
+  position: relative;
   display: flex;
   min-width: 0;
-  min-height: 83px;
+  min-height: 180px;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 9px 7px;
-  border: 1px solid #deebfc;
-  border-radius: 9px;
-  background: #fff;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px;
+  border: 1px solid #dce9fa;
+  border-radius: 18px;
+  background: linear-gradient(145deg, #fff 25%, #edf5ff);
   color: #10213e;
-  font-size: 12px;
-  font-weight: 650;
-  line-height: 1.2;
-  text-align: center;
-  transition:
-    opacity 650ms ease,
-    translate 650ms cubic-bezier(0.2, 0.7, 0.25, 1),
-    border-color 160ms ease,
-    box-shadow 160ms ease;
-  opacity: 0;
-  translate: -72px 0;
+  text-decoration: none;
+  box-shadow: 0 4px 0 #d8e5f5, 0 16px 28px -16px rgb(20 65 120 / 32%);
+  transform-style: preserve-3d;
+  transform: translate3d(0, var(--reveal-y, 0px), var(--reveal-z, 0px)) rotateX(var(--reveal-rx, 0deg)) rotateY(var(--reveal-ry, 0deg));
+  opacity: var(--reveal-opacity, 1);
+  transition: border-color 180ms ease, box-shadow 180ms ease;
 }
-
-.programCard:nth-child(n + 4) {
-  translate: 72px 0;
+.cardTop { display: flex; width: 100%; justify-content: space-between; align-items: center; transform: translateZ(12px); }
+.cardNumber { color: #67809f; font-size: 10px; font-weight: 600; letter-spacing: .1em; }
+.cardArrow { color: #2389e9; font-size: 19px; transition: transform 220ms ease; }
+.iconPlate {
+  display: grid; place-items: center; width: 56px; height: 56px;
+  border: 1px solid #fff; border-radius: 16px;
+  background: linear-gradient(135deg, #f3faff, #d9edff);
+  box-shadow: 0 6px 0 #c6dff5, 0 12px 18px -8px #92bde7;
+  transform: translateZ(28px) rotate(-6deg);
+  transition: transform 250ms ease;
 }
-
-.programGrid[data-revealed="true"] .programCard {
-  opacity: 1;
-  translate: 0 0;
-}
-
-.programCard:hover {
-  transform: translateY(-2px);
-  border-color: #8fc8ff;
-  box-shadow: 0 7px 18px rgb(20 112 210 / 10%);
+.cardName { font-size: 14px; font-weight: 700; line-height: 1.4; transform: translateZ(18px); }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .programCard:hover {
+    transform: translate3d(0, calc(var(--reveal-y, 0px) - 7px), 35px) rotateX(-7deg) rotateY(5deg);
+    border-color: #8fc8ff;
+    box-shadow: 0 5px 0 #c6def5, 0 26px 38px -18px rgb(20 90 170 / 38%);
+  }
+  .programCard:hover .iconPlate { transform: translateZ(45px) rotate(3deg); }
+  .programCard:hover .cardArrow { transform: translate(2px, -2px); }
 }
 
 .programCard:focus-visible,
@@ -128,11 +130,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .programCard {
-    opacity: 1;
-    translate: none;
-    transition: none;
-  }
+  .programCard, .iconPlate, .cardName, .cardTop { opacity: 1; transform: none; transition: none; }
 }
 
 @media (min-width: 1000px) {
@@ -189,3 +187,6 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+@media (min-width: 651px) and (max-width: 1000px) { .programGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 650px) { .programCard { min-height: 156px; padding: 14px; gap: 14px; } .cardName { font-size: 12px; } .programGrid { gap: 12px; } }

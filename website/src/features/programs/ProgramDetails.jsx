@@ -70,6 +70,8 @@ const pricingSlugAliases = {
   "hybrid-electric-vehicles": "hev",
   "internet-of-things": "iot",
   "java-programming": "java",
+  "offline-ai": "offline-artificial-intelligence",
+  "offline-ml": "offline-machine-learning",
   "operations-and-supply-chain-management": "supply-chain-management",
   "web-development": "advanced-web-development",
 };

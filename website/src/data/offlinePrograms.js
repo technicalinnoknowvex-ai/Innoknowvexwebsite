@@ -15,7 +15,7 @@ const offlineTrainingSection = {
     {
       number: "01",
       title: "Artificial Intelligence",
-      slug: "artificial-intelligence",
+      slug: "offline-artificial-intelligence",
       image: images[0],
       description:
         "Learn to apply artificial intelligence through guided projects, practical exercises, and expert-led classroom sessions.",
@@ -31,7 +31,7 @@ const offlineTrainingSection = {
     {
       number: "02",
       title: "AI & Machine Learning",
-      slug: "machine-learning",
+      slug: "offline-machine-learning",
       image: images[1],
       description:
         "Build intelligent models through practical machine-learning exercises, real-world case studies, and personal mentorship.",

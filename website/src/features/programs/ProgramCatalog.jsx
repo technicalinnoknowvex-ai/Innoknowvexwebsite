@@ -102,6 +102,10 @@ function normalizeProgramName(value) {
     .replace(/^-|-$/g, "");
 }
 
+function isOfflineProgram(program) {
+  return normalizeProgramName(program.slug || program.title).startsWith("offline-");
+}
+
 function getCategoryPriority(category) {
   const normalized = category.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 
@@ -164,6 +168,7 @@ export default function ProgramCatalog() {
     const availableCategories = [
       ...new Set(
         programs
+          .filter((program) => !isOfflineProgram(program))
           .map((program) => program.category?.trim())
           .filter(Boolean),
       ),
@@ -174,7 +179,10 @@ export default function ProgramCatalog() {
       return priorityDifference || first.localeCompare(second);
     });
   }, [programs]);
-  const filters = useMemo(() => ["All programs", ...categories], [categories]);
+  const filters = useMemo(
+    () => ["All programs", "Offline Internships", ...categories],
+    [categories],
+  );
   const programsWithImages = useMemo(
     () =>
       programs.map((program) => ({
@@ -190,9 +198,12 @@ export default function ProgramCatalog() {
     const normalizedQuery = query.trim().toLowerCase();
 
     return programsWithImages.filter((program) => {
-      const matchesCategory =
-        activeCategory === "All programs" ||
-        program.category?.trim() === activeCategory;
+      const isOffline = isOfflineProgram(program);
+      const matchesCategory = activeCategory === "Offline Internships"
+        ? isOffline
+        : !isOffline &&
+          (activeCategory === "All programs" ||
+            program.category?.trim() === activeCategory);
       const searchableText = [
         program.title,
         program.category,
