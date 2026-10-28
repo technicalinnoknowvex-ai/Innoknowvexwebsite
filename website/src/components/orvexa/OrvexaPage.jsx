@@ -16,6 +16,15 @@ export default function OrvexaPage() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
 
+  const startRobotGreeting = useCallback(() => {
+    const video = videoRef.current;
+    if (!video || !video.paused) return;
+
+    video.play().catch((error) => {
+      console.error("ORVEXA robot video could not start playing.", error);
+    });
+  }, []);
+
   const playGreeting = useCallback(async () => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -51,17 +60,13 @@ export default function OrvexaPage() {
     let lastFrameTime = 0;
     const frameInterval = 1000 / 30;
 
-    const startVideo = () => {
-      if (!video.paused) return;
-
-      video.play().catch((error) => {
-        console.error("ORVEXA robot video could not start playing.", error);
-      });
-    };
-
     const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        startVideo();
+      if (
+        document.visibilityState === "visible" &&
+        audioRef.current &&
+        !audioRef.current.paused
+      ) {
+        startRobotGreeting();
       }
     };
 
@@ -132,23 +137,25 @@ export default function OrvexaPage() {
       context.putImageData(frame, 0, 0);
     };
 
-    video.addEventListener("loadeddata", startVideo);
     document.addEventListener("visibilitychange", handleVisibilityChange);
-    startVideo();
     animationFrameId = window.requestAnimationFrame(renderFrame);
 
     return () => {
-      video.removeEventListener("loadeddata", startVideo);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.cancelAnimationFrame(animationFrameId);
     };
-  }, []);
+  }, [startRobotGreeting]);
 
   const stopGreeting = () => {
     const audio = audioRef.current;
     if (audio) {
       audio.pause();
       audio.currentTime = 0;
+    }
+    const video = videoRef.current;
+    if (video) {
+      video.pause();
+      video.currentTime = 0;
     }
     setIsSpeaking(false);
   };
@@ -210,7 +217,6 @@ export default function OrvexaPage() {
             <video
               ref={videoRef}
               className={styles.robotVideoSource}
-              autoPlay
               loop
               muted
               playsInline
@@ -231,9 +237,22 @@ export default function OrvexaPage() {
           <audio
             ref={audioRef}
             preload="auto"
-            onPlay={() => setIsSpeaking(true)}
-            onPause={() => setIsSpeaking(false)}
-            onEnded={() => setIsSpeaking(false)}
+            onPlay={() => {
+              setIsSpeaking(true);
+              startRobotGreeting();
+            }}
+            onPause={() => {
+              setIsSpeaking(false);
+              videoRef.current?.pause();
+            }}
+            onEnded={() => {
+              setIsSpeaking(false);
+              const video = videoRef.current;
+              if (video) {
+                video.pause();
+                video.currentTime = 0;
+              }
+            }}
             onError={() => setCanPlayGreeting(true)}
           >
             <source src="/orvexa/voice.mp3" type="audio/mpeg" />
