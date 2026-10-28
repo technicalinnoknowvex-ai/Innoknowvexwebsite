@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import styles from "./PopularPrograms.module.css";
 
 const programs = [
@@ -61,22 +61,50 @@ function ProgramIcon({ type }) {
 
 export default function PopularPrograms() {
   const gridRef = useRef(null);
-  const [hasEnteredView, setHasEnteredView] = useState(false);
-
   useEffect(() => {
     const grid = gridRef.current;
-    if (!grid) return undefined;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setHasEnteredView(entry.isIntersecting);
-      },
-      { threshold: 0.2 },
-    );
-
+    if (!grid) return;
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let frame = 0;
+    let inView = true;
+    const clamp = (value) => Math.min(1, Math.max(0, value));
+    const update = () => {
+      frame = 0;
+      const rect = grid.getBoundingClientRect();
+      const viewport = window.innerHeight;
+      const progress = clamp((viewport * 0.96 - rect.top) / (viewport * 0.6));
+      Array.from(grid.children).forEach((card, index) => {
+        const p = media.matches ? 1 : clamp((progress - index * 0.045) / 0.72);
+        const eased = 1 - Math.pow(1 - p, 3);
+        const side = index % 2 === 0 ? -1 : 1;
+        card.style.setProperty("--reveal-y", String(60 * (1 - eased)) + "px");
+        card.style.setProperty("--reveal-rx", String(28 * (1 - eased)) + "deg");
+        card.style.setProperty("--reveal-ry", String(side * 32 * (1 - eased)) + "deg");
+        card.style.setProperty("--reveal-z", String(-150 * (1 - eased)) + "px");
+        card.style.setProperty("--reveal-opacity", 0.35 + eased * 0.65);
+      });
+    };
+    const schedule = () => {
+      if (inView && !frame) frame = requestAnimationFrame(update);
+    };
+    const observer = new IntersectionObserver(([entry]) => {
+      inView = entry.isIntersecting;
+      if (inView) schedule();
+    }, { rootMargin: "150px" });
     observer.observe(grid);
-    return () => observer.disconnect();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    media.addEventListener("change", schedule);
+    update();
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      media.removeEventListener("change", schedule);
+    };
   }, []);
+
 
   return (
     <section className={styles.section} id="programs" aria-labelledby="programs-title">
@@ -105,19 +133,16 @@ export default function PopularPrograms() {
           </Link>
         </div>
 
-        <div
-          ref={gridRef}
-          className={styles.programGrid}
-          data-revealed={hasEnteredView}
-        >
-          {programs.map((program) => (
+        <div ref={gridRef} className={styles.programGrid}>
+          {programs.map((program, index) => (
             <Link
               className={styles.programCard}
               href={`/programs/${program.slug}`}
               key={program.slug}
             >
-              <ProgramIcon type={program.icon} />
-              <span>{program.name}</span>
+              <span className={styles.cardTop}><span className={styles.cardNumber}>0{index + 1}</span><span className={styles.cardArrow} aria-hidden="true">↗</span></span>
+              <span className={styles.iconPlate}><ProgramIcon type={program.icon} /></span>
+              <span className={styles.cardName}>{program.name}</span>
             </Link>
           ))}
         </div>

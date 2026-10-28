@@ -13,7 +13,10 @@ export default function RevealOnScroll({ children, className = "" }) {
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        setIsVisible(entry.isIntersecting);
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.unobserve(entry.target);
+        }
       },
       { threshold: 0.16, rootMargin: "0px 0px -6% 0px" },
     );

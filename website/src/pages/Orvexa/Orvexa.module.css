@@ -98,6 +98,36 @@
   line-height: 1.65;
 }
 
+.voiceButton {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 18px;
+  margin-right: 10px;
+  padding: 0 15px;
+  border: 1px solid rgb(8 127 194 / 30%);
+  border-radius: 999px;
+  background: #fff;
+  color: #0876b7;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.voiceButton:hover:not(:disabled) {
+  background: #087fc2;
+  color: #fff;
+}
+
+.voiceButton:focus-visible {
+  outline: 3px solid #087fc2;
+  outline-offset: 3px;
+}
+
 .comingSoonLabel {
   display: inline-flex;
   min-height: 38px;
@@ -138,14 +168,35 @@
   position: absolute;
   z-index: 1;
   right: max(calc((100% - 1200px) / 2), 3%);
-  bottom: 2;
-  width: min(39%, 470px);
-  height: 92%;
+  bottom: 0;
+  width: min(45%, 540px);
+  height: 100%;
 }
 
-.robot {
-  object-fit: contain;
-  object-position: center bottom;
+.robotFrame::after {
+  position: absolute;
+  right: 18%;
+  bottom: 2%;
+  left: 18%;
+  height: 18px;
+  border-radius: 50%;
+  background: rgb(34 79 116 / 20%);
+  content: "";
+  filter: blur(10px);
+  pointer-events: none;
+}
+
+.robotVideoSource {
+  display: none;
+}
+
+.robotVideoCanvas {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: auto;
+  height: 100%;
+  transform: translateX(-50%);
 }
 
 .visuallyHidden {
@@ -203,7 +254,7 @@
     position: relative;
     right: auto;
     bottom: auto;
-    width: min(100%, 400px);
+    width: min(100%, 470px);
     height: 310px;
     align-self: center;
     margin-top: -10px;
@@ -243,7 +294,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .homeLink {
+  .homeLink,
+  .voiceButton {
     transition: none;
   }
 }
