@@ -131,6 +131,8 @@
 	object-fit: cover;
 	object-position: center top;
 	transform: translateY(20%) scale(1.06);
+	-webkit-user-drag: none;
+	user-select: none;
 }
 
 .features {

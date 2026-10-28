@@ -61,6 +61,7 @@ export default function OrvexaSection() {
             fill
             sizes="(max-width: 700px) 80vw, 38vw"
             className={styles.robot}
+            draggable={false}
           />
         </div>
 
