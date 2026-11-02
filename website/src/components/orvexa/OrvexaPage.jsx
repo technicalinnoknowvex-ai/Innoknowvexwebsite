@@ -28,6 +28,8 @@ export default function OrvexaPage() {
   const canvasRef = useRef(null);
   const sideCanvasRef = useRef(null);
   const stuntVideoRef = useRef(null);
+  const helloVideoRef = useRef(null);
+  const helloStartedRef = useRef(false);
   const stuntPlayingRef = useRef(false);
   const openingStuntPendingRef = useRef(false);
   const openingStuntPlayingRef = useRef(false);
@@ -56,11 +58,12 @@ export default function OrvexaPage() {
     setRobotMode("idle");
     if (!video || stageRef.current !== "chat") return;
     video.pause();
-    if (video.readyState < HTMLMediaElement.HAVE_METADATA) return;
-    video.currentTime = 6.2;
-    if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      video.play().catch(() => {});
-    }
+    const hello = helloVideoRef.current;
+    if (!hello || hello.readyState < HTMLMediaElement.HAVE_CURRENT_DATA || helloStartedRef.current) return;
+    helloStartedRef.current = true;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    hello.currentTime = reducedMotion ? Math.max(0, hello.duration - 0.1) : 0;
+    if (!reducedMotion) hello.play().catch(() => {});
   }, []);
 
   const playRobotStunt = useCallback(async () => {
@@ -74,6 +77,8 @@ export default function OrvexaPage() {
     openingStuntPlayingRef.current = openingStuntPendingRef.current;
     openingStuntPendingRef.current = false;
     stuntPlayingRef.current = true;
+    helloStartedRef.current = false;
+    helloVideoRef.current?.pause();
     setRobotMode("stunt");
     // The generated lead-in briefly crops the reference image; start at the
     // first fully framed pose, before the actual cartwheel begins.
@@ -88,6 +93,8 @@ export default function OrvexaPage() {
       openingStuntPlayingRef.current = false;
       openingStuntPendingRef.current = false;
       stuntVideoRef.current?.pause();
+      helloVideoRef.current?.pause();
+      helloStartedRef.current = false;
     }
     if (stage !== "intro") {
       videoRef.current?.pause();
@@ -156,7 +163,13 @@ export default function OrvexaPage() {
     const renderFrame = (time) => {
       animationFrameId = window.requestAnimationFrame(renderFrame);
 
-      const sourceVideo = stageRef.current === "chat" && stuntVideoRef.current?.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA ? stuntVideoRef.current : video;
+      const hello = helloVideoRef.current;
+      const showingHello = stageRef.current === "chat" && !stuntPlayingRef.current && helloStartedRef.current && hello?.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA;
+      const sourceVideo = showingHello
+        ? hello
+        : stageRef.current === "chat" && stuntPlayingRef.current && stuntVideoRef.current?.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA
+          ? stuntVideoRef.current
+          : video;
       if (
         stageRef.current === "ready" ||
         !sourceVideo ||
@@ -239,7 +252,16 @@ export default function OrvexaPage() {
           const scale = Math.min((sideCanvas.width - padding * 2) / subjectWidth, (sideCanvas.height - padding * 2) / subjectHeight);
           const width = subjectWidth * scale;
           const height = subjectHeight * scale;
-          sideContext?.drawImage(processingCanvas, minX, minY, subjectWidth, subjectHeight, (sideCanvas.width - width) / 2, sideCanvas.height - padding - height, width, height);
+          if (showingHello) {
+            // Use the reference standing pose as a fixed anchor: the hand can
+            // wave freely without auto-centering or resizing the entire robot.
+            const fixedScale = Math.min((sideCanvas.width - padding * 2) / (292 * frameWidth / 1280), (sideCanvas.height - padding * 2) / (604 * frameHeight / 720));
+            const x = sideCanvas.width / 2 - (631 * frameWidth / 1280) * fixedScale;
+            const y = sideCanvas.height - padding - (694 * frameHeight / 720) * fixedScale;
+            sideContext?.drawImage(processingCanvas, x, y, frameWidth * fixedScale, frameHeight * fixedScale);
+          } else {
+            sideContext?.drawImage(processingCanvas, minX, minY, subjectWidth, subjectHeight, (sideCanvas.width - width) / 2, sideCanvas.height - padding - height, width, height);
+          }
         }
       }
     };
@@ -315,7 +337,7 @@ export default function OrvexaPage() {
             <p>Your next chapter starts with a conversation.</p>
           </div>
 
-          <div className={styles.robotFrame} aria-hidden={stage !== "intro"}>
+          <div className={styles.robotFrame} data-speaking={isSpeaking} aria-hidden={stage !== "intro"}>
             <div className={styles.robotAura} />
             <video ref={videoRef} className={styles.robotVideoSource} controlsList="nodownload noremoteplayback" disablePictureInPicture loop muted playsInline preload="auto" aria-hidden="true">
               <source src="/orvexa/cuterobo.mp4" type="video/mp4" />
@@ -347,12 +369,15 @@ export default function OrvexaPage() {
 
           {stage === "chat" && <div className={styles.chatLayer}>
             <aside className={styles.companionDock} data-robot-mode={robotMode} aria-hidden="true" onPointerEnter={playRobotStunt} onPointerLeave={stopRobotStunt}>
+              <video ref={helloVideoRef} className={styles.robotVideoSource} controlsList="nodownload noremoteplayback" disablePictureInPicture muted playsInline preload="auto" onLoadedData={() => {
+                if (stageRef.current === "chat" && !stuntPlayingRef.current) startRobotIdle();
+              }} aria-hidden="true"><source src="/orvexa/robot-hello.mp4" type="video/mp4" /></video>
               {stuntEnabled && <video key="robot-gymnastics-wide" ref={stuntVideoRef} className={styles.robotVideoSource} controlsList="nodownload noremoteplayback" disablePictureInPicture muted playsInline preload="auto" onLoadedData={() => {
                 if (openingStuntPendingRef.current) playRobotStunt();
                 else if (!stuntPlayingRef.current) startRobotIdle();
               }} onTimeUpdate={() => {
                 const video = stuntVideoRef.current;
-                if (!stuntPlayingRef.current && video && video.currentTime >= 7.8) startRobotIdle();
+                if (stuntPlayingRef.current && video && video.currentTime >= 5.6) startRobotIdle();
               }} onEnded={startRobotIdle} onError={() => { stuntPlayingRef.current = false; openingStuntPendingRef.current = false; openingStuntPlayingRef.current = false; setRobotMode("idle"); }}><source src="/orvexa/robot-gymnastics-wide.mp4" type="video/mp4" /></video>}
               <div className={styles.dockEyebrow}><span /> YOUR ORVEXA SPACE</div>
               <div className={styles.companionStage}>
