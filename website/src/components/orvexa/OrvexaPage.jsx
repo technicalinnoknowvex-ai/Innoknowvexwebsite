@@ -2,40 +2,15 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Play, Square } from "lucide-react";
+import { useEffect, useRef } from "react";
 import Footer from "../layout/Footer/Footer";
 import Header from "../layout/Header/Header";
 import orbitImage from "../../assets/images/orvexa/orbit-transparent.webp";
 import styles from "../../pages/Orvexa/Orvexa.module.css";
 
 export default function OrvexaPage() {
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [canPlayGreeting, setCanPlayGreeting] = useState(false);
-  const audioRef = useRef(null);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
-
-  const playGreeting = useCallback(async () => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    try {
-      await audio.play();
-      setCanPlayGreeting(false);
-    } catch {
-      setCanPlayGreeting(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    const audio = audioRef.current;
-    const timeoutId = window.setTimeout(playGreeting, 700);
-    return () => {
-      window.clearTimeout(timeoutId);
-      audio?.pause();
-    };
-  }, [playGreeting]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -144,15 +119,6 @@ export default function OrvexaPage() {
     };
   }, []);
 
-  const stopGreeting = () => {
-    const audio = audioRef.current;
-    if (audio) {
-      audio.pause();
-      audio.currentTime = 0;
-    }
-    setIsSpeaking(false);
-  };
-
   return (
     <>
       <Header activeItem="ORVEXA" />
@@ -181,26 +147,6 @@ export default function OrvexaPage() {
               ORVEXA is being built to help you learn smarter, plan your career,
               and make more of every opportunity. Stay tuned.
             </p>
-            {isSpeaking && (
-              <button
-                className={styles.voiceButton}
-                type="button"
-                onClick={stopGreeting}
-              >
-                <Square size={16} />
-                Stop
-              </button>
-            )}
-            {canPlayGreeting && !isSpeaking && (
-              <button
-                className={styles.voiceButton}
-                type="button"
-                onClick={playGreeting}
-              >
-                <Play size={16} />
-                Play ORVEXA greeting
-              </button>
-            )}
             <span className={styles.comingSoonLabel}>Coming soon</span>
             <Link className={styles.homeLink} href="/">
               <span aria-hidden="true">←</span> Back to home
@@ -228,16 +174,6 @@ export default function OrvexaPage() {
               width="360"
             />
           </div>
-          <audio
-            ref={audioRef}
-            preload="auto"
-            onPlay={() => setIsSpeaking(true)}
-            onPause={() => setIsSpeaking(false)}
-            onEnded={() => setIsSpeaking(false)}
-            onError={() => setCanPlayGreeting(true)}
-          >
-            <source src="/orvexa/voice.mp3" type="audio/mpeg" />
-          </audio>
         </section>
       </main>
       <Footer />
