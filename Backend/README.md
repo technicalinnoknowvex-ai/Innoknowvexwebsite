@@ -117,7 +117,9 @@ The website admin interface is served by the main frontend at `/auth/admin`. New
 
 The reset-password request uses the access token Supabase provides after the recovery link is opened. Supabase's managed `auth.users` table cannot be renamed; the application-owned profile table is named `user_profiles_new`.
 
-The `user_profiles_new` table stores `id`, `full_name`, `email`, `created_at`, and `updated_at`. The signup trigger copies `full_name` from user metadata and `email` from `auth.users`. Run `supabase/user_profiles_new_portfolio.sql` to add the `skills` and `projects` columns used by the student dashboard.
+The `user_profiles_new` table stores `id`, `full_name`, `email`, `created_at`, and `updated_at`. The signup trigger copies `full_name` from user metadata and `email` from `auth.users`. The authenticated `/api/auth/me/portfolio` routes read and update learner profile data in this table. The profile includes `skills` (skills the learner already knows), `learning_skills` (`text[]`), `projects` (`jsonb` array), `current_status` (`text`), `education_level` (`text`), `experience` (`jsonb` array), `interests` and `goals` (`text[]`), and `ai_personalization_consent` and `onboarding_completed` (`boolean`) columns. Run `supabase/user_profiles_learning_skills.sql` in the Supabase SQL Editor to add any missing profile columns. The migration is safe to rerun and does not replace existing columns or data.
+
+`PUT /api/auth/me/portfolio` accepts partial updates and upserts the authenticated user's profile row if it does not exist yet. Experience items use `role`, `organization`, `description`, `startDate`, and `endDate` properties. `current_status` accepts `student`, `graduate`, or `working_professional` (also accepting spaces or hyphens, normalized to underscores). Run `supabase/user_profiles_learning_skills.sql` to add missing profile columns and apply authenticated-only row-level security policies. Profile access is restricted to the row whose `id` matches `auth.uid()`.
 
 ## Program APIs
 

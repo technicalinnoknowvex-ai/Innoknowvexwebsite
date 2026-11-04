@@ -7,6 +7,78 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowUpRight, ArrowUp, Mic, Play, X, Volume2 } from "lucide-react";
 import Header from "../layout/Header/Header";
 import styles from "../../pages/Orvexa/Orvexa.module.css";
+import {
+  clearAuthStorage,
+  getStudentPortfolio,
+  updateStudentPortfolio,
+} from "../../lib/auth-api";
+
+const EMPTY_PROFILE = {
+  current_status: "",
+  education_level: "",
+  skills: [],
+  learning_skills: [],
+  projects: [],
+  experience: [],
+  interests: [],
+  goals: [],
+  ai_personalization_consent: false,
+  onboarding_completed: false,
+};
+const ORVEXA_RETURN_PATH = "/orvexa?openChat=1";
+
+function profileToDraft(profile = EMPTY_PROFILE) {
+  return {
+    current_status: profile.current_status || "",
+    education_level: profile.education_level || "",
+    skills: (profile.skills || []).join("\n"),
+    learning_skills: (profile.learning_skills || []).join("\n"),
+    projects: (profile.projects || [])
+      .map((project) => [project.title, project.description || "", (project.technologies || []).join(", "), project.url || ""].join(" | "))
+      .join("\n"),
+    experience: (profile.experience || [])
+      .map((item) => [item.role, item.organization || "", item.description || "", item.startDate || "", item.endDate || ""].join(" | "))
+      .join("\n"),
+    interests: (profile.interests || []).join("\n"),
+    goals: (profile.goals || []).join("\n"),
+    ai_personalization_consent: profile.ai_personalization_consent === true,
+  };
+}
+
+function parseList(value) {
+  return value.split(/[\n,]/).map((item) => item.trim()).filter(Boolean);
+}
+
+function draftToProfile(draft) {
+  const projectRows = draft.projects.split("\n").map((row) => row.trim()).filter(Boolean);
+  const experienceRows = draft.experience.split("\n").map((row) => row.trim()).filter(Boolean);
+
+  return {
+    current_status: draft.current_status,
+    education_level: draft.education_level.trim() || null,
+    skills: parseList(draft.skills),
+    learning_skills: parseList(draft.learning_skills),
+    projects: projectRows.map((row) => {
+      const [projectTitle, projectDescription = "", technologies = "", url = ""] =
+        row.split("|").map((part) => part.trim());
+      return {
+        title: projectTitle,
+        description: projectDescription,
+        technologies: parseList(technologies),
+        url,
+      };
+    }),
+    experience: experienceRows.map((row) => {
+      const [role, organization = "", description = "", startDate = "", endDate = ""] =
+        row.split("|").map((part) => part.trim());
+      return { role, organization, description, startDate, endDate };
+    }),
+    interests: parseList(draft.interests),
+    goals: parseList(draft.goals),
+    ai_personalization_consent: draft.ai_personalization_consent,
+    onboarding_completed: true,
+  };
+}
 
 function OrbitMark({ className = "" }) {
   return <Image src={orbitImage} alt="" aria-hidden="true" width={96} height={72} className={className} draggable={false} onContextMenu={(event) => event.preventDefault()} onDragStart={(event) => event.preventDefault()} unoptimized />;
@@ -20,6 +92,14 @@ export default function OrvexaPage() {
   const [robotMode, setRobotMode] = useState("idle");
   const [draft, setDraft] = useState("");
   const [notice, setNotice] = useState("");
+  const [profileStatus, setProfileStatus] = useState("loading");
+  const [profileError, setProfileError] = useState("");
+  const [profile, setProfile] = useState(EMPTY_PROFILE);
+  const [profileDraft, setProfileDraft] = useState(profileToDraft());
+  const [profileStep, setProfileStep] = useState(0);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [skipProfileSetup, setSkipProfileSetup] = useState(false);
   const launchRef = useRef(null);
   const closeRef = useRef(null);
   const inputRef = useRef(null);
@@ -33,6 +113,7 @@ export default function OrvexaPage() {
   const stuntPlayingRef = useRef(false);
   const openingStuntPendingRef = useRef(false);
   const openingStuntPlayingRef = useRef(false);
+  const returnedToChatRef = useRef(false);
   const stageRef = useRef("intro");
 
   useEffect(() => {
@@ -40,6 +121,56 @@ export default function OrvexaPage() {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = previousOverflow; };
+  }, [stage]);
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("openChat") !== "1") return;
+    returnedToChatRef.current = true;
+    const frameId = window.requestAnimationFrame(() => setStage("chat"));
+    return () => window.cancelAnimationFrame(frameId);
+  }, []);
+
+  useEffect(() => {
+    if (stage !== "chat") return undefined;
+    let isCurrent = true;
+
+    async function loadLearnerProfile() {
+      const accessToken = window.sessionStorage.getItem("innoknowvex_access_token");
+      setProfileError("");
+      setSkipProfileSetup(false);
+      setProfileStatus("loading");
+      setIsEditingProfile(false);
+
+      if (!accessToken) {
+        setProfileStatus("signed-out");
+        return;
+      }
+
+      try {
+        const savedProfile = await getStudentPortfolio(accessToken);
+        if (!isCurrent) return;
+        const nextProfile = { ...EMPTY_PROFILE, ...savedProfile };
+        setProfile(nextProfile);
+        setProfileDraft(profileToDraft(nextProfile));
+        setSkipProfileSetup(nextProfile.onboarding_completed);
+        setProfileStatus(nextProfile.onboarding_completed ? "complete" : "incomplete");
+      } catch (error) {
+        if (!isCurrent) return;
+        if (error.status === 401) {
+          clearAuthStorage();
+          setProfileStatus("signed-out");
+          return;
+        }
+        setProfileError("We couldn’t load your learner profile. Please try again.");
+        setProfileStatus("error");
+      }
+    }
+
+    loadLearnerProfile();
+    return () => {
+      isCurrent = false;
+    };
   }, [stage]);
 
   const startRobotGreeting = useCallback(() => {
@@ -121,6 +252,7 @@ export default function OrvexaPage() {
   }, []);
 
   useEffect(() => {
+    if (returnedToChatRef.current) return undefined;
     const audio = audioRef.current;
     const timeoutId = window.setTimeout(playGreeting, 700);
     return () => {
@@ -294,12 +426,18 @@ export default function OrvexaPage() {
     audioRef.current?.pause();
     videoRef.current?.pause();
     openingStuntPendingRef.current = true;
+    const url = new URL(window.location.href);
+    url.searchParams.set("openChat", "1");
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
     setStage("chat");
     setNotice("");
     window.requestAnimationFrame(() => closeRef.current?.focus());
   };
 
   const closeAssistant = () => {
+    const url = new URL(window.location.href);
+    url.searchParams.delete("openChat");
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
     setStage("ready");
     window.requestAnimationFrame(() => launchRef.current?.focus());
   };
@@ -310,9 +448,48 @@ export default function OrvexaPage() {
     setNotice("This is an interface preview. Live ORVEXA replies are not connected yet; your message has not been sent.");
   };
 
+  function editSavedProfileStep(step) {
+    setProfileDraft(profileToDraft(profile));
+    setProfileStep(step);
+    setProfileError("");
+    setIsEditingProfile(true);
+    setSkipProfileSetup(false);
+  }
+
+  async function saveLearnerProfile() {
+    const accessToken = window.sessionStorage.getItem("innoknowvex_access_token");
+    if (!accessToken) {
+      setProfileStatus("signed-out");
+      return;
+    }
+    if (!profileDraft.ai_personalization_consent) {
+      setProfileError("Please agree to save your profile for personalized guidance, or skip setup.");
+      return;
+    }
+
+    setIsSavingProfile(true);
+    setProfileError("");
+    try {
+      const savedProfile = await updateStudentPortfolio(accessToken, draftToProfile(profileDraft));
+      setProfile({ ...EMPTY_PROFILE, ...savedProfile });
+      setIsEditingProfile(false);
+      setProfileStatus("complete");
+      setNotice("Your learner profile is saved. You can review or edit it any time.");
+    } catch (error) {
+      if (error.status === 401) {
+        clearAuthStorage();
+        setProfileStatus("signed-out");
+      } else {
+        setProfileError("We couldn’t save your learner profile. Please check your answers and try again.");
+      }
+    } finally {
+      setIsSavingProfile(false);
+    }
+  }
+
   return (
     <>
-      <div inert={stage === "chat"}><Header activeItem="ORVEXA" /></div>
+      <Header activeItem="ORVEXA" />
       <main className={styles.page} onContextMenu={(event) => {
         // A casual-save deterrent only, not protection from browser inspection.
         if (event.target instanceof Element && event.target.closest("img, canvas, video, [data-orvexa-art]")) event.preventDefault();
@@ -391,15 +568,9 @@ export default function OrvexaPage() {
               <p>Your learning & career companion.</p>
               {stuntEnabled && <p className={styles.hoverHint}>Hover over me for a little surprise.</p>}
             </aside>
-            <section className={styles.chatPanel} role="dialog" aria-modal="true" aria-labelledby="chat-title"
+            <section className={styles.chatPanel} role="dialog" aria-labelledby="chat-title"
               onKeyDown={(event) => {
                 if (event.key === "Escape") { event.stopPropagation(); closeAssistant(); }
-                if (event.key === "Tab") {
-                  const items = Array.from(event.currentTarget.querySelectorAll('button:not([disabled]), textarea, a[href]')).filter((item) => item.getClientRects().length > 0);
-                  const first = items[0]; const last = items[items.length - 1];
-                  if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
-                  else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
-                }
               }}>
               <header className={styles.chatHeader}>
                 <div className={styles.assistantMark} data-orvexa-art="true"><OrbitMark className={styles.headerOrbit} /></div>
@@ -407,24 +578,190 @@ export default function OrvexaPage() {
                 {stuntEnabled && <button type="button" className={styles.motionToggle} aria-label="Play robot move" onClick={playRobotStunt} title="Play robot gymnastics"><Play size={14} /><span>Robot move</span></button>}
                 <button ref={closeRef} type="button" className={styles.iconButton} aria-label="Close ORVEXA" onClick={closeAssistant}><X size={21} /></button>
               </header>
-              <div className={styles.conversation}>
-                <span className={styles.welcomeIcon} data-orvexa-art="true"><span className={styles.orbitMotion}><OrbitMark className={styles.welcomeOrbit} /></span></span>
-                <p className={styles.eyebrow}>YOUR AMBITION. OUR STARTING POINT.</p>
-                <h3>What’s your<br /><span>next big step?</span></h3>
-                <p className={styles.welcomeCopy}>A new skill, a career move, or a stronger resume.<br />Start with what’s on your mind.</p>
-                <div className={styles.suggestions}>
-                  {["Find my learning path", "Explore my career options", "Improve my resume"].map((text) => <button type="button" key={text} onClick={() => { setDraft(text); inputRef.current?.focus(); }}>{text}<ArrowUpRight size={16} /></button>)}
+              <div className={`${styles.conversation} ${(["incomplete", "complete", "signed-out", "error"].includes(profileStatus) && !skipProfileSetup) ? styles.conversationForm : ""}`}>
+                {profileStatus === "loading" && (
+                  <div className={styles.profileMessage} role="status">Loading your learner profile…</div>
+                )}
+
+                {profileStatus === "signed-out" && !skipProfileSetup && (
+                  <div className={styles.profileMessage}>
+                    <p className={styles.eyebrow}>PERSONAL GUIDANCE STARTS WITH YOU</p>
+                    <h3>Sign in to start<br /><span>your ORVEXA journey.</span></h3>
+                    <p className={styles.welcomeCopy}>ORVEXA uses your learner profile to make guidance relevant to your skills, projects, and goals. Sign in or create an account to continue.</p>
+                    <div className={styles.suggestions}>
+                      <Link href={`/auth/student/login?next=${encodeURIComponent(ORVEXA_RETURN_PATH)}`}>Sign in <ArrowUpRight size={16} /></Link>
+                      <Link href={`/auth/student/signup?next=${encodeURIComponent(ORVEXA_RETURN_PATH)}`}>Create account <ArrowUpRight size={16} /></Link>
+                    </div>
+                  </div>
+                )}
+
+                {profileStatus === "error" && !skipProfileSetup && (
+                  <div className={styles.profileMessage}>
+                    <p className={styles.eyebrow}>LEARNER PROFILE</p>
+                    <h3>We couldn’t load<br /><span>your saved profile.</span></h3>
+                    <p className={styles.welcomeCopy}>{profileError}</p>
+                    <div className={styles.suggestions}>
+                      <button type="button" onClick={() => {
+                        setStage("ready");
+                        window.requestAnimationFrame(() => setStage("chat"));
+                      }}>Try again <ArrowUpRight size={16} /></button>
+                      <Link href={`/auth/student/login?next=${encodeURIComponent(ORVEXA_RETURN_PATH)}`}>Sign in again <ArrowUpRight size={16} /></Link>
+                    </div>
+                  </div>
+                )}
+
+                {(profileStatus === "incomplete" || isEditingProfile) && !skipProfileSetup && (
+                  <section className={styles.onboarding} aria-labelledby="onboarding-title">
+                    <p className={styles.eyebrow}>YOUR AMBITION. OUR STARTING POINT.</p>
+                    <h3 id="onboarding-title">{profileStep < 4 ? "Let’s get to know you." : "Review your answers."}</h3>
+                    {profileStep < 4 ? (
+                      <>
+                        <p className={styles.onboardingProgress}>A few optional details · Step {profileStep + 1} of 4</p>
+                        {profileStep === 0 && (
+                          <div className={styles.onboardingFields}>
+                            <label>
+                              <span>Which best describes you?</span>
+                              <select value={profileDraft.current_status} onChange={(event) => setProfileDraft((previous) => ({ ...previous, current_status: event.target.value }))}>
+                                <option value="">Choose one</option>
+                                <option value="student">Student</option>
+                                <option value="graduate">Graduate</option>
+                                <option value="working_professional">Working professional</option>
+                              </select>
+                            </label>
+                            <label>
+                              <span>What is your education level? <small>Optional</small></span>
+                              <input value={profileDraft.education_level} onChange={(event) => setProfileDraft((previous) => ({ ...previous, education_level: event.target.value }))} maxLength={120} placeholder="For example, studying for a bachelor's degree" />
+                            </label>
+                          </div>
+                        )}
+                        {profileStep === 1 && (
+                          <div className={styles.onboardingFields}>
+                            <label>
+                              <span>What skills do you already know?</span>
+                              <textarea value={profileDraft.skills} onChange={(event) => setProfileDraft((previous) => ({ ...previous, skills: event.target.value }))} maxLength={3000} rows={5} placeholder={"JavaScript\nCommunication\nData analysis"} />
+                              <small>List skills you have used or practiced. Enter one per line.</small>
+                            </label>
+                            <label>
+                              <span>What skills would you like to learn?</span>
+                              <textarea value={profileDraft.learning_skills} onChange={(event) => setProfileDraft((previous) => ({ ...previous, learning_skills: event.target.value }))} maxLength={3000} rows={4} placeholder={"Machine learning\nCloud computing"} />
+                              <small>List skills you want to develop. Enter one per line.</small>
+                            </label>
+                          </div>
+                        )}
+                        {profileStep === 2 && (
+                          <div className={styles.onboardingFields}>
+                            <label>
+                              <span>What projects have you worked on? <small>Optional</small></span>
+                              <textarea value={profileDraft.projects} onChange={(event) => setProfileDraft((previous) => ({ ...previous, projects: event.target.value }))} maxLength={12000} rows={4} placeholder={"Personal website | Built a portfolio | React, CSS"} />
+                              <small>One project per line: title | description | technologies.</small>
+                            </label>
+                            <label>
+                              <span>Any work, internship, or volunteer experience? <small>Optional</small></span>
+                              <textarea value={profileDraft.experience} onChange={(event) => setProfileDraft((previous) => ({ ...previous, experience: event.target.value }))} maxLength={12000} rows={3} placeholder={"Intern | Example company | Helped build a reporting tool"} />
+                              <small>One experience per line: role | organization | description | start date | end date.</small>
+                            </label>
+                          </div>
+                        )}
+                        {profileStep === 3 && (
+                          <div className={styles.onboardingFields}>
+                            <label>
+                              <span>What topics interest you? <small>Optional</small></span>
+                              <textarea value={profileDraft.interests} onChange={(event) => setProfileDraft((previous) => ({ ...previous, interests: event.target.value }))} maxLength={3000} rows={3} placeholder={"AI\nWeb development"} />
+                            </label>
+                            <label>
+                              <span>What would you like to achieve? <small>Optional</small></span>
+                              <textarea value={profileDraft.goals} onChange={(event) => setProfileDraft((previous) => ({ ...previous, goals: event.target.value }))} maxLength={3000} rows={3} placeholder={"Build my first app\nPrepare for a new role"} />
+                            </label>
+                            <label className={styles.consentField}>
+                              <input type="checkbox" checked={profileDraft.ai_personalization_consent} onChange={(event) => setProfileDraft((previous) => ({ ...previous, ai_personalization_consent: event.target.checked }))} />
+                              <span>I agree to save this profile so ORVEXA can personalize learning and career guidance. I can edit my answers or withdraw consent later.</span>
+                            </label>
+                          </div>
+                        )}
+                        {profileError && <p className={styles.profileError} role="alert">{profileError}</p>}
+                        <div className={styles.onboardingActions}>
+                          {profileStep > 0 && <button type="button" onClick={() => { setProfileError(""); setProfileStep((step) => step - 1); }}>Back</button>}
+                          <button type="button" onClick={() => {
+                            setProfileError("");
+                            if (profileStep === 0 && !profileDraft.current_status) {
+                              setProfileError("Choose whether you are a student, graduate, or working professional.");
+                              return;
+                            }
+                            setProfileStep((step) => step + 1);
+                          }}>{profileStep === 3 ? "Review answers" : "Next question"} <ArrowUpRight size={15} /></button>
+                        </div>
+                      </>
+                    ) : (
+                      <div className={styles.profileReview}>
+                        {[
+                          ["About you", `Step 1 · ${profileDraft.current_status.replaceAll("_", " ")}${profileDraft.education_level ? ` · ${profileDraft.education_level}` : ""}`, 0],
+                          ["Skills I know", profileDraft.skills || "Not added", 1],
+                          ["Skills I want to learn", profileDraft.learning_skills || "Not added", 1],
+                          ["Projects & experience", [profileDraft.projects, profileDraft.experience].filter(Boolean).join("\n") || "Not added", 2],
+                          ["Interests & goals", [profileDraft.interests, profileDraft.goals].filter(Boolean).join("\n") || "Not added", 3],
+                        ].map(([label, value, step]) => (
+                          <div key={label}>
+                            <p><strong>{label}</strong><button type="button" onClick={() => { setProfileError(""); setProfileStep(step); }}>Edit</button></p>
+                            <span>{value}</span>
+                          </div>
+                        ))}
+                        {!profileDraft.ai_personalization_consent && <p className={styles.profileError} role="alert">Consent is needed to save this profile for personalized guidance.</p>}
+                        {profileError && <p className={styles.profileError} role="alert">{profileError}</p>}
+                        <div className={styles.onboardingActions}>
+                          <button type="button" onClick={() => { setProfileError(""); setProfileStep(3); }}>Back</button>
+                          <button type="button" onClick={saveLearnerProfile} disabled={isSavingProfile || !profileDraft.ai_personalization_consent}>
+                            {isSavingProfile ? "Saving…" : "Save profile"}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </section>
+                )}
+
+                {profileStatus === "complete" && !isEditingProfile && !skipProfileSetup && (
+                  <section className={styles.onboarding} aria-labelledby="saved-profile-title">
+                    <span className={styles.welcomeIcon} data-orvexa-art="true"><span className={styles.orbitMotion}><OrbitMark className={styles.welcomeOrbit} /></span></span>
+                    <p className={styles.eyebrow}>YOUR AMBITION. OUR STARTING POINT.</p>
+                    <h3 id="saved-profile-title">Your profile,<br /><span>your next big step.</span></h3>
+                    <div className={styles.profileReview}>
+                      <div><p><strong>About you</strong><button type="button" onClick={() => editSavedProfileStep(0)}>Edit</button></p><span>{profile.current_status?.replaceAll("_", " ") || "Not added"}{profile.education_level ? ` · ${profile.education_level}` : ""}</span></div>
+                      <div><p><strong>Skills I know</strong><button type="button" onClick={() => editSavedProfileStep(1)}>Edit</button></p><span>{profile.skills.join(", ") || "Not added"}</span></div>
+                      <div><p><strong>Skills I want to learn</strong><button type="button" onClick={() => editSavedProfileStep(1)}>Edit</button></p><span>{profile.learning_skills.join(", ") || "Not added"}</span></div>
+                      <div><p><strong>Projects</strong><button type="button" onClick={() => editSavedProfileStep(2)}>Edit</button></p><span>{profile.projects.map((project) => project.title).join(", ") || "Not added"}</span></div>
+                      <div><p><strong>Experience</strong><button type="button" onClick={() => editSavedProfileStep(2)}>Edit</button></p><span>{profile.experience.map((item) => item.role).join(", ") || "Not added"}</span></div>
+                      <div><p><strong>Interests & goals</strong><button type="button" onClick={() => editSavedProfileStep(3)}>Edit</button></p><span>{[...profile.interests, ...profile.goals].join(", ") || "Not added"}</span></div>
+                    </div>
+                    <div className={styles.onboardingActions}>
+                      <button type="button" onClick={() => setSkipProfileSetup(true)}>Continue to chat <ArrowUpRight size={15} /></button>
+                    </div>
+                  </section>
+                )}
+
+                {skipProfileSetup && (
+                  <div className={styles.profileMessage}>
+                    <span className={styles.welcomeIcon} data-orvexa-art="true"><span className={styles.orbitMotion}><OrbitMark className={styles.welcomeOrbit} /></span></span>
+                    <p className={styles.eyebrow}>YOUR AMBITION. OUR STARTING POINT.</p>
+                    <h3>What’s your<br /><span>next big step?</span></h3>
+                    <p className={styles.welcomeCopy}>A new skill, a career move, or a stronger resume.<br />Start with what’s on your mind.</p>
+                    {profileStatus === "complete" && <button className={styles.profileEditLink} type="button" onClick={() => setSkipProfileSetup(false)}>Review your saved profile</button>}
+                    {profileStatus === "incomplete" && <button className={styles.profileEditLink} type="button" onClick={() => { setSkipProfileSetup(false); setProfileStep(0); }}>Set up your learner profile</button>}
+                    <div className={styles.suggestions}>
+                      {["Find my learning path", "Explore my career options", "Improve my resume"].map((text) => <button type="button" key={text} onClick={() => { setDraft(text); inputRef.current?.focus(); }}>{text}<ArrowUpRight size={16} /></button>)}
+                    </div>
+                  </div>
+                )}
+              </div>
+              {profileStatus === "complete" && skipProfileSetup && (
+                <div className={styles.composerArea}>
+                  <p className={styles.notice} role="status">{notice || "Preview only — messages and microphone audio are not sent or recorded."}</p>
+                  <form className={styles.composer} onSubmit={submitMessage}>
+                    <textarea ref={inputRef} aria-label="Message ORVEXA" placeholder="What would you like to explore?" rows={1} maxLength={4000} value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); submitMessage(event); } }} />
+                    <button type="button" className={styles.micButton} aria-label="Voice preview information" onClick={() => setNotice("Voice conversations are not connected yet. Your microphone has not been activated.")}><Mic size={19} /></button>
+                    <button type="submit" className={styles.sendButton} aria-label="Try sending a preview message" disabled={!draft.trim()}><ArrowUp size={21} /></button>
+                  </form>
+                  <p className={styles.composerFootnote}>Built for your possibilities. Designed around you.</p>
                 </div>
-              </div>
-              <div className={styles.composerArea}>
-                <p className={styles.notice} role="status">{notice || "Preview only — messages and microphone audio are not sent or recorded."}</p>
-                <form className={styles.composer} onSubmit={submitMessage}>
-                  <textarea ref={inputRef} aria-label="Message ORVEXA" placeholder="What would you like to explore?" rows={1} maxLength={4000} value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); submitMessage(event); } }} />
-                  <button type="button" className={styles.micButton} aria-label="Voice preview information" onClick={() => setNotice("Voice conversations are not connected yet. Your microphone has not been activated.")}><Mic size={19} /></button>
-                  <button type="submit" className={styles.sendButton} aria-label="Try sending a preview message" disabled={!draft.trim()}><ArrowUp size={21} /></button>
-                </form>
-                <p className={styles.composerFootnote}>Built for your possibilities. Designed around you.</p>
-              </div>
+              )}
             </section>
           </div>}
           <div className={styles.sceneFooter} aria-hidden="true"><span>LEARN. EXPLORE. BECOME.</span><span>THE FUTURE LOOKS LIKE YOU. ↗</span></div>
