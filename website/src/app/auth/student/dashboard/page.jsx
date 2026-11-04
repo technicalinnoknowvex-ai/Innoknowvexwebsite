@@ -16,7 +16,18 @@ import {
 import styles from "./page.module.css";
 import { userFacingError } from "../../../../lib/user-facing-error";
 
-const EMPTY_PORTFOLIO = { skills: [], projects: [] };
+const EMPTY_PORTFOLIO = {
+  skills: [],
+  learning_skills: [],
+  projects: [],
+  current_status: null,
+  education_level: null,
+  experience: [],
+  interests: [],
+  goals: [],
+  ai_personalization_consent: false,
+  onboarding_completed: false,
+};
 
 function getInitials(name) {
   return name
@@ -40,6 +51,13 @@ export default function StudentDashboardPage() {
   const [draftName, setDraftName] = useState("");
   const [portfolio, setPortfolio] = useState(EMPTY_PORTFOLIO);
   const [draftSkills, setDraftSkills] = useState("");
+  const [draftLearningSkills, setDraftLearningSkills] = useState("");
+  const [draftCurrentStatus, setDraftCurrentStatus] = useState("");
+  const [draftEducationLevel, setDraftEducationLevel] = useState("");
+  const [draftExperience, setDraftExperience] = useState("");
+  const [draftInterests, setDraftInterests] = useState("");
+  const [draftGoals, setDraftGoals] = useState("");
+  const [draftConsent, setDraftConsent] = useState(false);
   const [draftProjects, setDraftProjects] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -131,9 +149,18 @@ export default function StudentDashboardPage() {
 
   function startPortfolioEdit() {
     setDraftSkills(portfolio.skills.join("\n"));
+    setDraftLearningSkills((portfolio.learning_skills || []).join("\n"));
+    setDraftCurrentStatus(portfolio.current_status || "");
+    setDraftEducationLevel(portfolio.education_level || "");
+    setDraftExperience((portfolio.experience || [])
+      .map((item) => [item.role, item.organization || "", item.description || "", item.startDate || "", item.endDate || ""].join(" | "))
+      .join("\n"));
+    setDraftInterests((portfolio.interests || []).join("\n"));
+    setDraftGoals((portfolio.goals || []).join("\n"));
+    setDraftConsent(portfolio.ai_personalization_consent === true);
     setDraftProjects(portfolio.projects.map((project) => ({
       ...project,
-      technologies: project.technologies.join(", "),
+      technologies: (project.technologies || []).join(", "),
     })));
     setError("");
     setNotice("");
@@ -153,6 +180,18 @@ export default function StudentDashboardPage() {
 
     const nextPortfolio = {
       skills: draftSkills.split(/[,\n]/).map((skill) => skill.trim()).filter(Boolean),
+      learning_skills: draftLearningSkills.split(/[,\n]/).map((skill) => skill.trim()).filter(Boolean),
+      current_status: draftCurrentStatus || null,
+      education_level: draftEducationLevel.trim() || null,
+      experience: draftExperience.split("\n").map((row) => row.trim()).filter(Boolean).map((row) => {
+        const [role, organization = "", description = "", startDate = "", endDate = ""] =
+          row.split("|").map((part) => part.trim());
+        return { role, organization, description, startDate, endDate };
+      }),
+      interests: draftInterests.split(/[,\n]/).map((item) => item.trim()).filter(Boolean),
+      goals: draftGoals.split(/[,\n]/).map((item) => item.trim()).filter(Boolean),
+      ai_personalization_consent: draftConsent,
+      onboarding_completed: portfolio.onboarding_completed,
       projects: draftProjects.map((project) => ({
         ...project,
         technologies: project.technologies.split(",").map((technology) => technology.trim()).filter(Boolean),
@@ -316,12 +355,12 @@ export default function StudentDashboardPage() {
           <div className={styles.portfolioHeader}>
             <div>
               <p className={styles.cardEyebrow}>YOUR EXPERIENCE</p>
-              <h2 id="portfolio-title">Skills &amp; projects</h2>
-              <p>Showcase the skills you have learned and the projects you have built.</p>
+              <h2 id="portfolio-title">Your learner profile</h2>
+              <p>Review and update the information ORVEXA uses to personalize your guidance.</p>
             </div>
             {!isEditingPortfolio && (
               <button className={styles.editButton} type="button" onClick={startPortfolioEdit}>
-                Edit skills &amp; projects
+                Edit learner profile
               </button>
             )}
           </div>
@@ -329,7 +368,26 @@ export default function StudentDashboardPage() {
           {isEditingPortfolio ? (
             <form className={styles.portfolioForm} onSubmit={handleSavePortfolio}>
               <label className={styles.portfolioField}>
-                <span>Skills</span>
+                <span>Current status</span>
+                <select value={draftCurrentStatus} onChange={(event) => setDraftCurrentStatus(event.target.value)}>
+                  <option value="">Not specified</option>
+                  <option value="student">Student</option>
+                  <option value="graduate">Graduate</option>
+                  <option value="working_professional">Working professional</option>
+                </select>
+              </label>
+              <label className={styles.portfolioField}>
+                <span>Education level</span>
+                <input
+                  type="text"
+                  value={draftEducationLevel}
+                  onChange={(event) => setDraftEducationLevel(event.target.value)}
+                  maxLength={120}
+                  placeholder="For example, bachelor's degree"
+                />
+              </label>
+              <label className={styles.portfolioField}>
+                <span>Skills I know</span>
                 <textarea
                   value={draftSkills}
                   onChange={(event) => setDraftSkills(event.target.value)}
@@ -337,7 +395,49 @@ export default function StudentDashboardPage() {
                   maxLength={3000}
                   rows={4}
                 />
-                <small>Enter one skill per line or separate skills with commas (up to 30).</small>
+                <small>Enter skills you already know, one per line (up to 30).</small>
+              </label>
+              <label className={styles.portfolioField}>
+                <span>Skills I want to learn</span>
+                <textarea
+                  value={draftLearningSkills}
+                  onChange={(event) => setDraftLearningSkills(event.target.value)}
+                  placeholder={"Machine learning\nCloud computing"}
+                  maxLength={3000}
+                  rows={4}
+                />
+                <small>Enter skills you want to develop, one per line (up to 30).</small>
+              </label>
+              <label className={styles.portfolioField}>
+                <span>Experience</span>
+                <textarea
+                  value={draftExperience}
+                  onChange={(event) => setDraftExperience(event.target.value)}
+                  placeholder={"Software intern | Example Co. | Helped build a reporting tool | 2024 | 2025"}
+                  maxLength={12000}
+                  rows={4}
+                />
+                <small>One per line: role | organization | description | start date | end date.</small>
+              </label>
+              <label className={styles.portfolioField}>
+                <span>Interests</span>
+                <textarea
+                  value={draftInterests}
+                  onChange={(event) => setDraftInterests(event.target.value)}
+                  placeholder={"Artificial intelligence\nWeb development"}
+                  maxLength={3000}
+                  rows={3}
+                />
+              </label>
+              <label className={styles.portfolioField}>
+                <span>Goals</span>
+                <textarea
+                  value={draftGoals}
+                  onChange={(event) => setDraftGoals(event.target.value)}
+                  placeholder={"Build my first app\nPrepare for a new role"}
+                  maxLength={3000}
+                  rows={3}
+                />
               </label>
 
               <div className={styles.projectEditorHeader}>
@@ -402,10 +502,19 @@ export default function StudentDashboardPage() {
                 </fieldset>
               ))}
 
+              <label className={styles.profileConsent}>
+                <input
+                  type="checkbox"
+                  checked={draftConsent}
+                  onChange={(event) => setDraftConsent(event.target.checked)}
+                />
+                <span>Allow ORVEXA to use my learner profile for personalized guidance.</span>
+              </label>
+
               {error && <p className={styles.pageError} role="alert">{error}</p>}
               <div className={styles.editActions}>
                 <button className={styles.saveButton} type="submit" disabled={isSavingPortfolio}>
-                  {isSavingPortfolio ? "Saving..." : "Save skills & projects"}
+                  {isSavingPortfolio ? "Saving..." : "Save learner profile"}
                 </button>
                 <button
                   className={styles.cancelButton}
@@ -423,7 +532,14 @@ export default function StudentDashboardPage() {
           ) : (
             <div className={styles.portfolioContent}>
               <div className={styles.portfolioGroup}>
-                <h3>Skills</h3>
+                <h3>About you</h3>
+                <p className={styles.profileSummary}>
+                  {portfolio.current_status?.replaceAll("_", " ") || "Status not added"}
+                  {portfolio.education_level ? ` · ${portfolio.education_level}` : ""}
+                </p>
+              </div>
+              <div className={styles.portfolioGroup}>
+                <h3>Skills I know</h3>
                 {portfolio.skills.length ? (
                   <ul className={styles.skillList}>
                     {portfolio.skills.map((skill, index) => <li key={`${skill}-${index}`}>{skill}</li>)}
@@ -431,6 +547,50 @@ export default function StudentDashboardPage() {
                 ) : (
                   <p className={styles.emptyPortfolio}>No skills added yet.</p>
                 )}
+              </div>
+              <div className={styles.portfolioGroup}>
+                <h3>Skills I want to learn</h3>
+                {portfolio.learning_skills?.length ? (
+                  <ul className={styles.skillList}>
+                    {portfolio.learning_skills.map((skill, index) => <li key={`${skill}-${index}`}>{skill}</li>)}
+                  </ul>
+                ) : (
+                  <p className={styles.emptyPortfolio}>No learning goals added yet.</p>
+                )}
+              </div>
+              <div className={styles.portfolioGroup}>
+                <h3>Experience</h3>
+                {portfolio.experience?.length ? (
+                  <div className={styles.projectList}>
+                    {portfolio.experience.map((item, index) => (
+                      <article className={styles.projectCard} key={`${item.role}-${index}`}>
+                        <h4>{item.role}</h4>
+                        {item.organization && <p>{item.organization}</p>}
+                        {item.description && <p>{item.description}</p>}
+                        {(item.startDate || item.endDate) && <p>{[item.startDate, item.endDate].filter(Boolean).join(" – ")}</p>}
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <p className={styles.emptyPortfolio}>No experience added yet.</p>
+                )}
+              </div>
+              <div className={styles.profileSummaryGrid}>
+                <div className={styles.portfolioGroup}>
+                  <h3>Interests</h3>
+                  <p className={styles.profileSummary}>{portfolio.interests?.join(", ") || "No interests added yet."}</p>
+                </div>
+                <div className={styles.portfolioGroup}>
+                  <h3>Goals</h3>
+                  <p className={styles.profileSummary}>{portfolio.goals?.join(", ") || "No goals added yet."}</p>
+                </div>
+              </div>
+              <div className={styles.portfolioGroup}>
+                <h3>Personalized guidance</h3>
+                <p className={styles.profileSummary}>
+                  {portfolio.ai_personalization_consent ? "Allowed" : "Not allowed"}
+                  {portfolio.onboarding_completed ? " · Learner profile complete" : " · Learner profile not complete"}
+                </p>
               </div>
               <div className={styles.portfolioGroup}>
                 <h3>Projects</h3>
