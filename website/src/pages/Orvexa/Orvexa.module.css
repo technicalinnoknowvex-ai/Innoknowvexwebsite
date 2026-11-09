@@ -427,6 +427,52 @@
   padding:30px 25px 20px
 }
 
+.conversationChat {
+  text-align:left
+}
+
+.chatMessages {
+  display:grid;
+  gap:12px;
+  width:min(620px,100%);
+  margin:0 auto
+}
+
+.chatMessage {
+  max-width:85%;
+  padding:12px 15px;
+  border:1px solid #163a5310;
+  border-radius:16px;
+  background:#fff;
+  color:#38576e;
+  font-size:13px;
+  line-height:1.65;
+  overflow-wrap:anywhere;
+  white-space:pre-wrap
+}
+
+.chatMessage p {
+  margin:0
+}
+
+.userMessage {
+  justify-self:end;
+  border-color:#133d5a;
+  background:#133d5a;
+  color:#fff
+}
+
+.assistantMessage {
+  justify-self:start;
+  box-shadow:0 3px 10px #24415b08
+}
+
+.typingIndicator {
+  margin:0;
+  color:#6b7f90;
+  font-size:12px
+}
+
 .welcomeIcon {
   display:grid;
   place-items:center;

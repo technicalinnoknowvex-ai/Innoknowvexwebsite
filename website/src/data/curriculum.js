@@ -2213,6 +2213,113 @@ const stockMarketCurriculum = [
 ];
 
 
+const supplychainmanagemnet=[
+  {
+    "id": 1,
+    "title": "Introduction to Supply Chain Management",
+    "topics": [
+      "Fundamentals of Supply Chain Management",
+      "Supply Chain Concepts and Components",
+      "Supply Chain Management vs Logistics Management",
+      "Supply Chain Processes and Operations",
+      "Role of Supply Chain Management in Business"
+    ]
+  },
+  {
+    "id": 2,
+    "title": "Procurement & Supplier Management",
+    "topics": [
+      "Introduction to Procurement and Purchasing",
+      "Procurement Cycle and Purchase Requisition",
+      "Supplier Selection and Evaluation",
+      "Vendor Relationship Management",
+      "Purchase Orders, Contracts and Negotiations"
+    ]
+  },
+  {
+    "id": 3,
+    "title": "Inventory & Warehouse Management",
+    "topics": [
+      "Fundamentals of Inventory Management",
+      "Types of Inventory and Stock Classification",
+      "Economic Order Quantity (EOQ)",
+      "Reorder Point and Safety Stock Calculation",
+      "Warehouse Operations and Storage Management"
+    ]
+  },
+  {
+    "id": 4,
+    "title": "Demand Forecasting & Supply Planning",
+    "topics": [
+      "Introduction to Demand Forecasting",
+      "Demand Planning Techniques",
+      "Moving Average and Exponential Smoothing",
+      "Supply Planning and Capacity Planning",
+      "Sales and Operations Planning (S&OP)"
+    ]
+  },
+  {
+    "id": 5,
+    "title": "Logistics & Transportation Management",
+    "topics": [
+      "Fundamentals of Logistics Management",
+      "Transportation Modes and Route Planning",
+      "Freight Management and Cost Optimization",
+      "Distribution and Delivery Management",
+      "Last-Mile Delivery and Reverse Logistics"
+    ]
+  },
+  {
+    "id": 6,
+    "title": "Supply Chain Analytics & Performance Management",
+    "topics": [
+      "Introduction to Supply Chain Analytics",
+      "Key Performance Indicators (KPIs) in Supply Chain",
+      "Supply Chain Cost Analysis",
+      "Data-Driven Decision Making",
+      "Supply Chain Risk Assessment and Management"
+    ]
+  },
+  {
+    "id": 7,
+    "title": "Supply Chain Technology & ERP Systems",
+    "topics": [
+      "Introduction to ERP Systems",
+      "SAP ERP and Supply Chain Management Overview",
+      "Warehouse Management Systems (WMS)",
+      "Transportation Management Systems (TMS)",
+      "Automation, AI and Digital Transformation in Supply Chain"
+    ]
+  },
+  {
+    "id": 8,
+    "title": "Global Supply Chain & Strategic Management",
+    "topics": [
+      "Global Supply Chain Operations",
+      "International Trade and Incoterms",
+      "Import and Export Documentation",
+      "Supply Chain Risk and Business Continuity Planning",
+      "Sustainable and Green Supply Chain Management"
+    ]
+  },
+  {
+    "id": 9,
+    "title": "Advanced Supply Chain Analytics & Capstone Project",
+    "topics": [
+      "Advanced Excel for Supply Chain Management",
+      "Power BI Dashboards for Supply Chain Reporting",
+      "SQL Basics for Supply Chain Data Analysis",
+      "Real-World Supply Chain Case Studies",
+      "End-to-End Supply Chain Optimization Project"
+    ]
+  }
+]
+
+
+
+
+
+
 const uiuxCurriculum = [
   {
     id: 1,
@@ -2768,6 +2875,120 @@ const medicalCodingCurriculum = [
   }
 ];
 
+const ClinicalResearch=[
+  {
+    "id": 1,
+    "title": "Introduction to Clinical Research & Clinical Data Management",
+    "topics": [
+      "Introduction to Clinical Research",
+      "Clinical Trial Fundamentals and Phases (Phase I–IV)",
+      "Role and Importance of Clinical Data Management (CDM)",
+      "Clinical Trial Processes and Data Flow",
+      "Overview of Clinical Data Management"
+    ]
+  },
+  {
+    "id": 2,
+    "title": "Good Clinical Practice (GCP) & Regulatory Guidelines",
+    "topics": [
+      "Introduction to Good Clinical Practice (GCP)",
+      "ICH-GCP Guidelines",
+      "FDA and EMA Regulatory Guidelines",
+      "Ethical Conduct in Clinical Research",
+      "Subject Safety and Data Confidentiality"
+    ]
+  },
+  {
+    "id": 3,
+    "title": "Case Report Form (CRF) Design",
+    "topics": [
+      "Introduction to Case Report Forms (CRF)",
+      "Paper-Based CRF Design",
+      "Electronic Case Report Forms (eCRF)",
+      "CRF Design Principles and Best Practices",
+      "Accurate, Relevant and Consistent Data Collection"
+    ]
+  },
+  {
+    "id": 4,
+    "title": "Clinical Data Entry & Validation",
+    "topics": [
+      "Introduction to Clinical Data Entry",
+      "Manual Data Entry Techniques",
+      "Electronic Data Entry Techniques",
+      "Validation Rules and Edit Checks",
+      "Data Consistency and Accuracy Checks"
+    ]
+  },
+  {
+    "id": 5,
+    "title": "Electronic Data Capture (EDC) Systems",
+    "topics": [
+      "Introduction to Electronic Data Capture (EDC) Systems",
+      "Overview of Medidata Rave",
+      "Introduction to Oracle Clinical and REDCap",
+      "EDC System Navigation and Configuration",
+      "Clinical Data Management Using EDC Systems"
+    ]
+  },
+  {
+    "id": 6,
+    "title": "Clinical Data Query Management",
+    "topics": [
+      "Introduction to Query Management",
+      "Identifying Clinical Data Discrepancies",
+      "Query Generation and Management",
+      "Query Resolution Processes",
+      "Communication Between CDM Teams and Site Personnel"
+    ]
+  },
+  {
+    "id": 7,
+    "title": "Clinical Data Collection & Management",
+    "topics": [
+      "Clinical Data Collection Techniques",
+      "Clinical Dataset Review and Cleaning",
+      "Clinical Data Quality Management",
+      "External Data Reconciliation",
+      "Reconciliation with Laboratory and Safety Databases"
+    ]
+  },
+  {
+    "id": 8,
+    "title": "Database Lock & Data Archival",
+    "topics": [
+      "Introduction to Clinical Database Management",
+      "Pre-Lock Database Review and Preparation",
+      "Clinical Database Lock Procedures",
+      "Database Finalization for Statistical Analysis",
+      "Clinical Data Documentation and Archival"
+    ]
+  },
+  {
+    "id": 9,
+    "title": "Clinical Data Quality Control & Audits",
+    "topics": [
+      "Introduction to Clinical Data Quality Control",
+      "Internal Quality Control (QC) Processes",
+      "Clinical Data Quality Assurance",
+      "Regulatory Audit Preparation",
+      "Clinical Research Inspections and Compliance"
+    ]
+  },
+  {
+    "id": 10,
+    "title": "Career & Industry Readiness",
+    "topics": [
+      "Introduction to Clinical Data Management Career Roles",
+      "Resume Preparation and Profile Building",
+      "Clinical Data Management Interview Preparation",
+      "Clinical Industry Case Studies",
+      "Mock Projects and Practical Industry Experience"
+    ]
+  }
+]
+
+
 const curriculumByProgramKey = {
   "web-development": webDevelopmentCurriculum,
   "android-development": mobileDevelopmentCurriculum,
@@ -2797,8 +3018,13 @@ const curriculumByProgramKey = {
   "java-programming": javaCurriculum,
   "mern-stack": webDevelopmentCurriculum,
   "business-management": businessCurriculum,
-  "clinical-data-management": medicalCurriculum,
-  "clinical-trials-and-research": medicalCurriculum,
+  "clinical-data-management": ClinicalResearch,
+  "clinical-training-and-research": ClinicalResearch,
+  "clinical-training-research": ClinicalResearch,
+  "clinical-trials-and-research": ClinicalResearch,
+  "operations-and-supply-chain-management": supplychainmanagemnet,
+  "operations-supply-chain-management": supplychainmanagemnet,
+  "supply-chain-management": supplychainmanagemnet,
   "c-cpp": programmingCurriculum,
   "c-cpp-programming": programmingCurriculum,
   "autocad": autoCADCurriculum,
@@ -2892,4 +3118,3 @@ export function getCurriculumForProgram(program) {
 
   return typeof selected === "function" ? selected(programKey) : selected;
 }
-
