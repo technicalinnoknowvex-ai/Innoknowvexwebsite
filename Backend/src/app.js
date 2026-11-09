@@ -6,6 +6,7 @@ const studentLeadRoutes = require("./routes/studentLeadRoutes");
 const partnershipInquiryRoutes = require("./routes/partnershipInquiryRoutes");
 const careerRoutes = require("./routes/careerRoutes");
 const authRoutes = require("./routes/authRoutes");
+const assistantRoutes = require("./routes/assistantRoutes");
 const programRoutes = require("./routes/programRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const testimonialRoutes = require("./routes/testimonialRoutes");
@@ -45,6 +46,7 @@ app.get("/health", (request, response) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/assistant", assistantRoutes);
 app.use("/api/leads", studentLeadRoutes);
 app.use("/api/partnership-inquiries", partnershipInquiryRoutes);
 app.use("/api/careers", careerRoutes);

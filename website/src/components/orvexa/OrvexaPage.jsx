@@ -12,6 +12,7 @@ import {
   getStudentPortfolio,
   updateStudentPortfolio,
 } from "../../lib/auth-api";
+import { sendAssistantMessage } from "../../lib/assistant-api";
 
 const EMPTY_PROFILE = {
   current_status: "",
@@ -92,6 +93,8 @@ export default function OrvexaPage() {
   const [robotMode, setRobotMode] = useState("idle");
   const [draft, setDraft] = useState("");
   const [notice, setNotice] = useState("");
+  const [messages, setMessages] = useState([]);
+  const [isSending, setIsSending] = useState(false);
   const [profileStatus, setProfileStatus] = useState("loading");
   const [profileError, setProfileError] = useState("");
   const [profile, setProfile] = useState(EMPTY_PROFILE);
@@ -103,6 +106,7 @@ export default function OrvexaPage() {
   const launchRef = useRef(null);
   const closeRef = useRef(null);
   const inputRef = useRef(null);
+  const conversationRef = useRef(null);
   const audioRef = useRef(null);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -122,6 +126,15 @@ export default function OrvexaPage() {
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = previousOverflow; };
   }, [stage]);
+
+  useEffect(() => {
+    if (messages.length || isSending) {
+      conversationRef.current?.scrollTo({
+        top: conversationRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+  }, [messages, isSending]);
 
   useEffect(() => {
     const url = new URL(window.location.href);
@@ -442,10 +455,38 @@ export default function OrvexaPage() {
     window.requestAnimationFrame(() => launchRef.current?.focus());
   };
 
-  const submitMessage = (event) => {
+  const submitMessage = async (event) => {
     event.preventDefault();
-    if (!draft.trim()) return;
-    setNotice("This is an interface preview. Live ORVEXA replies are not connected yet; your message has not been sent.");
+    const message = draft.trim();
+    if (!message || isSending) return;
+
+    const accessToken = window.sessionStorage.getItem("innoknowvex_access_token");
+    if (!accessToken) {
+      setProfileStatus("signed-out");
+      setSkipProfileSetup(false);
+      return;
+    }
+
+    setDraft("");
+    setNotice("");
+    setMessages((previous) => [...previous, { role: "user", content: message }]);
+    setIsSending(true);
+
+    try {
+      const reply = await sendAssistantMessage(accessToken, message);
+      setMessages((previous) => [...previous, { role: "assistant", content: reply }]);
+    } catch (error) {
+      setMessages((previous) => previous.slice(0, -1));
+      setDraft(message);
+      if (error.status === 401) {
+        clearAuthStorage();
+        setProfileStatus("signed-out");
+        setSkipProfileSetup(false);
+      }
+      setNotice(error.message || "ORVEXA could not reply. Please try again.");
+    } finally {
+      setIsSending(false);
+    }
   };
 
   function editSavedProfileStep(step) {
@@ -505,7 +546,7 @@ export default function OrvexaPage() {
           <div className={styles.floatingShards} aria-hidden="true"><i /><i /><i /></div>
           <div className={styles.topline} inert={stage === "chat"}>
             <Link href="/" className={styles.homeLink}>← Back to home</Link>
-            <span className={styles.previewBadge}><span /> EXPERIENCE PREVIEW</span>
+            <span className={styles.previewBadge}><span /> TEXT CHAT · AI ENABLED</span>
           </div>
 
           <div className={styles.heading} aria-hidden={stage === "chat"}>
@@ -541,7 +582,7 @@ export default function OrvexaPage() {
               </span>
             </button>
             <p className={styles.launchHint}>Type or speak. Let’s find your next step.</p>
-            <span className={styles.previewNote}>Interface preview · Live AI coming soon</span>
+            <span className={styles.previewNote}>AI-powered text chat · Voice is not connected yet</span>
           </div>
 
           {stage === "chat" && <div className={styles.chatLayer}>
@@ -574,11 +615,14 @@ export default function OrvexaPage() {
               }}>
               <header className={styles.chatHeader}>
                 <div className={styles.assistantMark} data-orvexa-art="true"><OrbitMark className={styles.headerOrbit} /></div>
-                <div><h2 id="chat-title">ORVEXA</h2><p>Learning & career companion · Preview</p></div>
+                <div><h2 id="chat-title">ORVEXA</h2><p>Learning & career companion · AI powered</p></div>
                 {stuntEnabled && <button type="button" className={styles.motionToggle} aria-label="Play robot move" onClick={playRobotStunt} title="Play robot gymnastics"><Play size={14} /><span>Robot move</span></button>}
                 <button ref={closeRef} type="button" className={styles.iconButton} aria-label="Close ORVEXA" onClick={closeAssistant}><X size={21} /></button>
               </header>
-              <div className={`${styles.conversation} ${(["incomplete", "complete", "signed-out", "error"].includes(profileStatus) && !skipProfileSetup) ? styles.conversationForm : ""}`}>
+              <div
+                ref={conversationRef}
+                className={`${styles.conversation} ${(["incomplete", "complete", "signed-out", "error"].includes(profileStatus) && !skipProfileSetup) ? styles.conversationForm : ""} ${messages.length ? styles.conversationChat : ""}`}
+              >
                 {profileStatus === "loading" && (
                   <div className={styles.profileMessage} role="status">Loading your learner profile…</div>
                 )}
@@ -673,8 +717,19 @@ export default function OrvexaPage() {
                               <textarea value={profileDraft.goals} onChange={(event) => setProfileDraft((previous) => ({ ...previous, goals: event.target.value }))} maxLength={3000} rows={3} placeholder={"Build my first app\nPrepare for a new role"} />
                             </label>
                             <label className={styles.consentField}>
-                              <input type="checkbox" checked={profileDraft.ai_personalization_consent} onChange={(event) => setProfileDraft((previous) => ({ ...previous, ai_personalization_consent: event.target.checked }))} />
-                              <span>I agree to save this profile so ORVEXA can personalize learning and career guidance. I can edit my answers or withdraw consent later.</span>
+                              <input
+                                type="checkbox"
+                                checked={profileDraft.ai_personalization_consent}
+                                onChange={(event) => {
+                                  const consent = event.target.checked;
+                                  setProfileDraft((previous) => ({
+                                    ...previous,
+                                    ai_personalization_consent: consent,
+                                  }));
+                                  if (consent) setProfileError("");
+                                }}
+                              />
+                              <span>I agree to save this profile and share these details with ORVEXA’s AI provider, Google Gemini, for personalized guidance. I can edit my answers or withdraw consent later.</span>
                             </label>
                           </div>
                         )}
@@ -685,6 +740,10 @@ export default function OrvexaPage() {
                             setProfileError("");
                             if (profileStep === 0 && !profileDraft.current_status) {
                               setProfileError("Choose whether you are a student, graduate, or working professional.");
+                              return;
+                            }
+                            if (profileStep === 3 && !profileDraft.ai_personalization_consent) {
+                              setProfileError("Select the consent checkbox before reviewing and saving your profile.");
                               return;
                             }
                             setProfileStep((step) => step + 1);
@@ -737,7 +796,21 @@ export default function OrvexaPage() {
                   </section>
                 )}
 
-                {skipProfileSetup && (
+                {messages.length > 0 && (
+                  <div className={styles.chatMessages} aria-live="polite">
+                    {messages.map((message, index) => (
+                      <div
+                        className={`${styles.chatMessage} ${message.role === "user" ? styles.userMessage : styles.assistantMessage}`}
+                        key={`${message.role}-${index}`}
+                      >
+                        <p>{message.content}</p>
+                      </div>
+                    ))}
+                    {isSending && <p className={styles.typingIndicator} role="status">ORVEXA is thinking…</p>}
+                  </div>
+                )}
+
+                {skipProfileSetup && messages.length === 0 && (
                   <div className={styles.profileMessage}>
                     <span className={styles.welcomeIcon} data-orvexa-art="true"><span className={styles.orbitMotion}><OrbitMark className={styles.welcomeOrbit} /></span></span>
                     <p className={styles.eyebrow}>YOUR AMBITION. OUR STARTING POINT.</p>
@@ -753,11 +826,11 @@ export default function OrvexaPage() {
               </div>
               {profileStatus === "complete" && skipProfileSetup && (
                 <div className={styles.composerArea}>
-                  <p className={styles.notice} role="status">{notice || "Preview only — messages and microphone audio are not sent or recorded."}</p>
+                  <p className={styles.notice} role={notice ? "alert" : "status"}>{notice || "Your message is sent to Google Gemini. Your saved profile is shared only if you consented. Chats aren’t stored."}</p>
                   <form className={styles.composer} onSubmit={submitMessage}>
-                    <textarea ref={inputRef} aria-label="Message ORVEXA" placeholder="What would you like to explore?" rows={1} maxLength={4000} value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); submitMessage(event); } }} />
+                    <textarea ref={inputRef} aria-label="Message ORVEXA" placeholder="What would you like to explore?" rows={1} maxLength={4000} value={draft} disabled={isSending} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); submitMessage(event); } }} />
                     <button type="button" className={styles.micButton} aria-label="Voice preview information" onClick={() => setNotice("Voice conversations are not connected yet. Your microphone has not been activated.")}><Mic size={19} /></button>
-                    <button type="submit" className={styles.sendButton} aria-label="Try sending a preview message" disabled={!draft.trim()}><ArrowUp size={21} /></button>
+                    <button type="submit" className={styles.sendButton} aria-label="Send message to ORVEXA" disabled={!draft.trim() || isSending}>{isSending ? "…" : <ArrowUp size={21} />}</button>
                   </form>
                   <p className={styles.composerFootnote}>Built for your possibilities. Designed around you.</p>
                 </div>

@@ -15,6 +15,20 @@ variable to allow additional frontend origins. A loopback `FRONTEND_URL` is igno
 when `NODE_ENV=production` or the backend is running on Render, preventing
 verification links from pointing to localhost.
 
+## ORVEXA AI chat
+
+Set `GEMINI_API_KEY` in the backend `.env` and in the backend hosting provider's
+secret settings. The optional `GEMINI_MODEL` setting defaults to `gemini-2.5-flash`.
+Never expose the key in frontend code or a `NEXT_PUBLIC_*` variable.
+
+Authenticated clients can send `{ "message": "..." }` to
+`POST /api/assistant/chat`. The endpoint uses course descriptions and curriculum
+from `programs_new`. It adds the authenticated learner's profile context only when
+`ai_personalization_consent` is true. Messages, course data, and any consented profile
+context are sent to Google's Gemini API to generate a reply; chat messages are not
+stored by this endpoint. Do not send sensitive information that is unnecessary for
+learning guidance.
+
 ## Student guidance leads
 
 Run `supabase/student_guidance_leads.sql` in the Supabase SQL Editor. The optional
