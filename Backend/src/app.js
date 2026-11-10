@@ -106,7 +106,7 @@ app.use((error, request, response, next) => {
   response.status(statusCode).json({
     error:
       statusCode >= 500 && !isPaymentRequest
-        ? "Internal server error."
+        ? error.publicMessage || "Internal server error."
         : responseMessage,
     ...(statusCode < 500 && errorCode ? { code: errorCode } : {}),
   });

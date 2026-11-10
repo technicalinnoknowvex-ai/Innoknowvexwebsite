@@ -16,6 +16,7 @@ const STOP_WORDS = new Set([
 function httpError(statusCode, message) {
   const error = new Error(message);
   error.statusCode = statusCode;
+  error.publicMessage = message;
   return error;
 }
 
@@ -205,11 +206,20 @@ function createAssistantController({
     }
 
     if (!providerResponse.ok) {
+      const providerStatus = providerResponse.status;
+      const isUnavailable = providerStatus === 429 || providerStatus >= 500;
+      const message = providerStatus === 400 || providerStatus === 403
+        ? "Google Gemini rejected the API credentials or request. Check the backend GEMINI_API_KEY and API access settings."
+        : providerStatus === 404
+          ? "The configured Google Gemini model was not found. Check the backend GEMINI_MODEL setting."
+          : providerStatus === 429
+            ? "Google Gemini quota or rate limit reached. Check the API project's quota and try again later."
+            : providerStatus >= 500
+              ? "Google Gemini is temporarily unavailable. Please try again shortly."
+              : "ORVEXA could not generate a response. Please try again.";
       throw httpError(
-        providerResponse.status === 429 ? 503 : 502,
-        providerResponse.status === 429
-          ? "ORVEXA is temporarily busy. Please try again shortly."
-          : "ORVEXA could not generate a response. Please try again.",
+        isUnavailable ? 503 : 502,
+        message,
       );
     }
 

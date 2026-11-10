@@ -170,6 +170,40 @@ test("handles missing or blocked provider output explicitly", async () => {
   );
 });
 
+test("reports actionable messages for Gemini credentials, model, and quota failures", async () => {
+  const cases = [
+    [400, /credentials or request/],
+    [403, /credentials or request/],
+    [404, /model was not found/],
+    [429, /quota or rate limit/],
+  ];
+
+  for (const [status, message] of cases) {
+    const dependencies = createDependencies({
+      providerResponse: {
+        ok: false,
+        status,
+        json: async () => ({ error: { message: "provider detail intentionally not exposed" } }),
+      },
+    });
+
+    await assert.rejects(
+      dependencies.chat({
+        body: { message: "Hello" },
+        user: { id: "learner-id" },
+        accessToken: "learner-token",
+      }, createResponse()),
+      (error) => {
+        assert.equal(error.statusCode, status === 429 ? 503 : 502);
+        assert.match(error.message, message);
+        assert.match(error.publicMessage, message);
+        assert.doesNotMatch(error.publicMessage, /provider detail intentionally not exposed/);
+        return true;
+      },
+    );
+  }
+});
+
 test("profile context is omitted without explicit personalization consent", () => {
   assert.equal(profileContext({ ...learnerProfile, ai_personalization_consent: false }), null);
 });
