@@ -174,7 +174,7 @@ test("reports actionable messages for Gemini credentials, model, and quota failu
   const cases = [
     [400, /credentials or request/],
     [403, /credentials or request/],
-    [404, /model was not found/],
+    [404, /model "test-model" was not found or is unavailable/],
     [429, /quota or rate limit/],
   ];
 

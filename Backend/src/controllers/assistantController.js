@@ -211,7 +211,7 @@ function createAssistantController({
       const message = providerStatus === 400 || providerStatus === 403
         ? "Google Gemini rejected the API credentials or request. Check the backend GEMINI_API_KEY and API access settings."
         : providerStatus === 404
-          ? "The configured Google Gemini model was not found. Check the backend GEMINI_MODEL setting."
+          ? `Google Gemini model "${model}" was not found or is unavailable for this API project. Check GEMINI_MODEL or verify model access in Google AI Studio.`
           : providerStatus === 429
             ? "Google Gemini quota or rate limit reached. Check the API project's quota and try again later."
             : providerStatus >= 500
