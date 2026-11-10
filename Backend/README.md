@@ -18,7 +18,10 @@ verification links from pointing to localhost.
 ## ORVEXA AI chat
 
 Set `GEMINI_API_KEY` in the backend `.env` and in the backend hosting provider's
-secret settings. The optional `GEMINI_MODEL` setting defaults to `gemini-2.5-flash`.
+secret settings. The optional `GEMINI_MODEL` setting defaults to
+`gemini-3.5-flash-lite`. If you set `GEMINI_MODEL` in the hosting provider, use a
+model enabled for your Gemini API key; Google limits API access to the deprecated
+`gemini-2.5-flash` model to existing users.
 Never expose the key in frontend code or a `NEXT_PUBLIC_*` variable.
 
 Authenticated clients can send `{ "message": "..." }` to
