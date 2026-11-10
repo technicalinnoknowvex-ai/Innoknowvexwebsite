@@ -191,8 +191,18 @@ function createAssistantController({
         },
       );
     } catch (error) {
-      const providerError = httpError(502, "ORVEXA could not connect to its AI provider.");
+      const timedOut = error?.name === "TimeoutError" || error?.name === "AbortError";
+      const providerError = httpError(
+        timedOut ? 504 : 502,
+        timedOut
+          ? "Google Gemini did not respond within 30 seconds. Please retry."
+          : "ORVEXA could not reach Google Gemini. Check the backend service's outbound network and DNS/TLS connectivity.",
+      );
       providerError.cause = error;
+      providerError.providerFailure = {
+        name: typeof error?.name === "string" ? error.name : "UnknownError",
+        code: typeof error?.cause?.code === "string" ? error.cause.code : undefined,
+      };
       throw providerError;
     }
 

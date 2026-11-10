@@ -29,7 +29,7 @@ function createResponse() {
   };
 }
 
-function createDependencies({ profile = learnerProfile, apiKey = "test-key", providerResponse } = {}) {
+function createDependencies({ profile = learnerProfile, apiKey = "test-key", providerResponse, fetchImpl } = {}) {
   let prompt;
   const database = {
     from(table) {
@@ -54,6 +54,15 @@ function createDependencies({ profile = learnerProfile, apiKey = "test-key", pro
       };
     },
   };
+  const providerFetch = fetchImpl || (async (url, options) => {
+    assert.match(url, /test-model:generateContent$/);
+    assert.equal(options.headers["x-goog-api-key"], apiKey);
+    prompt = JSON.parse(options.body).contents[0].parts[0].text;
+    return providerResponse || {
+      ok: true,
+      json: async () => ({ candidates: [{ content: { parts: [{ text: "Consider Artificial Intelligence because it matches your interest in AI." }] } }] }),
+    };
+  });
   const controller = createAssistantController({
     database,
     apiKey,
@@ -78,15 +87,7 @@ function createDependencies({ profile = learnerProfile, apiKey = "test-key", pro
         },
       };
     },
-    async fetchImpl(url, options) {
-      assert.match(url, /test-model:generateContent$/);
-      assert.equal(options.headers["x-goog-api-key"], apiKey);
-      prompt = JSON.parse(options.body).contents[0].parts[0].text;
-      return providerResponse || {
-        ok: true,
-        json: async () => ({ candidates: [{ content: { parts: [{ text: "Consider Artificial Intelligence because it matches your interest in AI." }] } }] }),
-      };
-    },
+    fetchImpl: providerFetch,
   });
 
   return {
@@ -198,6 +199,43 @@ test("reports actionable messages for Gemini credentials, model, and quota failu
         assert.match(error.message, message);
         assert.match(error.publicMessage, message);
         assert.doesNotMatch(error.publicMessage, /provider detail intentionally not exposed/);
+        return true;
+      },
+    );
+  }
+});
+
+test("reports a Gemini timeout separately from a network connection failure", async () => {
+  const cases = [
+    [
+      Object.assign(new Error("timed out"), { name: "TimeoutError" }),
+      504,
+      /did not respond within 30 seconds/,
+    ],
+    [
+      Object.assign(new TypeError("fetch failed"), { cause: { code: "ENOTFOUND" } }),
+      502,
+      /outbound network and DNS\/TLS connectivity/,
+    ],
+  ];
+
+  for (const [failure, statusCode, publicMessage] of cases) {
+    const dependencies = createDependencies({
+      fetchImpl: async () => { throw failure; },
+    });
+
+    await assert.rejects(
+      dependencies.chat({
+        body: { message: "Hello" },
+        user: { id: "learner-id" },
+        accessToken: "learner-token",
+      }, createResponse()),
+      (error) => {
+        assert.equal(error.statusCode, statusCode);
+        assert.match(error.publicMessage, publicMessage);
+        if (failure.cause?.code) {
+          assert.equal(error.providerFailure.code, "ENOTFOUND");
+        }
         return true;
       },
     );

@@ -99,6 +99,7 @@ app.use((error, request, response, next) => {
       message: errorMessage,
       code: errorCode,
       status: statusCode,
+      ...(error.providerFailure ? { providerFailure: error.providerFailure } : {}),
       stack: error.stack,
     });
   }
