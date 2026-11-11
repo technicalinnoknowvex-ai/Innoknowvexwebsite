@@ -17,6 +17,7 @@ const learnerProfile = {
   interests: ["AI"],
   goals: ["Build useful software"],
   ai_personalization_consent: true,
+  ai_personalization_consent_provider: "groq",
 };
 
 function createResponse() {
@@ -29,7 +30,7 @@ function createResponse() {
   };
 }
 
-function createDependencies({ profile = learnerProfile, apiKey = "test-key", providerResponse } = {}) {
+function createDependencies({ profile = learnerProfile, apiKey = "test-key", providerResponse, fetchImpl } = {}) {
   let prompt;
   const database = {
     from(table) {
@@ -54,6 +55,18 @@ function createDependencies({ profile = learnerProfile, apiKey = "test-key", pro
       };
     },
   };
+  const providerFetch = fetchImpl || (async (url, options) => {
+    assert.equal(url, "https://api.groq.com/openai/v1/chat/completions");
+    assert.equal(options.headers.Authorization, `Bearer ${apiKey}`);
+    const body = JSON.parse(options.body);
+    assert.equal(body.model, "test-model");
+    assert.equal(body.messages[0].role, "system");
+    prompt = body.messages[1].content;
+    return providerResponse || {
+      ok: true,
+      json: async () => ({ choices: [{ message: { content: "Consider Artificial Intelligence because it matches your interest in AI." } }] }),
+    };
+  });
   const controller = createAssistantController({
     database,
     apiKey,
@@ -78,15 +91,7 @@ function createDependencies({ profile = learnerProfile, apiKey = "test-key", pro
         },
       };
     },
-    async fetchImpl(url, options) {
-      assert.match(url, /test-model:generateContent$/);
-      assert.equal(options.headers["x-goog-api-key"], apiKey);
-      prompt = JSON.parse(options.body).contents[0].parts[0].text;
-      return providerResponse || {
-        ok: true,
-        json: async () => ({ candidates: [{ content: { parts: [{ text: "Consider Artificial Intelligence because it matches your interest in AI." }] } }] }),
-      };
-    },
+    fetchImpl: providerFetch,
   });
 
   return {
@@ -95,7 +100,7 @@ function createDependencies({ profile = learnerProfile, apiKey = "test-key", pro
   };
 }
 
-test("sends course curriculum and consented profile to Gemini and returns its reply", async () => {
+test("sends course curriculum and Groq-consented profile to Groq and returns its reply", async () => {
   const dependencies = createDependencies();
   const response = createResponse();
 
@@ -156,7 +161,7 @@ test("handles missing or blocked provider output explicitly", async () => {
   const dependencies = createDependencies({
     providerResponse: {
       ok: true,
-      json: async () => ({ candidates: [] }),
+      json: async () => ({ choices: [] }),
     },
   });
 
@@ -170,11 +175,12 @@ test("handles missing or blocked provider output explicitly", async () => {
   );
 });
 
-test("reports actionable messages for Gemini credentials, model, and quota failures", async () => {
+test("reports actionable messages for Groq credentials, model, and quota failures", async () => {
   const cases = [
-    [400, /credentials or request/],
-    [403, /credentials or request/],
-    [404, /model was not found/],
+    [400, /rejected the chat request/],
+    [401, /rejected the API key or account access/],
+    [403, /rejected the API key or account access/],
+    [404, /model "test-model" was not found or is unavailable/],
     [429, /quota or rate limit/],
   ];
 
@@ -204,8 +210,55 @@ test("reports actionable messages for Gemini credentials, model, and quota failu
   }
 });
 
+test("reports a Groq timeout separately from a network connection failure", async () => {
+  const cases = [
+    [
+      Object.assign(new Error("timed out"), { name: "TimeoutError" }),
+      504,
+      /did not respond within 30 seconds/,
+    ],
+    [
+      Object.assign(new TypeError("fetch failed"), { cause: { code: "ENOTFOUND" } }),
+      502,
+      /outbound network and DNS\/TLS connectivity/,
+    ],
+  ];
+
+  for (const [failure, statusCode, publicMessage] of cases) {
+    const dependencies = createDependencies({
+      fetchImpl: async () => { throw failure; },
+    });
+
+    await assert.rejects(
+      dependencies.chat({
+        body: { message: "Hello" },
+        user: { id: "learner-id" },
+        accessToken: "learner-token",
+      }, createResponse()),
+      (error) => {
+        assert.equal(error.statusCode, statusCode);
+        assert.match(error.publicMessage, publicMessage);
+        if (failure.cause?.code) {
+          assert.equal(error.providerFailure.code, "ENOTFOUND");
+        }
+        return true;
+      },
+    );
+  }
+});
+
 test("profile context is omitted without explicit personalization consent", () => {
   assert.equal(profileContext({ ...learnerProfile, ai_personalization_consent: false }), null);
+});
+
+test("does not reuse consent given to a different AI provider", () => {
+  assert.equal(
+    profileContext({
+      ...learnerProfile,
+      ai_personalization_consent_provider: "gemini",
+    }),
+    null,
+  );
 });
 
 test("course selection prioritizes matching course details and caps curriculum context", () => {

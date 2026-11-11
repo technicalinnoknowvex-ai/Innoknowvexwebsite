@@ -270,6 +270,11 @@ function requireStudentPortfolio(request) {
     }
   }
 
+  if (Object.hasOwn(profile, "ai_personalization_consent")) {
+    profile.ai_personalization_consent_provider =
+      profile.ai_personalization_consent ? "groq" : null;
+  }
+
   return profile;
 }
 
