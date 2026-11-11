@@ -30,25 +30,43 @@ function createResponse() {
   };
 }
 
-function createDependencies({ profile = learnerProfile, apiKey = "test-key", providerResponse, fetchImpl } = {}) {
+function createDependencies({
+  profile = learnerProfile,
+  apiKey = "test-key",
+  providerResponse,
+  pricingError = null,
+  fetchImpl,
+} = {}) {
   let prompt;
   const database = {
     from(table) {
-      assert.equal(table, "programs_new");
+      assert.ok(["programs_new", "program_pricing_new"].includes(table));
       return {
         select(fields) {
-          assert.match(fields, /curriculum/);
+          if (table === "programs_new") assert.match(fields, /curriculum/);
+          else assert.match(fields, /self_current_price/);
           return {
             order: async () => ({
-              data: [{
-                title: "Artificial Intelligence",
-                slug: "artificial-intelligence",
-                category: "Data Science & AI",
-                short_description: "Explore AI fundamentals.",
-                curriculum: [{ title: "AI foundations", topics: ["Search", "Reasoning"] }],
-                internship: false,
-              }],
-              error: null,
+              data: table === "programs_new"
+                ? [{
+                  title: "Artificial Intelligence",
+                  slug: "artificial-intelligence",
+                  category: "Data Science & AI",
+                  short_description: "Explore AI fundamentals.",
+                  curriculum: [{ title: "AI foundations", topics: ["Search", "Reasoning"] }],
+                  internship: false,
+                }]
+                : [{
+                  course_name: "Artificial Intelligence",
+                  self_actual_price: 25000,
+                  self_current_price: 19999,
+                  mentor_actual_price: 35000,
+                  mentor_current_price: 29999,
+                  professional_actual_price: 50000,
+                  professional_current_price: 44999,
+                  currency: "INR",
+                }],
+              error: table === "program_pricing_new" ? pricingError : null,
             }),
           };
         },
@@ -113,7 +131,26 @@ test("sends course curriculum and Groq-consented profile to Groq and returns its
   assert.equal(response.body.data.reply, "Consider Artificial Intelligence because it matches your interest in AI.");
   assert.match(dependencies.getPrompt(), /AI foundations/);
   assert.match(dependencies.getPrompt(), /skillsToLearn/);
+  assert.match(dependencies.getPrompt(), /"selfLearning":\{"actualPrice":25000,"currentPrice":19999\}/);
+  assert.match(dependencies.getPrompt(), /"currency":"INR"/);
+  assert.match(dependencies.getPrompt(), /exact current and actual price/);
   assert.doesNotMatch(dependencies.getPrompt(), /private\.example/);
+});
+
+test("does not call Groq when the website pricing query fails", async () => {
+  const dependencies = createDependencies({
+    pricingError: new Error("Pricing table unavailable."),
+    fetchImpl: async () => { throw new Error("Groq should not be called."); },
+  });
+
+  await assert.rejects(
+    dependencies.chat({
+      body: { message: "What is the course fee?" },
+      user: { id: "learner-id" },
+      accessToken: "learner-token",
+    }, createResponse()),
+    /Pricing table unavailable/,
+  );
 });
 
 test("does not include profile details when personalization consent is absent", async () => {

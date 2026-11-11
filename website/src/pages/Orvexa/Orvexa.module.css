@@ -445,13 +445,14 @@
   border-radius:16px;
   background:#fff;
   color:#38576e;
-  font-size:13px;
-  line-height:1.65;
+  font-family:var(--font-geist-sans),Arial,Helvetica,sans-serif;
+  font-size:14px;
+  line-height:1.7;
   overflow-wrap:anywhere;
   white-space:pre-wrap
 }
 
-.chatMessage p {
+.chatMessage>p {
   margin:0
 }
 
@@ -464,7 +465,109 @@
 
 .assistantMessage {
   justify-self:start;
+  max-width:min(94%,650px);
+  padding:16px 19px;
+  border-radius:8px 18px 18px 18px;
   box-shadow:0 3px 10px #24415b08
+}
+
+.markdownMessage {
+  white-space:normal
+}
+
+.markdownMessage>*:first-child {
+  margin-top:0
+}
+
+.markdownMessage>*:last-child {
+  margin-bottom:0
+}
+
+.markdownMessage p {
+  margin:0 0 12px
+}
+
+.markdownMessage h1,.markdownMessage h2,.markdownMessage h3,.markdownMessage h4 {
+  margin:18px 0 9px;
+  color:#173d59;
+  font-size:1.05em;
+  font-weight:700;
+  line-height:1.35
+}
+
+.markdownMessage ul,.markdownMessage ol {
+  display:grid;
+  gap:5px;
+  margin:8px 0 14px;
+  padding-left:22px
+}
+
+.markdownMessage li::marker {
+  color:#2781ac
+}
+
+.markdownMessage strong {
+  color:#173d59;
+  font-weight:700
+}
+
+.markdownMessage a {
+  color:#1677a5;
+  text-decoration:underline;
+  text-underline-offset:2px
+}
+
+.markdownMessage blockquote {
+  margin:12px 0;
+  padding:4px 0 4px 13px;
+  border-left:3px solid #80c4e3;
+  color:#667f91
+}
+
+.markdownMessage code {
+  padding:2px 5px;
+  border-radius:5px;
+  background:#e9f1f6;
+  color:#17425f;
+  font-family:var(--font-geist-mono),monospace;
+  font-size:.9em
+}
+
+.markdownMessage pre {
+  overflow-x:auto;
+  margin:12px 0;
+  padding:13px;
+  border-radius:10px;
+  background:#102a3d;
+  color:#eef8ff
+}
+
+.markdownMessage pre code {
+  padding:0;
+  background:none;
+  color:inherit;
+  font-size:.88em
+}
+
+.markdownMessage table {
+  display:block;
+  overflow-x:auto;
+  width:100%;
+  margin:12px 0;
+  border-collapse:collapse;
+  font-size:.92em
+}
+
+.markdownMessage th,.markdownMessage td {
+  padding:8px 10px;
+  border:1px solid #dce7ee;
+  text-align:left
+}
+
+.markdownMessage th {
+  background:#edf5fa;
+  color:#173d59;
+  font-weight:700
 }
 
 .typingIndicator {

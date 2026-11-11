@@ -5,6 +5,8 @@ import Image from "next/image";
 import orbitImage from "../../assets/images/orvexa/orbit-transparent.webp";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowUpRight, ArrowUp, Mic, Play, X, Volume2 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import Header from "../layout/Header/Header";
 import styles from "../../pages/Orvexa/Orvexa.module.css";
 import {
@@ -813,7 +815,11 @@ export default function OrvexaPage() {
                         className={`${styles.chatMessage} ${message.role === "user" ? styles.userMessage : styles.assistantMessage}`}
                         key={`${message.role}-${index}`}
                       >
-                        <p>{message.content}</p>
+                        {message.role === "assistant" ? (
+                          <div className={styles.markdownMessage}>
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
+                          </div>
+                        ) : <p>{message.content}</p>}
                       </div>
                     ))}
                     {isSending && <p className={styles.typingIndicator} role="status">ORVEXA is thinking…</p>}

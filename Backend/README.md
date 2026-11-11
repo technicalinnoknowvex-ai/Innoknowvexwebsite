@@ -28,11 +28,14 @@ choosing a model. Never expose the key in frontend code or a `NEXT_PUBLIC_*` var
 
 Authenticated clients can send `{ "message": "..." }` to
 `POST /api/assistant/chat`. The endpoint uses course descriptions and curriculum
-from `programs_new`. It adds the authenticated learner's profile context only when
+from `programs_new`, plus current/actual plan prices from `program_pricing_new`.
+It adds the authenticated learner's profile context only when
 `ai_personalization_consent` is true and the consent provider is `groq`. Messages,
-course data, and any newly consented profile context are sent to Groq to generate a
-reply; chat messages are not stored by this endpoint. Do not send sensitive
-information that is unnecessary for learning guidance.
+course/pricing data, and any newly consented profile context are sent to Groq to
+generate a reply; chat messages are not stored by this endpoint. Innoknowvex-specific
+answers are limited to facts in this context; general educational questions can be
+answered using the model's general knowledge. Do not send sensitive information that
+is unnecessary for learning guidance.
 
 ## Student guidance leads
 
