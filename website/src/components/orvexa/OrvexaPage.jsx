@@ -24,6 +24,7 @@ const EMPTY_PROFILE = {
   interests: [],
   goals: [],
   ai_personalization_consent: false,
+  ai_personalization_consent_provider: null,
   onboarding_completed: false,
 };
 const ORVEXA_RETURN_PATH = "/orvexa?openChat=1";
@@ -42,7 +43,9 @@ function profileToDraft(profile = EMPTY_PROFILE) {
       .join("\n"),
     interests: (profile.interests || []).join("\n"),
     goals: (profile.goals || []).join("\n"),
-    ai_personalization_consent: profile.ai_personalization_consent === true,
+    ai_personalization_consent:
+      profile.ai_personalization_consent === true &&
+      profile.ai_personalization_consent_provider === "groq",
   };
 }
 
@@ -503,7 +506,7 @@ export default function OrvexaPage() {
       setProfileStatus("signed-out");
       return;
     }
-    if (!profileDraft.ai_personalization_consent) {
+    if (!profileDraft.ai_personalization_consent && !profile.onboarding_completed) {
       setProfileError("Please agree to save your profile for personalized guidance, or skip setup.");
       return;
     }
@@ -511,7 +514,10 @@ export default function OrvexaPage() {
     setIsSavingProfile(true);
     setProfileError("");
     try {
-      const savedProfile = await updateStudentPortfolio(accessToken, draftToProfile(profileDraft));
+      const profileUpdate = profileDraft.ai_personalization_consent
+        ? draftToProfile(profileDraft)
+        : { ai_personalization_consent: false, onboarding_completed: true };
+      const savedProfile = await updateStudentPortfolio(accessToken, profileUpdate);
       setProfile({ ...EMPTY_PROFILE, ...savedProfile });
       setIsEditingProfile(false);
       setProfileStatus("complete");
@@ -729,7 +735,7 @@ export default function OrvexaPage() {
                                   if (consent) setProfileError("");
                                 }}
                               />
-                              <span>I agree to save this profile and share these details with ORVEXA’s AI provider, Google Gemini, for personalized guidance. I can edit my answers or withdraw consent later.</span>
+                              <span>I agree to save this profile and share these details with Groq, ORVEXA’s AI provider, for personalized guidance. I can edit my answers or withdraw consent later.</span>
                             </label>
                           </div>
                         )}
@@ -768,8 +774,12 @@ export default function OrvexaPage() {
                         {profileError && <p className={styles.profileError} role="alert">{profileError}</p>}
                         <div className={styles.onboardingActions}>
                           <button type="button" onClick={() => { setProfileError(""); setProfileStep(3); }}>Back</button>
-                          <button type="button" onClick={saveLearnerProfile} disabled={isSavingProfile || !profileDraft.ai_personalization_consent}>
-                            {isSavingProfile ? "Saving…" : "Save profile"}
+                          <button
+                            type="button"
+                            onClick={saveLearnerProfile}
+                            disabled={isSavingProfile || (!profileDraft.ai_personalization_consent && !profile.onboarding_completed)}
+                          >
+                            {isSavingProfile ? "Saving…" : !profileDraft.ai_personalization_consent && profile.onboarding_completed ? "Save without Groq consent" : "Save profile"}
                           </button>
                         </div>
                       </div>
@@ -826,7 +836,13 @@ export default function OrvexaPage() {
               </div>
               {profileStatus === "complete" && skipProfileSetup && (
                 <div className={styles.composerArea}>
-                  <p className={styles.notice} role={notice ? "alert" : "status"}>{notice || "Your message is sent to Google Gemini. Your saved profile is shared only if you consented. Chats aren’t stored."}</p>
+                  {profile.ai_personalization_consent_provider !== "groq" && (
+                    <div className={styles.profileNotice} role="status">
+                      Your saved profile won’t be shared with Groq until you review and give consent.
+                      <button type="button" onClick={() => editSavedProfileStep(3)}>Review profile consent</button>
+                    </div>
+                  )}
+                  <p className={styles.notice} role={notice ? "alert" : "status"}>{notice || "Your message and relevant course details are sent to Groq. Your saved profile is included only with your Groq consent. Chats aren’t stored."}</p>
                   <form className={styles.composer} onSubmit={submitMessage}>
                     <textarea ref={inputRef} aria-label="Message ORVEXA" placeholder="What would you like to explore?" rows={1} maxLength={4000} value={draft} disabled={isSending} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); submitMessage(event); } }} />
                     <button type="button" className={styles.micButton} aria-label="Voice preview information" onClick={() => setNotice("Voice conversations are not connected yet. Your microphone has not been activated.")}><Mic size={19} /></button>

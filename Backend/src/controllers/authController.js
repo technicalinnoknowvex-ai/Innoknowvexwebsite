@@ -119,7 +119,7 @@ async function getStudentPortfolio(request, response) {
   const { data, error } = await authenticatedSupabase
     .from("user_profiles_new")
     .select(
-      "skills, learning_skills, projects, current_status, education_level, experience, interests, goals, ai_personalization_consent, onboarding_completed",
+      "skills, learning_skills, projects, current_status, education_level, experience, interests, goals, ai_personalization_consent, ai_personalization_consent_provider, onboarding_completed",
     )
     .eq("id", request.user.id)
     .maybeSingle();
@@ -136,6 +136,7 @@ async function getStudentPortfolio(request, response) {
       interests: data?.interests || [],
       goals: data?.goals || [],
       ai_personalization_consent: data?.ai_personalization_consent ?? false,
+      ai_personalization_consent_provider: data?.ai_personalization_consent_provider || null,
       onboarding_completed: data?.onboarding_completed ?? false,
     },
   });
@@ -144,24 +145,32 @@ async function getStudentPortfolio(request, response) {
 async function updateStudentPortfolio(request, response) {
   const profile = requireStudentPortfolio(request);
   const authenticatedSupabase = createAuthenticatedClient(accessTokenFromRequest(request));
-  const { data, error } = await authenticatedSupabase
-    .from("user_profiles_new")
-    .upsert(
-      {
-        id: request.user.id,
-        full_name:
-          request.user.user_metadata?.full_name ||
-          request.user.email?.split("@")[0] ||
-          "Student",
-        email: request.user.email,
-        ...profile,
-      },
-      { onConflict: "id" },
-    )
-    .select(
-      "skills, learning_skills, projects, current_status, education_level, experience, interests, goals, ai_personalization_consent, onboarding_completed",
-    )
-    .single();
+  const isConsentWithdrawal =
+    profile.ai_personalization_consent === false &&
+    profile.onboarding_completed === true &&
+    Object.keys(profile).length === 3;
+  const profileQuery = isConsentWithdrawal
+    ? authenticatedSupabase
+        .from("user_profiles_new")
+        .update(profile)
+        .eq("id", request.user.id)
+    : authenticatedSupabase
+        .from("user_profiles_new")
+        .upsert(
+          {
+            id: request.user.id,
+            full_name:
+              request.user.user_metadata?.full_name ||
+              request.user.email?.split("@")[0] ||
+              "Student",
+            email: request.user.email,
+            ...profile,
+          },
+          { onConflict: "id" },
+        );
+  const { data, error } = await profileQuery.select(
+    "skills, learning_skills, projects, current_status, education_level, experience, interests, goals, ai_personalization_consent, ai_personalization_consent_provider, onboarding_completed",
+  ).single();
 
   if (error) throw error;
   response.json({
@@ -175,6 +184,7 @@ async function updateStudentPortfolio(request, response) {
       interests: data.interests || [],
       goals: data.goals || [],
       ai_personalization_consent: data.ai_personalization_consent ?? false,
+      ai_personalization_consent_provider: data.ai_personalization_consent_provider || null,
       onboarding_completed: data.onboarding_completed ?? false,
     },
     message: "Learner profile updated.",

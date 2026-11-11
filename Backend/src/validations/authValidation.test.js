@@ -46,6 +46,7 @@ test("validates and normalizes learner profile fields", () => {
       interests: ["AI", "Web development"],
       goals: ["Build AI applications"],
       ai_personalization_consent: true,
+      ai_personalization_consent_provider: "groq",
       onboarding_completed: true,
     },
   );
@@ -74,6 +75,7 @@ test("allows partial profile updates and clearing optional collections", () => {
       current_status: null,
       education_level: null,
       ai_personalization_consent: false,
+      ai_personalization_consent_provider: null,
     },
   );
 });

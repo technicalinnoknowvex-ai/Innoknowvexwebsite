@@ -552,6 +552,30 @@
   text-align:center
 }
 
+.profileNotice {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:4px 8px;
+  margin:0 0 10px;
+  color:#6b5b2b;
+  font-size:11px;
+  line-height:1.5;
+  text-align:center
+}
+
+.profileNotice button {
+  border:0;
+  padding:0;
+  background:none;
+  color:#17648a;
+  font:inherit;
+  font-weight:700;
+  text-decoration:underline;
+  cursor:pointer
+}
+
 .composer {
   display:flex;
   align-items:flex-end;
