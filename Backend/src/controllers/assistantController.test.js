@@ -4,6 +4,7 @@ const {
   createAssistantController,
   profileContext,
   extractReply,
+  resolveCourseMatches,
   selectRelevantCourses,
 } = require("./assistantController");
 
@@ -35,40 +36,56 @@ function createDependencies({
   apiKey = "test-key",
   providerResponse,
   pricingError = null,
+  courses = [{
+    title: "Artificial Intelligence",
+    slug: "artificial-intelligence",
+    category: "Data Science & AI",
+    short_description: "Explore AI fundamentals.",
+    curriculum: [{ title: "AI foundations", topics: ["Search", "Reasoning"] }],
+    duration: "6 months",
+    internship: false,
+  }],
+  pricingRows = [{
+    course_name: "Artificial Intelligence",
+    self_actual_price: 25000,
+    self_current_price: 19999,
+    mentor_actual_price: 35000,
+    mentor_current_price: 29999,
+    professional_actual_price: 50000,
+    professional_current_price: 44999,
+    currency: "INR",
+  }],
+  faqs = [],
   fetchImpl,
 } = {}) {
   let prompt;
   const database = {
     from(table) {
-      assert.ok(["programs_new", "program_pricing_new"].includes(table));
+      assert.ok(["programs_new", "program_pricing_new", "company_faq"].includes(table));
       return {
         select(fields) {
-          if (table === "programs_new") assert.match(fields, /curriculum/);
-          else assert.match(fields, /self_current_price/);
-          return {
+          if (table === "programs_new") assert.equal(fields, "*");
+          else if (table === "program_pricing_new") assert.match(fields, /self_current_price/);
+          else assert.match(fields, /keywords/);
+
+          const query = {
             order: async () => ({
               data: table === "programs_new"
-                ? [{
-                  title: "Artificial Intelligence",
-                  slug: "artificial-intelligence",
-                  category: "Data Science & AI",
-                  short_description: "Explore AI fundamentals.",
-                  curriculum: [{ title: "AI foundations", topics: ["Search", "Reasoning"] }],
-                  internship: false,
-                }]
-                : [{
-                  course_name: "Artificial Intelligence",
-                  self_actual_price: 25000,
-                  self_current_price: 19999,
-                  mentor_actual_price: 35000,
-                  mentor_current_price: 29999,
-                  professional_actual_price: 50000,
-                  professional_current_price: 44999,
-                  currency: "INR",
-                }],
+                ? courses
+                : table === "program_pricing_new"
+                  ? pricingRows
+                  : faqs,
               error: table === "program_pricing_new" ? pricingError : null,
             }),
           };
+          if (table === "company_faq") {
+            query.eq = (column, value) => {
+              assert.equal(column, "is_active");
+              assert.equal(value, true);
+              return query;
+            };
+          }
+          return query;
         },
       };
     },
@@ -118,12 +135,12 @@ function createDependencies({
   };
 }
 
-test("sends course curriculum and Groq-consented profile to Groq and returns its reply", async () => {
+test("sends the named course curriculum and consented profile to Groq", async () => {
   const dependencies = createDependencies();
   const response = createResponse();
 
   await dependencies.chat({
-    body: { message: "What course could fit my interests?" },
+    body: { message: "What does the Artificial Intelligence curriculum cover?" },
     user: { id: "learner-id" },
     accessToken: "learner-token",
   }, response);
@@ -133,8 +150,274 @@ test("sends course curriculum and Groq-consented profile to Groq and returns its
   assert.match(dependencies.getPrompt(), /skillsToLearn/);
   assert.match(dependencies.getPrompt(), /"selfLearning":\{"actualPrice":25000,"currentPrice":19999\}/);
   assert.match(dependencies.getPrompt(), /"currency":"INR"/);
-  assert.match(dependencies.getPrompt(), /exact current and actual price/);
   assert.doesNotMatch(dependencies.getPrompt(), /private\.example/);
+});
+
+test("resolves ML and Machine Learning aliases to one course and only its data", async () => {
+  const courses = [
+    {
+      title: "Artificial Intelligence",
+      slug: "artificial-intelligence",
+      category: "Data Science & AI",
+      short_description: "Explore AI fundamentals.",
+      curriculum: [{ title: "AI foundations" }],
+      internship: false,
+    },
+    {
+      title: "Machine Learning",
+      slug: "machine-learning",
+      category: "Data Science & AI",
+      short_description: "Build machine learning models.",
+      curriculum: [{ title: "Machine learning models" }],
+      internship: true,
+    },
+  ];
+  const pricingRows = [
+    {
+      course_name: "Artificial Intelligence",
+      self_actual_price: 25000,
+      self_current_price: 19999,
+      mentor_actual_price: 35000,
+      mentor_current_price: 29999,
+      professional_actual_price: 50000,
+      professional_current_price: 44999,
+      currency: "INR",
+    },
+    {
+      course_name: "Machine Learning",
+      self_actual_price: 30000,
+      self_current_price: 24999,
+      mentor_actual_price: 40000,
+      mentor_current_price: 34999,
+      professional_actual_price: 55000,
+      professional_current_price: 49999,
+      currency: "INR",
+    },
+  ];
+  const dependencies = createDependencies({ courses, pricingRows });
+  const response = createResponse();
+
+  await dependencies.chat({
+    body: { message: "What does the ML course curriculum cover?" },
+    user: { id: "learner-id" },
+    accessToken: "learner-token",
+  }, response);
+
+  const prompt = dependencies.getPrompt();
+  assert.match(prompt, /"title":"Machine Learning"/);
+  assert.match(prompt, /Machine learning models/);
+  assert.match(prompt, /"currentPrice":24999/);
+  assert.doesNotMatch(prompt, /AI foundations/);
+  assert.doesNotMatch(prompt, /"currentPrice":19999/);
+  assert.equal(
+    resolveCourseMatches(courses, "How much is the Machine Learning course?").courses[0].slug,
+    "machine-learning",
+  );
+});
+
+test("returns exact pricing-table options for general price questions without Groq", async () => {
+  const dependencies = createDependencies({
+    apiKey: "",
+    courses: [
+      { title: "Artificial Intelligence", slug: "artificial-intelligence", curriculum: [] },
+      { title: "Machine Learning", slug: "machine-learning", curriculum: [] },
+    ],
+    pricingRows: [
+      {
+        course_name: "Artificial Intelligence",
+        self_current_price: 19999,
+        currency: "INR",
+      },
+      {
+        course_name: "Machine Learning",
+        self_current_price: 24999,
+        currency: "INR",
+      },
+    ],
+  });
+  const response = createResponse();
+
+  await dependencies.chat({
+    body: { message: "What is the proce for Orvexa training?" },
+    user: { id: "learner-id" },
+    accessToken: "learner-token",
+  }, response);
+
+  assert.match(response.body.data.reply, /Artificial Intelligence/);
+  assert.match(response.body.data.reply, /Machine Learning/);
+  assert.match(response.body.data.reply, /₹19,999\.00/);
+  assert.match(response.body.data.reply, /₹24,999\.00/);
+  assert.match(response.body.data.reply, /Which course or plan/);
+  assert.equal(dependencies.getPrompt(), undefined);
+});
+
+test("returns the matched course price directly from program_pricing_new", async () => {
+  const dependencies = createDependencies({
+    courses: [
+      { title: "Artificial Intelligence", slug: "artificial-intelligence" },
+      { title: "Machine Learning", slug: "machine-learning" },
+    ],
+    pricingRows: [
+      {
+        course_name: "Artificial Intelligence",
+        self_current_price: 19999,
+        currency: "INR",
+      },
+      {
+        course_name: "Machine Learning",
+        self_actual_price: 30000,
+        self_current_price: 24999,
+        currency: "INR",
+      },
+    ],
+    fetchImpl: async () => { throw new Error("Groq should not be called for a price lookup."); },
+  });
+  const response = createResponse();
+
+  await dependencies.chat({
+    body: { message: "What is the ML price?" },
+    user: { id: "learner-id" },
+    accessToken: "learner-token",
+  }, response);
+
+  assert.match(response.body.data.reply, /Machine Learning/);
+  assert.match(response.body.data.reply, /₹24,999\.00/);
+  assert.match(response.body.data.reply, /₹30,000\.00/);
+  assert.doesNotMatch(response.body.data.reply, /Artificial Intelligence/);
+  assert.equal(dependencies.getPrompt(), undefined);
+});
+
+test("returns course duration from programs_new without Groq", async () => {
+  const dependencies = createDependencies({
+    courses: [
+      {
+        title: "Machine Learning",
+        slug: "machine-learning",
+        duration: "12 weeks",
+      },
+    ],
+    fetchImpl: async () => { throw new Error("Groq should not be called for a duration lookup."); },
+  });
+  const response = createResponse();
+
+  await dependencies.chat({
+    body: { message: "How long is the ML course?" },
+    user: { id: "learner-id" },
+    accessToken: "learner-token",
+  }, response);
+
+  assert.match(response.body.data.reply, /Machine Learning/);
+  assert.match(response.body.data.reply, /12 weeks/);
+  assert.equal(dependencies.getPrompt(), undefined);
+});
+
+test("retrieves relevant company FAQ facts as references, not canned replies", async () => {
+  const dependencies = createDependencies({
+    faqs: [
+      {
+        category: "company",
+        question: "How does Innoknowvex teach?",
+        answer: "Training uses hands-on learning and expert mentorship.",
+        keywords: ["teaching", "learning", "mentorship"],
+      },
+      {
+        category: "payments",
+        question: "How can I pay?",
+        answer: "Payment details are available at checkout.",
+        keywords: ["payment", "checkout"],
+      },
+    ],
+  });
+
+  await dependencies.chat({
+    body: { message: "How does the learning and mentorship work?" },
+    user: { id: "learner-id" },
+    accessToken: "learner-token",
+  }, createResponse());
+
+  assert.match(dependencies.getPrompt(), /hands-on learning and expert mentorship/);
+  assert.match(dependencies.getPrompt(), /not fixed scripts/);
+  assert.doesNotMatch(dependencies.getPrompt(), /Payment details are available at checkout/);
+});
+
+test("asks for clarification when one course alias matches multiple courses", async () => {
+  const courses = [
+    {
+      title: "Machine Learning",
+      slug: "machine-learning",
+      curriculum: [],
+    },
+    {
+      title: "AI and Machine Learning",
+      slug: "ai-machine-learning",
+      curriculum: [],
+    },
+  ];
+  const dependencies = createDependencies({
+    courses,
+    fetchImpl: async () => { throw new Error("Groq should not be called for an ambiguous course."); },
+  });
+  const response = createResponse();
+
+  await dependencies.chat({
+    body: { message: "What is the machine learning price?" },
+    user: { id: "learner-id" },
+    accessToken: "learner-token",
+  }, response);
+
+  assert.match(response.body.data.reply, /Machine Learning, AI and Machine Learning/);
+  assert.match(response.body.data.reply, /Which course do you mean/);
+});
+
+test("keeps all courses in an explicit comparison", async () => {
+  const courses = [
+    {
+      title: "Artificial Intelligence",
+      slug: "artificial-intelligence",
+      curriculum: [{ title: "AI foundations" }],
+    },
+    {
+      title: "Machine Learning",
+      slug: "machine-learning",
+      curriculum: [{ title: "Machine learning models" }],
+    },
+  ];
+  const dependencies = createDependencies({ courses, pricingRows: [] });
+  const response = createResponse();
+
+  await dependencies.chat({
+    body: { message: "Compare ML vs AI curriculum" },
+    user: { id: "learner-id" },
+    accessToken: "learner-token",
+  }, response);
+
+  assert.match(dependencies.getPrompt(), /AI foundations/);
+  assert.match(dependencies.getPrompt(), /Machine learning models/);
+});
+
+test("derives aliases from every course title and slug", () => {
+  const courses = [
+    { title: "Full Stack Web Development", slug: "web-development" },
+    { title: "Cyber Security", slug: "cyber-security" },
+    { title: "Data Science", slug: "data-science" },
+  ];
+
+  assert.equal(resolveCourseMatches(courses, "How much is FSWD?").courses[0].title, "Full Stack Web Development");
+  assert.equal(resolveCourseMatches(courses, "What is the web development curriculum?").courses[0].title, "Full Stack Web Development");
+  assert.equal(resolveCourseMatches(courses, "What does cybersecurity cost?").courses[0].title, "Cyber Security");
+  assert.equal(resolveCourseMatches(courses, "Tell me about DS").courses[0].title, "Data Science");
+});
+
+test("uses a delivery modifier to distinguish similarly named courses", () => {
+  const courses = [
+    { title: "Online Machine Learning", slug: "machine-learning-online" },
+    { title: "Offline Machine Learning", slug: "machine-learning-offline" },
+  ];
+
+  const result = resolveCourseMatches(courses, "What is the offline ML price?");
+
+  assert.equal(result.ambiguous, false);
+  assert.deepEqual(result.courses.map((course) => course.title), ["Offline Machine Learning"]);
 });
 
 test("does not call Groq when the website pricing query fails", async () => {
