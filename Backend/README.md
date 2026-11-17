@@ -17,8 +17,9 @@ verification links from pointing to localhost.
 
 ## ORVEXA AI chat
 
-Run `supabase/groq_profile_consent.sql` in the Supabase SQL Editor before deploying
-the updated backend. Existing Gemini consent is not reused: learners must explicitly
+Run `supabase/groq_profile_consent.sql` and
+`supabase/orvexa_company_faq.sql` in the Supabase SQL Editor before deploying the
+updated backend. Existing Gemini consent is not reused: learners must explicitly
 consent to sharing their profile with Groq before profile details are included.
 
 Set `GROQ_API_KEY` in the backend `.env` and in the backend hosting provider's
@@ -27,12 +28,28 @@ secret settings. The optional `GROQ_MODEL` setting defaults to
 choosing a model. Never expose the key in frontend code or a `NEXT_PUBLIC_*` variable.
 
 Authenticated clients can send `{ "message": "..." }` to
-`POST /api/assistant/chat`. The endpoint uses course descriptions and curriculum
-from `programs_new`. It adds the authenticated learner's profile context only when
+`POST /api/assistant/chat`. Course descriptions and curriculum come from
+`programs_new`; prices come from `program_pricing_new`. Course titles, slugs, title
+phrases, and acronyms resolve names (including `ML`, `FSWD`, and compact forms
+such as `cybersecurity`) across the catalog. For price questions, the backend
+returns the matched table prices directly rather than relying on Groq to repeat
+them. General price questions list the available prices and ask which course or
+plan the learner means.
+
+Course durations are read directly from the optional `duration` column in
+`programs_new`. Add and populate that text column to enable duration answers;
+until then, ORVEXA reports that a verified duration is not listed. When multiple
+courses match, ORVEXA asks the learner to clarify; a delivery modifier such as
+“offline” can distinguish similarly named courses. Company FAQs are ranked as
+factual references and Groq phrases relevant facts for the learner instead of
+repeating fixed answers. Edit and add approved company facts in `company_faq`.
+It adds the authenticated learner's profile context only when
 `ai_personalization_consent` is true and the consent provider is `groq`. Messages,
-course data, and any newly consented profile context are sent to Groq to generate a
-reply; chat messages are not stored by this endpoint. Do not send sensitive
-information that is unnecessary for learning guidance.
+resolved course/pricing data, and any newly consented profile context are sent to Groq to
+generate a reply; chat messages are not stored by this endpoint. Innoknowvex-specific
+answers are limited to facts in this context; general educational questions can be
+answered using the model's general knowledge. Do not send sensitive information that
+is unnecessary for learning guidance.
 
 ## Student guidance leads
 
