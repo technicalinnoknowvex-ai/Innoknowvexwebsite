@@ -36,13 +36,15 @@ returns the matched table prices directly rather than relying on Groq to repeat
 them. General price questions list the available prices and ask which course or
 plan the learner means.
 
-Course durations are read directly from the optional `duration` column in
-`programs_new`. Add and populate that text column to enable duration answers;
-until then, ORVEXA reports that a verified duration is not listed. When multiple
-courses match, ORVEXA asks the learner to clarify; a delivery modifier such as
-“offline” can distinguish similarly named courses. Company FAQs are ranked as
-factual references and Groq phrases relevant facts for the learner instead of
-repeating fixed answers. Edit and add approved company facts in `company_faq`.
+Training and internship durations are read directly from the
+`training_duration` and `internship_duration` columns in `programs_new`. Populate
+both columns to show both values for each course; missing values are identified
+as not listed. Course slugs and categories are internal matching data and are not
+included in answer context. When multiple courses match, ORVEXA asks the learner
+to clarify; a delivery modifier such as “offline” can distinguish similarly
+named courses. Company FAQs are ranked as factual references and Groq phrases
+relevant facts for the learner instead of repeating fixed answers. Edit and add
+approved company facts in `company_faq`.
 It adds the authenticated learner's profile context only when
 `ai_personalization_consent` is true and the consent provider is `groq`. Messages,
 resolved course/pricing data, and any newly consented profile context are sent to Groq to

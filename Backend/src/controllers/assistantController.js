@@ -5,7 +5,7 @@ const supabase = require("../config/supabaseClient");
 const COURSE_FIELDS = "*";
 const PRICING_FIELDS =
   "course_name, self_actual_price, self_current_price, mentor_actual_price, mentor_current_price, professional_actual_price, professional_current_price, currency";
-const FAQ_FIELDS = "category, question, answer, keywords";
+const FAQ_FIELDS = "question, answer, keywords";
 const PROFILE_FIELDS =
   "skills, learning_skills, projects, current_status, education_level, experience, interests, goals, ai_personalization_consent, ai_personalization_consent_provider, onboarding_completed";
 const STOP_WORDS = new Set([
@@ -141,7 +141,7 @@ function isPricingQuestion(value) {
 }
 
 function isDurationQuestion(value) {
-  return /\b(duration|how long|length of|weeks?|months?|years?|days?)\b/i.test(value);
+  return /\b(durations?|how long|length of|weeks?|months?|years?|days?)\b/i.test(value);
 }
 
 function formatPrice(value, currency) {
@@ -209,10 +209,9 @@ function pricingReply(pricingRows, catalog, selectedCourses) {
   return `Verified prices from the pricing table:\n\n${sections.join("\n\n")}${clarification}`;
 }
 
-function courseDuration(course) {
-  const duration = course.duration;
-  if (typeof duration === "string" && duration.trim()) return duration.trim();
-  if (typeof duration === "number" && Number.isFinite(duration)) return String(duration);
+function formatDuration(value) {
+  if (typeof value === "string" && value.trim()) return value.trim();
+  if (typeof value === "number" && Number.isFinite(value)) return String(value);
   return null;
 }
 
@@ -221,11 +220,16 @@ function durationReply(catalog, selectedCourses) {
   if (!courses.length) return "There are no courses listed in the catalog right now.";
 
   const details = courses.map((course) => {
-    const duration = courseDuration(course);
-    return `- **${course.title}**: ${duration || "No verified duration is listed in the catalog yet."}`;
+    const trainingDuration = formatDuration(course.training_duration);
+    const internshipDuration = formatDuration(course.internship_duration);
+    return [
+      `**${course.title}**`,
+      `- Training duration: ${trainingDuration || "Not listed in the catalog."}`,
+      `- Internship duration: ${internshipDuration || "Not listed in the catalog."}`,
+    ].join("\n");
   });
 
-  return `Course durations from the catalog:\n${details.join("\n")}`;
+  return `Course durations from the catalog:\n\n${details.join("\n\n")}`;
 }
 
 function resolveCourseMatches(courses, value) {
@@ -288,7 +292,6 @@ function selectRelevantFaqs(faqRows, message, limit = 5) {
     .sort((left, right) => right.score - left.score)
     .slice(0, limit)
     .map(({ faq }) => ({
-      category: faq.category,
       question: faq.question,
       answer: faq.answer,
     }));
@@ -297,10 +300,9 @@ function selectRelevantFaqs(faqRows, message, limit = 5) {
 function courseContext(course) {
   return {
     title: course.title,
-    slug: course.slug,
-    category: course.category,
     description: course.short_description,
-    duration: courseDuration(course),
+    trainingDuration: formatDuration(course.training_duration),
+    internshipDuration: formatDuration(course.internship_duration),
     curriculum: course.curriculum || [],
     internshipAvailable: course.internship,
   };
@@ -394,7 +396,7 @@ function createAssistantController({
         .from("company_faq")
         .select(FAQ_FIELDS)
         .eq("is_active", true)
-        .order("category", { ascending: true }),
+        .order("question", { ascending: true }),
     ]);
 
     if (coursesError) throw coursesError;
@@ -474,6 +476,7 @@ function createAssistantController({
       "When a price question has no named course, use the supplied pricing rows to show the available course names and ask which one they mean. Never ask for a location unless the supplied data says price depends on location.",
       "For a named course, use only its matching pricing row. If no matching row is supplied, say that an exact price is not listed for that course and ask whether they mean a similarly named listed course.",
       "Treat company FAQ entries as factual references, not fixed scripts. Answer the user's actual question in fresh wording, and personalize the explanation to the learner profile only when one is supplied and relevant.",
+      "Refer to courses by their titles. Never show internal course slugs or course categories in user-facing answers.",
       "For other Innoknowvex-specific facts, use only details present in the supplied context. If the context does not contain the answer, clearly say so and direct the user to the website/contact team rather than inventing details.",
       "For general educational questions, answer helpfully using your general knowledge, while clearly distinguishing general advice from Innoknowvex course facts.",
       "If the catalog does not answer a question, say what is missing and ask a useful follow-up.",

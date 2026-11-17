@@ -42,7 +42,8 @@ function createDependencies({
     category: "Data Science & AI",
     short_description: "Explore AI fundamentals.",
     curriculum: [{ title: "AI foundations", topics: ["Search", "Reasoning"] }],
-    duration: "6 months",
+    training_duration: "3 months",
+    internship_duration: "3 months",
     internship: false,
   }],
   pricingRows = [{
@@ -150,6 +151,7 @@ test("sends the named course curriculum and consented profile to Groq", async ()
   assert.match(dependencies.getPrompt(), /skillsToLearn/);
   assert.match(dependencies.getPrompt(), /"selfLearning":\{"actualPrice":25000,"currentPrice":19999\}/);
   assert.match(dependencies.getPrompt(), /"currency":"INR"/);
+  assert.doesNotMatch(dependencies.getPrompt(), /"slug"|"category"/);
   assert.doesNotMatch(dependencies.getPrompt(), /private\.example/);
 });
 
@@ -293,7 +295,9 @@ test("returns course duration from programs_new without Groq", async () => {
       {
         title: "Machine Learning",
         slug: "machine-learning",
-        duration: "12 weeks",
+        category: "Data Science & AI",
+        training_duration: "3 months",
+        internship_duration: "3 months",
       },
     ],
     fetchImpl: async () => { throw new Error("Groq should not be called for a duration lookup."); },
@@ -307,8 +311,42 @@ test("returns course duration from programs_new without Groq", async () => {
   }, response);
 
   assert.match(response.body.data.reply, /Machine Learning/);
-  assert.match(response.body.data.reply, /12 weeks/);
+  assert.match(response.body.data.reply, /Training duration: 3 months/);
+  assert.match(response.body.data.reply, /Internship duration: 3 months/);
+  assert.doesNotMatch(response.body.data.reply, /machine-learning|Data Science & AI/);
   assert.equal(dependencies.getPrompt(), undefined);
+});
+
+test("lists training and internship durations for every course when no course is named", async () => {
+  const dependencies = createDependencies({
+    courses: [
+      {
+        title: "Artificial Intelligence",
+        training_duration: "3 months",
+        internship_duration: "2 months",
+      },
+      {
+        title: "Machine Learning",
+        training_duration: "4 months",
+        internship_duration: "3 months",
+      },
+    ],
+    fetchImpl: async () => { throw new Error("Groq should not be called for a duration lookup."); },
+  });
+  const response = createResponse();
+
+  await dependencies.chat({
+    body: { message: "Show me the course durations." },
+    user: { id: "learner-id" },
+    accessToken: "learner-token",
+  }, response);
+
+  assert.match(response.body.data.reply, /Artificial Intelligence/);
+  assert.match(response.body.data.reply, /Training duration: 3 months/);
+  assert.match(response.body.data.reply, /Internship duration: 2 months/);
+  assert.match(response.body.data.reply, /Machine Learning/);
+  assert.match(response.body.data.reply, /Training duration: 4 months/);
+  assert.match(response.body.data.reply, /Internship duration: 3 months/);
 });
 
 test("retrieves relevant company FAQ facts as references, not canned replies", async () => {
