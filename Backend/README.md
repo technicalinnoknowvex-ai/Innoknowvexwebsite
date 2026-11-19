@@ -18,17 +18,28 @@ verification links from pointing to localhost.
 ## ORVEXA AI chat
 
 Run `supabase/groq_profile_consent.sql` and
-`supabase/orvexa_company_faq.sql` in the Supabase SQL Editor before deploying the
-updated backend. Existing Gemini consent is not reused: learners must explicitly
-consent to sharing their profile with Groq before profile details are included.
+`supabase/orvexa_company_faq.sql` and `supabase/orvexa_chat_history.sql` in the
+Supabase SQL Editor before deploying the updated backend. Existing Gemini consent
+is not reused: learners must explicitly consent to sharing their profile with
+Groq before profile details are included.
 
 Set `GROQ_API_KEY` in the backend `.env` and in the backend hosting provider's
 secret settings. The optional `GROQ_MODEL` setting defaults to
 `openai/gpt-oss-20b`. Check Groq's active model list and your account limits when
 choosing a model. Never expose the key in frontend code or a `NEXT_PUBLIC_*` variable.
 
-Authenticated clients can send `{ "message": "..." }` to
-`POST /api/assistant/chat`. Course descriptions and curriculum come from
+Authenticated clients send `{ "message": "...", "conversationId": "..." }` to
+`POST /api/assistant/chat`; omit `conversationId` to start a new conversation.
+The response includes the created or continued `conversationId`.
+`GET /api/assistant/conversations` lists the learner's recent chats, and
+`GET /api/assistant/conversations/:id/messages` loads a chat transcript. The
+backend stores turns in `orvexa_conversations` and `orvexa_messages`, and sends
+the latest 20 saved messages to Groq as conversational context. The history
+endpoints only expose conversations belonging to the authenticated learner.
+Chat history requires `SUPABASE_SERVICE_ROLE_KEY` on the backend to save assistant
+replies; never expose this key in frontend code.
+
+Course descriptions and curriculum come from
 `programs_new`; prices come from `program_pricing_new`. Course titles, slugs, title
 phrases, and acronyms resolve names (including `ML`, `FSWD`, and compact forms
 such as `cybersecurity`) across the catalog. For price questions, the backend
@@ -47,11 +58,11 @@ relevant facts for the learner instead of repeating fixed answers. Edit and add
 approved company facts in `company_faq`.
 It adds the authenticated learner's profile context only when
 `ai_personalization_consent` is true and the consent provider is `groq`. Messages,
-resolved course/pricing data, and any newly consented profile context are sent to Groq to
-generate a reply; chat messages are not stored by this endpoint. Innoknowvex-specific
-answers are limited to facts in this context; general educational questions can be
-answered using the model's general knowledge. Do not send sensitive information that
-is unnecessary for learning guidance.
+recent conversation turns, resolved course/pricing data, and any newly consented
+profile context are sent to Groq to generate a reply. Innoknowvex-specific answers
+are limited to facts in this context; general educational questions can be answered
+using the model's general knowledge. Do not send sensitive information that is
+unnecessary for learning guidance.
 
 ## Student guidance leads
 

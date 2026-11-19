@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import orbitImage from "../../assets/images/orvexa/orbit-transparent.webp";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowUpRight, ArrowUp, Mic, Play, X, Volume2 } from "lucide-react";
+import { ArrowUpRight, ArrowUp, Menu, Mic, Play, Plus, X, Volume2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import Header from "../layout/Header/Header";
@@ -14,7 +14,11 @@ import {
   getStudentPortfolio,
   updateStudentPortfolio,
 } from "../../lib/auth-api";
-import { sendAssistantMessage } from "../../lib/assistant-api";
+import {
+  getAssistantConversationMessages,
+  listAssistantConversations,
+  sendAssistantMessage,
+} from "../../lib/assistant-api";
 
 const EMPTY_PROFILE = {
   current_status: "",
@@ -99,6 +103,12 @@ export default function OrvexaPage() {
   const [draft, setDraft] = useState("");
   const [notice, setNotice] = useState("");
   const [messages, setMessages] = useState([]);
+  const [conversations, setConversations] = useState([]);
+  const [activeConversationId, setActiveConversationId] = useState(null);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [loadingConversationId, setLoadingConversationId] = useState(null);
+  const [historyError, setHistoryError] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [profileStatus, setProfileStatus] = useState("loading");
   const [profileError, setProfileError] = useState("");
@@ -145,7 +155,11 @@ export default function OrvexaPage() {
     const url = new URL(window.location.href);
     if (url.searchParams.get("openChat") !== "1") return;
     returnedToChatRef.current = true;
-    const frameId = window.requestAnimationFrame(() => setStage("chat"));
+    const frameId = window.requestAnimationFrame(() => {
+      setIsLoadingHistory(Boolean(window.sessionStorage.getItem("innoknowvex_access_token")));
+      setHistoryError("");
+      setStage("chat");
+    });
     return () => window.cancelAnimationFrame(frameId);
   }, []);
 
@@ -186,6 +200,36 @@ export default function OrvexaPage() {
     }
 
     loadLearnerProfile();
+    return () => {
+      isCurrent = false;
+    };
+  }, [stage]);
+
+  useEffect(() => {
+    if (stage !== "chat") return undefined;
+
+    const accessToken = window.sessionStorage.getItem("innoknowvex_access_token");
+    if (!accessToken) return undefined;
+
+    let isCurrent = true;
+    listAssistantConversations(accessToken)
+      .then((items) => {
+        if (isCurrent) setConversations(items);
+      })
+      .catch((error) => {
+        if (!isCurrent) return;
+        if (error.status === 401) {
+          clearAuthStorage();
+          setProfileStatus("signed-out");
+          setSkipProfileSetup(false);
+          return;
+        }
+        setHistoryError(error.message || "Saved conversations could not be loaded.");
+      })
+      .finally(() => {
+        if (isCurrent) setIsLoadingHistory(false);
+      });
+
     return () => {
       isCurrent = false;
     };
@@ -447,6 +491,8 @@ export default function OrvexaPage() {
     const url = new URL(window.location.href);
     url.searchParams.set("openChat", "1");
     window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+    setIsLoadingHistory(Boolean(window.sessionStorage.getItem("innoknowvex_access_token")));
+    setHistoryError("");
     setStage("chat");
     setNotice("");
     window.requestAnimationFrame(() => closeRef.current?.focus());
@@ -458,6 +504,58 @@ export default function OrvexaPage() {
     window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
     setStage("ready");
     window.requestAnimationFrame(() => launchRef.current?.focus());
+  };
+
+  const startNewConversation = () => {
+    if (isSending || loadingConversationId) return;
+    setActiveConversationId(null);
+    setMessages([]);
+    setDraft("");
+    setNotice("");
+    setHistoryError("");
+    setIsHistoryOpen(false);
+    setSkipProfileSetup(profileStatus === "complete");
+    if (profileStatus === "complete") {
+      window.requestAnimationFrame(() => inputRef.current?.focus());
+    }
+  };
+
+  const openSavedConversation = async (conversation) => {
+    if (isSending || loadingConversationId) return;
+    const accessToken = window.sessionStorage.getItem("innoknowvex_access_token");
+    if (!accessToken) {
+      setProfileStatus("signed-out");
+      setSkipProfileSetup(false);
+      return;
+    }
+
+    setLoadingConversationId(conversation.id);
+    setHistoryError("");
+    setNotice("");
+    try {
+      const savedMessages = await getAssistantConversationMessages(
+        accessToken,
+        conversation.id,
+      );
+      setActiveConversationId(conversation.id);
+      setMessages(savedMessages.map(({ id, role, content }) => ({
+        id,
+        role,
+        content,
+      })));
+      setSkipProfileSetup(true);
+      setIsHistoryOpen(false);
+    } catch (error) {
+      if (error.status === 401) {
+        clearAuthStorage();
+        setProfileStatus("signed-out");
+        setSkipProfileSetup(false);
+      } else {
+        setHistoryError(error.message || "That conversation could not be opened.");
+      }
+    } finally {
+      setLoadingConversationId(null);
+    }
   };
 
   const submitMessage = async (event) => {
@@ -478,8 +576,26 @@ export default function OrvexaPage() {
     setIsSending(true);
 
     try {
-      const reply = await sendAssistantMessage(accessToken, message);
-      setMessages((previous) => [...previous, { role: "assistant", content: reply }]);
+      const result = await sendAssistantMessage(
+        accessToken,
+        message,
+        activeConversationId,
+      );
+      setActiveConversationId(result.conversationId);
+      if (!result.conversationId) {
+        setNotice(
+          "Your reply was received, but saved chat history is unavailable until the latest backend is deployed.",
+        );
+      }
+      setMessages((previous) => [
+        ...previous,
+        { role: "assistant", content: result.reply },
+      ]);
+      try {
+        setConversations(await listAssistantConversations(accessToken));
+      } catch (error) {
+        setHistoryError(error.message || "Saved conversations could not be refreshed.");
+      }
     } catch (error) {
       setMessages((previous) => previous.slice(0, -1));
       setDraft(message);
@@ -624,9 +740,81 @@ export default function OrvexaPage() {
               <header className={styles.chatHeader}>
                 <div className={styles.assistantMark} data-orvexa-art="true"><OrbitMark className={styles.headerOrbit} /></div>
                 <div><h2 id="chat-title">ORVEXA</h2><p>Learning & career companion · AI powered</p></div>
+                {profileStatus !== "signed-out" && (
+                  <button
+                    type="button"
+                    className={styles.historyToggle}
+                    aria-label="Open chat history"
+                    aria-expanded={isHistoryOpen}
+                    aria-controls="orvexa-history-sidebar"
+                    onClick={() => setIsHistoryOpen(true)}
+                  >
+                    <Menu size={17} />
+                    <span>Chats</span>
+                  </button>
+                )}
                 {stuntEnabled && <button type="button" className={styles.motionToggle} aria-label="Play robot move" onClick={playRobotStunt} title="Play robot gymnastics"><Play size={14} /><span>Robot move</span></button>}
                 <button ref={closeRef} type="button" className={styles.iconButton} aria-label="Close ORVEXA" onClick={closeAssistant}><X size={21} /></button>
               </header>
+              {isHistoryOpen && (
+                <>
+                  <button
+                    type="button"
+                    className={styles.historyBackdrop}
+                    aria-label="Close chat history"
+                    onClick={() => setIsHistoryOpen(false)}
+                  />
+                  <aside
+                    className={styles.historySidebar}
+                    id="orvexa-history-sidebar"
+                    aria-label="Previous conversations"
+                  >
+                    <div className={styles.historySidebarHeader}>
+                      <h3>Chat history</h3>
+                      <button
+                        type="button"
+                        className={styles.newConversationButton}
+                        onClick={startNewConversation}
+                        disabled={isSending || Boolean(loadingConversationId)}
+                      >
+                        <Plus size={16} />
+                        New chat
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.historyCloseButton}
+                        aria-label="Close chat history"
+                        onClick={() => setIsHistoryOpen(false)}
+                      >
+                        <X size={18} />
+                      </button>
+                    </div>
+                    {historyError && <p className={styles.historyError} role="alert">{historyError}</p>}
+                    <div className={styles.historyList} aria-live="polite">
+                      {isLoadingHistory ? (
+                        <p className={styles.historyEmpty} role="status">Loading your chats…</p>
+                      ) : conversations.length ? (
+                        conversations.map((conversation) => (
+                          <button
+                            type="button"
+                            className={styles.historyItem}
+                            key={conversation.id}
+                            aria-current={activeConversationId === conversation.id ? "true" : undefined}
+                            onClick={() => openSavedConversation(conversation)}
+                            disabled={isSending || Boolean(loadingConversationId)}
+                            title={conversation.title}
+                          >
+                            <span>{conversation.title || "New chat"}</span>
+                            {loadingConversationId === conversation.id && <small>Loading…</small>}
+                          </button>
+                        ))
+                      ) : (
+                        <p className={styles.historyEmpty}>Your saved chats will appear here.</p>
+                      )}
+                    </div>
+                  </aside>
+                </>
+              )}
               <div
                 ref={conversationRef}
                 className={`${styles.conversation} ${(["incomplete", "complete", "signed-out", "error"].includes(profileStatus) && !skipProfileSetup) ? styles.conversationForm : ""} ${messages.length ? styles.conversationChat : ""}`}
@@ -654,6 +842,8 @@ export default function OrvexaPage() {
                     <p className={styles.welcomeCopy}>{profileError}</p>
                     <div className={styles.suggestions}>
                       <button type="button" onClick={() => {
+                        setIsLoadingHistory(Boolean(window.sessionStorage.getItem("innoknowvex_access_token")));
+                        setHistoryError("");
                         setStage("ready");
                         window.requestAnimationFrame(() => setStage("chat"));
                       }}>Try again <ArrowUpRight size={16} /></button>
@@ -813,7 +1003,7 @@ export default function OrvexaPage() {
                     {messages.map((message, index) => (
                       <div
                         className={`${styles.chatMessage} ${message.role === "user" ? styles.userMessage : styles.assistantMessage}`}
-                        key={`${message.role}-${index}`}
+                        key={message.id || `${message.role}-${index}`}
                       >
                         {message.role === "assistant" ? (
                           <div className={styles.markdownMessage}>
@@ -848,7 +1038,7 @@ export default function OrvexaPage() {
                       <button type="button" onClick={() => editSavedProfileStep(3)}>Review profile consent</button>
                     </div>
                   )}
-                  <p className={styles.notice} role={notice ? "alert" : "status"}>{notice || "Your message and relevant course details are sent to Groq. Your saved profile is included only with your Groq consent. Chats aren’t stored."}</p>
+                  <p className={styles.notice} role={notice ? "alert" : "status"}>{notice || "Your chats are saved to your account. Your saved profile is included only with your Groq consent."}</p>
                   <form className={styles.composer} onSubmit={submitMessage}>
                     <textarea ref={inputRef} aria-label="Message ORVEXA" placeholder="What would you like to explore?" rows={1} maxLength={4000} value={draft} disabled={isSending} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); submitMessage(event); } }} />
                     <button type="button" className={styles.micButton} aria-label="Voice preview information" onClick={() => setNotice("Voice conversations are not connected yet. Your microphone has not been activated.")}><Mic size={19} /></button>

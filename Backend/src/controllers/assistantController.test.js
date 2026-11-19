@@ -57,9 +57,97 @@ function createDependencies({
     currency: "INR",
   }],
   faqs = [],
+  storedConversations = [],
+  storedMessages = [],
+  historyInsertError = null,
   fetchImpl,
 } = {}) {
   let prompt;
+  let providerMessages = [];
+  const conversations = [...storedConversations];
+  const messages = [...storedMessages];
+  let generatedConversationId = 0;
+  let generatedMessageId = 0;
+
+  function userQuery(table) {
+    let action = "select";
+    let payload;
+    const filters = [];
+    const orders = [];
+    let rowLimit = Number.POSITIVE_INFINITY;
+    const query = {
+      select() {
+        if (action !== "insert") action = "select";
+        return query;
+      },
+      insert(value) {
+        action = "insert";
+        payload = value;
+        return query;
+      },
+      eq(column, value) {
+        filters.push([column, value]);
+        return query;
+      },
+      order(column, options = {}) {
+        orders.push({ column, ascending: options.ascending !== false });
+        return query;
+      },
+      limit(value) {
+        rowLimit = value;
+        return query;
+      },
+      async maybeSingle() {
+        const result = await execute();
+        return { data: result.data[0] || null, error: result.error };
+      },
+      async single() {
+        const result = await execute();
+        return { data: result.data[0] || null, error: result.error };
+      },
+      then(resolve, reject) {
+        return execute().then(resolve, reject);
+      },
+    };
+
+    function execute() {
+      if (table === "orvexa_conversations" && action === "insert") {
+        generatedConversationId += 1;
+        const now = new Date(Date.UTC(2026, 0, 1, 0, 0, generatedConversationId)).toISOString();
+        const row = {
+          id: `00000000-0000-4000-8000-${String(generatedConversationId).padStart(12, "0")}`,
+          created_at: now,
+          updated_at: now,
+          ...payload,
+        };
+        conversations.push(row);
+        return Promise.resolve({ data: [row], error: null });
+      }
+
+      const source = table === "orvexa_conversations"
+        ? conversations
+        : table === "orvexa_messages"
+          ? messages
+          : [];
+      let data = source.filter((row) =>
+        filters.every(([column, value]) => row[column] === value),
+      );
+      if (orders.length) {
+        data = [...data].sort((left, right) => {
+          for (const { column, ascending } of orders) {
+            const comparison = String(left[column] || "").localeCompare(String(right[column] || ""));
+            if (comparison) return ascending ? comparison : -comparison;
+          }
+          return 0;
+        });
+      }
+      data = data.slice(0, rowLimit);
+      return Promise.resolve({ data, error: null });
+    }
+
+    return query;
+  }
+
   const database = {
     from(table) {
       assert.ok(["programs_new", "program_pricing_new", "company_faq"].includes(table));
@@ -91,18 +179,20 @@ function createDependencies({
       };
     },
   };
-  const providerFetch = fetchImpl || (async (url, options) => {
+  const providerFetch = async (url, options) => {
     assert.equal(url, "https://api.groq.com/openai/v1/chat/completions");
     assert.equal(options.headers.Authorization, `Bearer ${apiKey}`);
     const body = JSON.parse(options.body);
     assert.equal(body.model, "test-model");
     assert.equal(body.messages[0].role, "system");
-    prompt = body.messages[1].content;
+    providerMessages = body.messages;
+    prompt = body.messages.at(-1).content;
+    if (fetchImpl) return fetchImpl(url, options);
     return providerResponse || {
       ok: true,
       json: async () => ({ choices: [{ message: { content: "Consider Artificial Intelligence because it matches your interest in AI." } }] }),
     };
-  });
+  };
   const controller = createAssistantController({
     database,
     apiKey,
@@ -111,17 +201,41 @@ function createDependencies({
       assert.equal(accessToken, "learner-token");
       return {
         from(table) {
-          assert.equal(table, "user_profiles_new");
+          if (table === "user_profiles_new") {
+            return {
+              select(fields) {
+                assert.match(fields, /learning_skills/);
+                return {
+                  eq(column, userId) {
+                    assert.equal(column, "id");
+                    assert.equal(userId, "learner-id");
+                    return { maybeSingle: async () => ({ data: profile, error: null }) };
+                  },
+                };
+              },
+            };
+          }
+          assert.ok(["orvexa_conversations", "orvexa_messages"].includes(table));
+          return userQuery(table);
+        },
+      };
+    },
+    createHistoryClient() {
+      return {
+        from(table) {
+          assert.equal(table, "orvexa_messages");
           return {
-            select(fields) {
-              assert.match(fields, /learning_skills/);
-              return {
-                eq(column, userId) {
-                  assert.equal(column, "id");
-                  assert.equal(userId, "learner-id");
-                  return { maybeSingle: async () => ({ data: profile, error: null }) };
-                },
-              };
+            insert(rows) {
+              if (historyInsertError) return Promise.resolve({ error: historyInsertError });
+              for (const row of rows) {
+                generatedMessageId += 1;
+                messages.push({
+                  id: `message-${generatedMessageId}`,
+                  created_at: new Date(Date.UTC(2026, 0, 1, 0, 0, generatedMessageId)).toISOString(),
+                  ...row,
+                });
+              }
+              return Promise.resolve({ error: null });
             },
           };
         },
@@ -132,7 +246,12 @@ function createDependencies({
 
   return {
     chat: controller.chat,
+    listConversations: controller.listConversations,
+    getConversationMessages: controller.getConversationMessages,
     getPrompt: () => prompt,
+    getProviderMessages: () => providerMessages,
+    getConversations: () => conversations,
+    getMessages: () => messages,
   };
 }
 
@@ -153,6 +272,157 @@ test("sends the named course curriculum and consented profile to Groq", async ()
   assert.match(dependencies.getPrompt(), /"currency":"INR"/);
   assert.doesNotMatch(dependencies.getPrompt(), /"slug"|"category"/);
   assert.doesNotMatch(dependencies.getPrompt(), /private\.example/);
+  assert.match(response.body.data.conversationId, /^[0-9a-f-]{36}$/i);
+  assert.deepEqual(
+    dependencies.getMessages().map(({ role, content }) => [role, content]),
+    [
+      ["user", "What does the Artificial Intelligence curriculum cover?"],
+      ["assistant", response.body.data.reply],
+    ],
+  );
+  assert.equal(
+    dependencies.getConversations()[0].title,
+    "What does the Artificial Intelligence curriculum cover?",
+  );
+});
+
+test("loads previous turns into Groq context and appends the next turn to that chat", async () => {
+  const conversationId = "11111111-1111-4111-8111-111111111111";
+  const dependencies = createDependencies({
+    storedConversations: [{
+      id: conversationId,
+      user_id: "learner-id",
+      title: "Machine Learning goals",
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-01T00:00:00.000Z",
+    }],
+    storedMessages: [
+      {
+        id: "message-1",
+        conversation_id: conversationId,
+        user_id: "learner-id",
+        role: "user",
+        content: "I want a career in machine learning.",
+        created_at: "2026-01-01T00:00:01.000Z",
+      },
+      {
+        id: "message-2",
+        conversation_id: conversationId,
+        user_id: "learner-id",
+        role: "assistant",
+        content: "I can use that goal to tailor suggestions in this chat.",
+        created_at: "2026-01-01T00:00:02.000Z",
+      },
+    ],
+  });
+  const response = createResponse();
+
+  await dependencies.chat({
+    body: {
+      message: "What course did I mention?",
+      conversationId,
+    },
+    user: { id: "learner-id" },
+    accessToken: "learner-token",
+  }, response);
+
+  assert.deepEqual(
+    dependencies.getProviderMessages().slice(1, 3),
+    [
+      { role: "user", content: "I want a career in machine learning." },
+      { role: "assistant", content: "I can use that goal to tailor suggestions in this chat." },
+    ],
+  );
+  assert.equal(response.body.data.conversationId, conversationId);
+  assert.equal(dependencies.getMessages().length, 4);
+});
+
+test("uses the previously discussed course for a follow-up price question", async () => {
+  const conversationId = "33333333-3333-4333-8333-333333333333";
+  const dependencies = createDependencies({
+    courses: [
+      { title: "Artificial Intelligence", slug: "artificial-intelligence" },
+      { title: "Machine Learning", slug: "machine-learning" },
+    ],
+    pricingRows: [
+      {
+        course_name: "Artificial Intelligence",
+        self_current_price: 19999,
+        currency: "INR",
+      },
+      {
+        course_name: "Machine Learning",
+        self_current_price: 24999,
+        currency: "INR",
+      },
+    ],
+    storedConversations: [{
+      id: conversationId,
+      user_id: "learner-id",
+      title: "Machine Learning",
+    }],
+    storedMessages: [{
+      id: "message-1",
+      conversation_id: conversationId,
+      user_id: "learner-id",
+      role: "user",
+      content: "Tell me about the Machine Learning curriculum.",
+      created_at: "2026-01-01T00:00:01.000Z",
+    }],
+    fetchImpl: async () => { throw new Error("Groq should not be called for a direct price lookup."); },
+  });
+  const response = createResponse();
+
+  await dependencies.chat({
+    body: { message: "And how much does it cost?", conversationId },
+    user: { id: "learner-id" },
+    accessToken: "learner-token",
+  }, response);
+
+  assert.match(response.body.data.reply, /Machine Learning/);
+  assert.match(response.body.data.reply, /₹24,999\.00/);
+  assert.doesNotMatch(response.body.data.reply, /Artificial Intelligence/);
+});
+
+test("lists and loads only conversations owned by the authenticated user", async () => {
+  const conversationId = "22222222-2222-4222-8222-222222222222";
+  const dependencies = createDependencies({
+    storedConversations: [{
+      id: conversationId,
+      user_id: "learner-id",
+      title: "My previous chat",
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-01T00:00:00.000Z",
+    }],
+    storedMessages: [{
+      id: "message-1",
+      conversation_id: conversationId,
+      user_id: "learner-id",
+      role: "user",
+      content: "Previous question",
+      created_at: "2026-01-01T00:00:01.000Z",
+    }],
+  });
+  const request = {
+    user: { id: "learner-id" },
+    accessToken: "learner-token",
+    params: { id: conversationId },
+  };
+  const listResponse = createResponse();
+  await dependencies.listConversations(request, listResponse);
+  assert.deepEqual(listResponse.body.data.conversations.map(({ id }) => id), [conversationId]);
+
+  const messagesResponse = createResponse();
+  await dependencies.getConversationMessages(request, messagesResponse);
+  assert.equal(messagesResponse.body.data.messages[0].content, "Previous question");
+
+  await assert.rejects(
+    dependencies.getConversationMessages({
+      ...request,
+      user: { id: "another-user" },
+    }, createResponse()),
+    { statusCode: 404 },
+  );
 });
 
 test("resolves ML and Machine Learning aliases to one course and only its data", async () => {
