@@ -1,16 +1,16 @@
 import { API_BASE_URL } from "../services/api";
 
-export async function sendAssistantMessage(accessToken, message) {
+async function assistantRequest(accessToken, path, options = {}) {
   let response;
 
   try {
-    response = await fetch(`${API_BASE_URL}/api/assistant/chat`, {
-      method: "POST",
+    response = await fetch(`${API_BASE_URL}/api/assistant/${path}`, {
+      ...options,
       headers: {
         Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
+        ...options.headers,
       },
-      body: JSON.stringify({ message }),
     });
   } catch {
     throw new Error("Unable to connect to ORVEXA. Please check your connection and try again.");
@@ -32,9 +32,60 @@ export async function sendAssistantMessage(accessToken, message) {
     throw error;
   }
 
-  if (typeof result.data?.reply !== "string" || !result.data.reply.trim()) {
-    throw new Error("ORVEXA returned an empty response. Please try again.");
+  return result;
+}
+
+export async function sendAssistantMessage(accessToken, message, conversationId) {
+  const result = await assistantRequest(accessToken, "chat", {
+    method: "POST",
+    body: JSON.stringify({
+      message,
+      ...(conversationId ? { conversationId } : {}),
+    }),
+  });
+
+  const responseConversationId = result.data?.conversationId;
+  if (
+    typeof result.data?.reply !== "string" ||
+    !result.data.reply.trim() ||
+    (responseConversationId != null &&
+      (typeof responseConversationId !== "string" || !responseConversationId.trim()))
+  ) {
+    throw new Error("ORVEXA returned an invalid chat response. Please try again.");
   }
 
-  return result.data.reply;
+  return {
+    reply: result.data.reply,
+    conversationId: responseConversationId || null,
+  };
+}
+
+export async function listAssistantConversations(accessToken) {
+  let result;
+  try {
+    result = await assistantRequest(accessToken, "conversations");
+  } catch (error) {
+    if (error.status === 404) {
+      throw new Error(
+        "Saved chat history is unavailable until the latest backend version is deployed.",
+      );
+    }
+    throw error;
+  }
+
+  if (!Array.isArray(result.data?.conversations)) {
+    throw new Error("ORVEXA returned an invalid conversation list.");
+  }
+  return result.data.conversations;
+}
+
+export async function getAssistantConversationMessages(accessToken, conversationId) {
+  const result = await assistantRequest(
+    accessToken,
+    `conversations/${encodeURIComponent(conversationId)}/messages`,
+  );
+  if (!Array.isArray(result.data?.messages)) {
+    throw new Error("ORVEXA returned invalid conversation messages.");
+  }
+  return result.data.messages;
 }

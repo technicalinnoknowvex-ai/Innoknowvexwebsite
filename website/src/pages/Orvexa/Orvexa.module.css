@@ -1323,6 +1323,134 @@
 /* Rejected flat somersault removed; gymnastics will use articulated video frames. */
 .gymnast { animation:none !important; transform:translateX(-50%); }
 
+.chatPanel { position:relative; }
+.chatHeader .historyToggle {
+  display:flex;
+  align-items:center;
+  gap:6px;
+  margin-left:auto;
+  padding:8px 10px;
+  border:1px solid #bcd6e6;
+  border-radius:10px;
+  background:#f6fbff;
+  color:#315d78;
+  font:inherit;
+  font-size:11px;
+  cursor:pointer;
+}
+.chatHeader .historyToggle:hover { background:#e4f3fc; }
+.chatHeader .motionToggle { margin-left:0; }
+.historyBackdrop {
+  position:absolute;
+  inset:0;
+  z-index:20;
+  width:100%;
+  height:100%;
+  border:0;
+  background:#06142470;
+  cursor:pointer;
+}
+.historySidebar {
+  position:absolute;
+  inset:0 auto 0 0;
+  z-index:21;
+  display:flex;
+  width:min(300px, calc(100% - 36px));
+  flex-direction:column;
+  padding:20px 14px 14px;
+  border-right:1px solid #d6e5ef;
+  background:#f8fbfe;
+  box-shadow:12px 0 38px #0e2d4430;
+}
+.historySidebarHeader {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:0 2px 14px;
+  border-bottom:1px solid #dce8f0;
+}
+.historySidebarHeader h3 {
+  flex:1;
+  margin:0;
+  color:#163a53;
+  font-size:15px;
+}
+.newConversationButton,
+.historyCloseButton {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  min-height:34px;
+  border:1px solid #c9dce9;
+  border-radius:9px;
+  background:#fff;
+  color:#315d78;
+  font:inherit;
+  font-size:11px;
+  cursor:pointer;
+}
+.newConversationButton { padding:0 9px; }
+.historyCloseButton { width:34px; padding:0; }
+.newConversationButton:disabled,
+.historyItem:disabled { opacity:.55; cursor:wait; }
+.historyList {
+  display:flex;
+  min-height:0;
+  flex:1;
+  flex-direction:column;
+  gap:6px;
+  overflow-y:auto;
+  padding:12px 2px 4px;
+}
+.historyItem {
+  display:flex;
+  min-height:42px;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:9px 10px;
+  overflow:hidden;
+  border:1px solid transparent;
+  border-radius:9px;
+  background:transparent;
+  color:#38576e;
+  font:inherit;
+  font-size:12px;
+  text-align:left;
+  cursor:pointer;
+}
+.historyItem span {
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.historyItem:hover,
+.historyItem[aria-current="true"] {
+  border-color:#d4e5ef;
+  background:#eaf4fb;
+}
+.historyItem small { flex:0 0 auto; color:#71899c; }
+.historyEmpty,
+.historyError {
+  margin:8px 4px;
+  color:#6b8193;
+  font-size:12px;
+  line-height:1.5;
+}
+.historyError { color:#a63333; }
+.chatHeader .historyToggle:focus-visible,
+.newConversationButton:focus-visible,
+.historyCloseButton:focus-visible,
+.historyItem:focus-visible {
+  outline:3px solid #33a9e7;
+  outline-offset:2px;
+}
+@media(max-width:760px) {
+  .chatHeader .historyToggle { margin-left:auto; padding:8px; }
+  .chatHeader .historyToggle span { display:none; }
+  .historySidebar { padding-top:16px; }
+}
 .companionDock .hoverHint { color:#8acfe9; font-size:10px; margin-top:12px; }
 @media(min-width:761px){ .companionDock { cursor:pointer; } }
 
