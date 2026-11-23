@@ -60,6 +60,7 @@ function createDependencies({
   storedConversations = [],
   storedMessages = [],
   historyInsertError = null,
+  websitePages = [],
   fetchImpl,
 } = {}) {
   let prompt;
@@ -241,6 +242,7 @@ function createDependencies({
         },
       };
     },
+    getWebsiteContent: async () => websitePages,
     fetchImpl: providerFetch,
   });
 
@@ -520,6 +522,7 @@ test("returns exact pricing-table options for general price questions without Gr
   assert.match(response.body.data.reply, /₹19,999\.00/);
   assert.match(response.body.data.reply, /₹24,999\.00/);
   assert.match(response.body.data.reply, /Which course or plan/);
+  assert.doesNotMatch(response.body.data.reply, /\b(?:catalog|database|table|listed|according to)\b/i);
   assert.equal(dependencies.getPrompt(), undefined);
 });
 
@@ -556,6 +559,7 @@ test("returns the matched course price directly from program_pricing_new", async
   assert.match(response.body.data.reply, /₹24,999\.00/);
   assert.match(response.body.data.reply, /₹30,000\.00/);
   assert.doesNotMatch(response.body.data.reply, /Artificial Intelligence/);
+  assert.doesNotMatch(response.body.data.reply, /\b(?:catalog|database|table|listed|according to)\b/i);
   assert.equal(dependencies.getPrompt(), undefined);
 });
 
@@ -584,6 +588,7 @@ test("returns course duration from programs_new without Groq", async () => {
   assert.match(response.body.data.reply, /Training duration: 3 months/);
   assert.match(response.body.data.reply, /Internship duration: 3 months/);
   assert.doesNotMatch(response.body.data.reply, /machine-learning|Data Science & AI/);
+  assert.doesNotMatch(response.body.data.reply, /\b(?:catalog|database|table|listed|according to)\b/i);
   assert.equal(dependencies.getPrompt(), undefined);
 });
 
@@ -617,6 +622,35 @@ test("lists training and internship durations for every course when no course is
   assert.match(response.body.data.reply, /Machine Learning/);
   assert.match(response.body.data.reply, /Training duration: 4 months/);
   assert.match(response.body.data.reply, /Internship duration: 3 months/);
+  assert.doesNotMatch(response.body.data.reply, /\b(?:catalog|database|table|listed|according to)\b/i);
+});
+
+test("handles missing prices and durations conversationally", async () => {
+  const priceDependencies = createDependencies({
+    pricingRows: [],
+    fetchImpl: async () => { throw new Error("Groq should not be called for a price lookup."); },
+  });
+  const priceResponse = createResponse();
+  await priceDependencies.chat({
+    body: { message: "What is the AI course price?" },
+    user: { id: "learner-id" },
+    accessToken: "learner-token",
+  }, priceResponse);
+  assert.match(priceResponse.body.data.reply, /I don't have confirmed pricing details/);
+  assert.doesNotMatch(priceResponse.body.data.reply, /\b(?:catalog|database|table|listed|according to|program_pricing_new)\b/i);
+
+  const durationDependencies = createDependencies({
+    courses: [{ title: "Artificial Intelligence" }],
+    fetchImpl: async () => { throw new Error("Groq should not be called for a duration lookup."); },
+  });
+  const durationResponse = createResponse();
+  await durationDependencies.chat({
+    body: { message: "How long is the AI course?" },
+    user: { id: "learner-id" },
+    accessToken: "learner-token",
+  }, durationResponse);
+  assert.match(durationResponse.body.data.reply, /I don't have that confirmed right now/);
+  assert.doesNotMatch(durationResponse.body.data.reply, /\b(?:catalog|database|table|listed|according to|programs_new)\b/i);
 });
 
 test("retrieves relevant company FAQ facts as references, not canned replies", async () => {
@@ -644,8 +678,150 @@ test("retrieves relevant company FAQ facts as references, not canned replies", a
   }, createResponse());
 
   assert.match(dependencies.getPrompt(), /hands-on learning and expert mentorship/);
-  assert.match(dependencies.getPrompt(), /not fixed scripts/);
+  assert.match(dependencies.getPrompt(), /Answer the user's actual question in fresh wording/);
   assert.doesNotMatch(dependencies.getPrompt(), /Payment details are available at checkout/);
+});
+
+test("retrieves company facts for broad and misspelled company questions", async () => {
+  const dependencies = createDependencies({
+    faqs: [
+      {
+        category: "company",
+        question: "What is Innoknowvex?",
+        answer: "Innoknowvex connects learners and institutions through practical learning and career opportunities.",
+        keywords: ["company", "about", "who we are", "what we do", "innoknowvex"],
+      },
+      {
+        category: "company",
+        question: "What is Innoknowvex's mission?",
+        answer: "The mission is to make industry-ready education and career opportunities accessible to everyone.",
+        keywords: ["mission", "purpose", "company"],
+      },
+      {
+        category: "payments",
+        question: "How can I pay?",
+        answer: "Payment details are available at checkout.",
+        keywords: ["payment", "checkout"],
+      },
+    ],
+  });
+
+  for (const message of [
+    "Tell me about the company",
+    "What does Innoknowvex do?",
+    "Tell me about the compmnay",
+  ]) {
+    await dependencies.chat({
+      body: { message },
+      user: { id: "learner-id" },
+      accessToken: "learner-token",
+    }, createResponse());
+
+    assert.match(dependencies.getPrompt(), /connects learners and institutions/);
+    assert.match(dependencies.getPrompt(), /When relevant company information is supplied/);
+    assert.match(dependencies.getPrompt(), /Answer directly in natural language/);
+    assert.doesNotMatch(dependencies.getPrompt(), /Payment details are available at checkout/);
+  }
+});
+
+test("provides the published company email, phone, and office address for contact questions", async () => {
+  const dependencies = createDependencies({
+    faqs: [{
+      category: "company",
+      question: "How can I contact Innoknowvex?",
+      answer: "Email support@innoknowvex.in or call +91 9535788085. The office is at Aratt Girija Towers, Survey 157/1, 2nd Floor, Manipal County Club Road, opposite Lake View County Apartment, Singasandra, Bengaluru, Karnataka - 560068, above Star Market.",
+      keywords: ["contact", "email", "phone", "address", "company"],
+    }],
+  });
+
+  await dependencies.chat({
+    body: { message: "Can you give me any contact details of the company?" },
+    user: { id: "learner-id" },
+    accessToken: "learner-token",
+  }, createResponse());
+
+  assert.match(dependencies.getPrompt(), /support@innoknowvex\.in/);
+  assert.match(dependencies.getPrompt(), /\+91 9535788085/);
+  assert.match(dependencies.getPrompt(), /Aratt Girija Towers/);
+  assert.match(dependencies.getPrompt(), /Singasandra, Bengaluru, Karnataka - 560068/);
+  assert.match(dependencies.getProviderMessages()[0].content, /never reveal or mention where the information came from/);
+});
+
+test("adds relevant public website page details to ORVEXA's supporting information", async () => {
+  const dependencies = createDependencies({
+    websitePages: [{
+      title: "Contact Us",
+      content: "Email support@innoknowvex.in or call +91 9535788085. Our office is in Bengaluru.",
+    }],
+  });
+
+  await dependencies.chat({
+    body: { message: "How do I contact your team?" },
+    user: { id: "learner-id" },
+    accessToken: "learner-token",
+  }, createResponse());
+
+  assert.match(dependencies.getPrompt(), /"title":"Contact Us"/);
+  assert.match(dependencies.getPrompt(), /support@innoknowvex\.in/);
+  assert.match(dependencies.getPrompt(), /\+91 9535788085/);
+});
+
+test("answers resume questions as general career support instead of one course's curriculum", async () => {
+  const conversationId = "00000000-0000-4000-8000-000000000101";
+  const dependencies = createDependencies({
+    courses: [
+      {
+        title: "Clinical Training & Research",
+        slug: "clinical-training-research",
+        short_description: "Clinical training and research skills.",
+        curriculum: [{
+          title: "Career & Industry Readiness",
+          topics: ["Resume Preparation and Profile Building"],
+        }],
+      },
+      {
+        title: "Artificial Intelligence",
+        slug: "artificial-intelligence",
+        short_description: "Learn artificial intelligence.",
+        curriculum: [],
+      },
+    ],
+    faqs: [
+      {
+        category: "career",
+        question: "What career support is available?",
+        answer: "Resume-building training and LinkedIn profile guidance are general support across all Innoknowvex training sessions, not unique to one course.",
+        keywords: ["career", "resume", "linkedin", "profile building", "support"],
+      },
+    ],
+    storedConversations: [{
+      id: conversationId,
+      user_id: "learner-id",
+      title: "Clinical program",
+    }],
+    storedMessages: [{
+      id: "message-1",
+      conversation_id: conversationId,
+      user_id: "learner-id",
+      role: "user",
+      content: "Tell me about Clinical Training & Research",
+      created_at: "2026-01-01T00:00:00.000Z",
+    }],
+  });
+
+  await dependencies.chat({
+    body: {
+      message: "Can you help me with resume building?",
+      conversationId,
+    },
+    user: { id: "learner-id" },
+    accessToken: "learner-token",
+  }, createResponse());
+
+  assert.match(dependencies.getPrompt(), /general support across all Innoknowvex training sessions/);
+  assert.match(dependencies.getPrompt(), /not exclusive to one course/);
+  assert.doesNotMatch(dependencies.getPrompt(), /Clinical Training & Research/);
+  assert.doesNotMatch(dependencies.getPrompt(), /Resume Preparation and Profile Building/);
 });
 
 test("asks for clarification when one course alias matches multiple courses", async () => {

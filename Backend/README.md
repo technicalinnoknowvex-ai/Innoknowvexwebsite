@@ -17,11 +17,13 @@ verification links from pointing to localhost.
 
 ## ORVEXA AI chat
 
-Run `supabase/groq_profile_consent.sql` and
-`supabase/orvexa_company_faq.sql` and `supabase/orvexa_chat_history.sql` in the
+Run `supabase/groq_profile_consent.sql`, `supabase/orvexa_company_faq.sql`, and
+`supabase/orvexa_chat_history.sql` in the
 Supabase SQL Editor before deploying the updated backend. Existing Gemini consent
 is not reused: learners must explicitly consent to sharing their profile with
 Groq before profile details are included.
+Re-run `supabase/orvexa_company_faq.sql` after FAQ content changes to upsert the
+approved company overview, story, mission, vision, and values facts.
 
 Set `GROQ_API_KEY` in the backend `.env` and in the backend hosting provider's
 secret settings. The optional `GROQ_MODEL` setting defaults to
@@ -49,20 +51,33 @@ plan the learner means.
 
 Training and internship durations are read directly from the
 `training_duration` and `internship_duration` columns in `programs_new`. Populate
-both columns to show both values for each course; missing values are identified
-as not listed. Course slugs and categories are internal matching data and are not
-included in answer context. When multiple courses match, ORVEXA asks the learner
+both columns to show both values for each course; missing values are described
+conversationally as unconfirmed. Course slugs and categories are internal matching
+data and are not included in answer context. ORVEXA states verified facts directly
+and does not mention its internal catalogs, databases, tables, or FAQ sources.
+When multiple courses match, ORVEXA asks the learner
 to clarify; a delivery modifier such as “offline” can distinguish similarly
-named courses. Company FAQs are ranked as factual references and Groq phrases
+named courses. Company FAQs are ranked as factual references, with company
+overview facts prioritized for differently worded company questions. Groq phrases
 relevant facts for the learner instead of repeating fixed answers. Edit and add
-approved company facts in `company_faq`.
+approved company facts in `company_faq`, then re-run the FAQ SQL seed to apply
+changes. The FAQ seed also includes the public support email, phone, and office
+address. Resume-building training and LinkedIn profile guidance are general
+career-readiness support across training sessions; they are not exclusive to
+one course.
 It adds the authenticated learner's profile context only when
 `ai_personalization_consent` is true and the consent provider is `groq`. Messages,
 recent conversation turns, resolved course/pricing data, and any newly consented
-profile context are sent to Groq to generate a reply. Innoknowvex-specific answers
-are limited to facts in this context; general educational questions can be answered
-using the model's general knowledge. Do not send sensitive information that is
-unnecessary for learning guidance.
+profile context are sent to Groq to generate a reply. ORVEXA also searches relevant
+text from public pages listed in the Innoknowvex sitemap and sends only the best
+matching snippets. It accepts HTTPS URLs from the company domain only, excludes
+authentication, admin, dashboard, and checkout paths, removes scripts, and caches
+indexed pages in memory for 30 minutes. If the public site cannot be reached, the
+assistant logs the issue and continues with its program and FAQ information. No
+private or authenticated pages are crawled.
+Innoknowvex-specific answers are limited to facts in this context; general
+educational questions can be answered using the model's general knowledge. Do not
+send sensitive information that is unnecessary for learning guidance.
 
 ## Student guidance leads
 
