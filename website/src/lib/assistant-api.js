@@ -35,11 +35,17 @@ async function assistantRequest(accessToken, path, options = {}) {
   return result;
 }
 
-export async function sendAssistantMessage(accessToken, message, conversationId) {
+export async function sendAssistantMessage(
+  accessToken,
+  message,
+  conversationId,
+  { voiceMode = false } = {},
+) {
   const result = await assistantRequest(accessToken, "chat", {
     method: "POST",
     body: JSON.stringify({
       message,
+      ...(voiceMode ? { voiceMode: true } : {}),
       ...(conversationId ? { conversationId } : {}),
     }),
   });

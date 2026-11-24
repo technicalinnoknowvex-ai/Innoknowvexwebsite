@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import orbitImage from "../../assets/images/orvexa/orbit-transparent.webp";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowUpRight, ArrowUp, Menu, Mic, Play, Plus, X, Volume2 } from "lucide-react";
+import { ArrowUpRight, ArrowUp, Menu, Mic, Play, Plus, Square, X, Volume2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import Header from "../layout/Header/Header";
@@ -19,6 +19,11 @@ import {
   listAssistantConversations,
   sendAssistantMessage,
 } from "../../lib/assistant-api";
+import {
+  followUpPrompts,
+  isLikelySpeechEcho,
+  prepareSpeechText,
+} from "./orvexa-interactions.mjs";
 
 const EMPTY_PROFILE = {
   current_status: "",
@@ -110,6 +115,11 @@ export default function OrvexaPage() {
   const [loadingConversationId, setLoadingConversationId] = useState(null);
   const [historyError, setHistoryError] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [isVoiceSessionActive, setIsVoiceSessionActive] = useState(false);
+  const [voiceSessionStatus, setVoiceSessionStatus] = useState("idle");
+  const [voiceTranscriptPreview, setVoiceTranscriptPreview] = useState("");
+  const [speakingMessageId, setSpeakingMessageId] = useState(null);
   const [profileStatus, setProfileStatus] = useState("loading");
   const [profileError, setProfileError] = useState("");
   const [profile, setProfile] = useState(EMPTY_PROFILE);
@@ -121,6 +131,7 @@ export default function OrvexaPage() {
   const launchRef = useRef(null);
   const closeRef = useRef(null);
   const inputRef = useRef(null);
+  const voiceOrbRef = useRef(null);
   const conversationRef = useRef(null);
   const audioRef = useRef(null);
   const videoRef = useRef(null);
@@ -134,6 +145,113 @@ export default function OrvexaPage() {
   const openingStuntPlayingRef = useRef(false);
   const returnedToChatRef = useRef(false);
   const stageRef = useRef("intro");
+  const recognitionRef = useRef(null);
+  const speechUtteranceRef = useRef(null);
+  const voiceModeActiveRef = useRef(false);
+  const voiceCaptureRef = useRef(null);
+  const voiceTranscriptRef = useRef("");
+  const voiceInterimRef = useRef("");
+  const voiceRecognitionFailedRef = useRef(false);
+  const voiceBargeInRef = useRef(false);
+  const voiceSpokenTextRef = useRef("");
+  const voiceRestartTimerRef = useRef(null);
+  const voiceSilenceTimerRef = useRef(null);
+
+  const stopVoiceOutput = useCallback(() => {
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+    speechUtteranceRef.current = null;
+    voiceSpokenTextRef.current = "";
+    setSpeakingMessageId(null);
+  }, []);
+
+  const speakMessage = useCallback((messageId, content) => {
+    if (typeof window === "undefined" || !window.speechSynthesis || !window.SpeechSynthesisUtterance) {
+      setNotice("Spoken replies are not available in this browser.");
+      return;
+    }
+    stopVoiceOutput();
+    const text = prepareSpeechText(content);
+    if (!text) {
+      setNotice("There isn’t any text in that reply to read aloud.");
+      return;
+    }
+    voiceSpokenTextRef.current = text;
+    const utterance = new window.SpeechSynthesisUtterance(text);
+    utterance.onstart = () => {
+      if (voiceModeActiveRef.current) voiceCaptureRef.current?.({ bargeIn: true });
+    };
+    utterance.onend = () => {
+      if (speechUtteranceRef.current === utterance) {
+        speechUtteranceRef.current = null;
+        voiceSpokenTextRef.current = "";
+        setSpeakingMessageId(null);
+        if (voiceModeActiveRef.current) {
+          if (voiceBargeInRef.current && recognitionRef.current) {
+            voiceBargeInRef.current = false;
+            const recognition = recognitionRef.current;
+            recognitionRef.current = null;
+            recognition.abort();
+          }
+          if (!recognitionRef.current) {
+            setVoiceSessionStatus("ready");
+            voiceRestartTimerRef.current = window.setTimeout(() => {
+              voiceRestartTimerRef.current = null;
+              voiceCaptureRef.current?.();
+            }, 300);
+          }
+        }
+      }
+    };
+    utterance.onerror = () => {
+      if (speechUtteranceRef.current === utterance) {
+        speechUtteranceRef.current = null;
+        setSpeakingMessageId(null);
+        setNotice("ORVEXA could not play that spoken reply.");
+        if (voiceModeActiveRef.current) {
+          setVoiceSessionStatus("error");
+          if (voiceBargeInRef.current && recognitionRef.current) {
+            voiceBargeInRef.current = false;
+            const recognition = recognitionRef.current;
+            recognitionRef.current = null;
+            recognition.abort();
+          }
+        }
+      }
+    };
+    speechUtteranceRef.current = utterance;
+    setSpeakingMessageId(messageId);
+    window.speechSynthesis.speak(utterance);
+  }, [stopVoiceOutput]);
+
+  const endVoiceSession = useCallback(() => {
+    voiceModeActiveRef.current = false;
+    voiceBargeInRef.current = false;
+    setIsVoiceSessionActive(false);
+    setVoiceSessionStatus("idle");
+    setIsListening(false);
+    if (voiceRestartTimerRef.current) {
+      window.clearTimeout(voiceRestartTimerRef.current);
+      voiceRestartTimerRef.current = null;
+    }
+    if (voiceSilenceTimerRef.current) {
+      window.clearTimeout(voiceSilenceTimerRef.current);
+      voiceSilenceTimerRef.current = null;
+    }
+    const recognition = recognitionRef.current;
+    recognitionRef.current = null;
+    recognition?.stop();
+    stopVoiceOutput();
+  }, [stopVoiceOutput]);
+
+  useEffect(() => () => {
+    voiceModeActiveRef.current = false;
+    if (voiceRestartTimerRef.current) window.clearTimeout(voiceRestartTimerRef.current);
+    if (voiceSilenceTimerRef.current) window.clearTimeout(voiceSilenceTimerRef.current);
+    recognitionRef.current?.stop();
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+  }, []);
 
   useEffect(() => {
     if (stage !== "chat") return;
@@ -499,6 +617,7 @@ export default function OrvexaPage() {
   };
 
   const closeAssistant = () => {
+    endVoiceSession();
     const url = new URL(window.location.href);
     url.searchParams.delete("openChat");
     window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
@@ -508,6 +627,7 @@ export default function OrvexaPage() {
 
   const startNewConversation = () => {
     if (isSending || loadingConversationId) return;
+    endVoiceSession();
     setActiveConversationId(null);
     setMessages([]);
     setDraft("");
@@ -522,6 +642,7 @@ export default function OrvexaPage() {
 
   const openSavedConversation = async (conversation) => {
     if (isSending || loadingConversationId) return;
+    endVoiceSession();
     const accessToken = window.sessionStorage.getItem("innoknowvex_access_token");
     if (!accessToken) {
       setProfileStatus("signed-out");
@@ -558,19 +679,20 @@ export default function OrvexaPage() {
     }
   };
 
-  const submitMessage = async (event) => {
-    event.preventDefault();
-    const message = draft.trim();
+  const sendMessage = async (value, { speakReply = false } = {}) => {
+    const message = value.trim();
     if (!message || isSending) return;
 
     const accessToken = window.sessionStorage.getItem("innoknowvex_access_token");
     if (!accessToken) {
       setProfileStatus("signed-out");
       setSkipProfileSetup(false);
+      if (speakReply) setVoiceSessionStatus("error");
       return;
     }
 
     setDraft("");
+    stopVoiceOutput();
     setNotice("");
     setMessages((previous) => [...previous, { role: "user", content: message }]);
     setIsSending(true);
@@ -580,6 +702,7 @@ export default function OrvexaPage() {
         accessToken,
         message,
         activeConversationId,
+        { voiceMode: speakReply },
       );
       setActiveConversationId(result.conversationId);
       if (!result.conversationId) {
@@ -587,18 +710,24 @@ export default function OrvexaPage() {
           "Your reply was received, but saved chat history is unavailable until the latest backend is deployed.",
         );
       }
+      const assistantMessageId = `assistant-${Date.now()}`;
       setMessages((previous) => [
         ...previous,
-        { role: "assistant", content: result.reply },
+        { id: assistantMessageId, role: "assistant", content: result.reply },
       ]);
-      try {
-        setConversations(await listAssistantConversations(accessToken));
-      } catch (error) {
-        setHistoryError(error.message || "Saved conversations could not be refreshed.");
+      if (speakReply && voiceModeActiveRef.current) {
+        setVoiceSessionStatus("speaking");
+        speakMessage(assistantMessageId, result.reply);
       }
+      listAssistantConversations(accessToken)
+        .then(setConversations)
+        .catch((error) => {
+          setHistoryError(error.message || "Saved conversations could not be refreshed.");
+        });
     } catch (error) {
       setMessages((previous) => previous.slice(0, -1));
       setDraft(message);
+      if (speakReply && voiceModeActiveRef.current) setVoiceSessionStatus("error");
       if (error.status === 401) {
         clearAuthStorage();
         setProfileStatus("signed-out");
@@ -608,6 +737,155 @@ export default function OrvexaPage() {
     } finally {
       setIsSending(false);
     }
+  };
+
+  const submitMessage = (event) => {
+    event.preventDefault();
+    return sendMessage(draft);
+  };
+
+  const startVoiceCapture = ({ bargeIn = false } = {}) => {
+    if (!voiceModeActiveRef.current || recognitionRef.current) return;
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setVoiceSessionStatus("error");
+      setNotice("Voice input is not supported in this browser. You can still type your question.");
+      return;
+    }
+
+    voiceTranscriptRef.current = "";
+    voiceInterimRef.current = "";
+    voiceRecognitionFailedRef.current = false;
+    voiceBargeInRef.current = bargeIn;
+    setVoiceTranscriptPreview("");
+    const recognition = new SpeechRecognition();
+    recognition.lang = navigator.language || "en-IN";
+    recognition.interimResults = true;
+    recognition.continuous = bargeIn;
+    recognition.onstart = () => {
+      if (!voiceModeActiveRef.current || bargeIn) return;
+      setIsListening(true);
+      setVoiceSessionStatus("listening");
+      setNotice("Listening. Your browser handles voice transcription; check its privacy settings for details.");
+    };
+    recognition.onresult = (event) => {
+      let completed = "";
+      let interim = "";
+      for (let index = event.resultIndex; index < event.results.length; index += 1) {
+        const transcript = event.results[index][0].transcript;
+        if (event.results[index].isFinal) completed += transcript;
+        else interim += transcript;
+      }
+      const newTranscript = `${completed} ${interim}`.trim();
+      if (!newTranscript) return;
+      if (bargeIn && voiceBargeInRef.current) {
+        if (isLikelySpeechEcho(newTranscript, voiceSpokenTextRef.current)) return;
+        voiceBargeInRef.current = false;
+        stopVoiceOutput();
+        setIsListening(true);
+        setVoiceSessionStatus("listening");
+        setNotice("I’m listening. Finish your thought whenever you’re ready.");
+      }
+      voiceTranscriptRef.current = `${voiceTranscriptRef.current} ${completed}`.trim();
+      voiceInterimRef.current = interim.trim();
+      const transcript = `${voiceTranscriptRef.current} ${voiceInterimRef.current}`.trim();
+      setVoiceTranscriptPreview(transcript);
+      setDraft(transcript);
+      if (recognition.continuous) {
+        if (voiceSilenceTimerRef.current) window.clearTimeout(voiceSilenceTimerRef.current);
+        voiceSilenceTimerRef.current = window.setTimeout(() => {
+          voiceSilenceTimerRef.current = null;
+          if (recognitionRef.current === recognition) recognition.stop();
+        }, 1000);
+      }
+    };
+    recognition.onerror = (event) => {
+      if (recognitionRef.current !== recognition || !voiceModeActiveRef.current) return;
+      if (bargeIn && voiceBargeInRef.current) {
+        voiceRecognitionFailedRef.current = true;
+        return;
+      }
+      voiceRecognitionFailedRef.current = true;
+      setIsListening(false);
+      setVoiceSessionStatus("error");
+      setNotice(event.error === "not-allowed"
+        ? "Microphone access was blocked. Allow it in your browser settings, or end voice chat to type."
+        : "I couldn’t hear that clearly. Tap the orb to try again.");
+    };
+    recognition.onend = () => {
+      if (recognitionRef.current !== recognition) return;
+      setIsListening(false);
+      recognitionRef.current = null;
+      if (voiceSilenceTimerRef.current) {
+        window.clearTimeout(voiceSilenceTimerRef.current);
+        voiceSilenceTimerRef.current = null;
+      }
+      if (!voiceModeActiveRef.current) return;
+      if (bargeIn && voiceBargeInRef.current) {
+        voiceBargeInRef.current = false;
+        if (!speechUtteranceRef.current) {
+          setVoiceSessionStatus("ready");
+          voiceRestartTimerRef.current = window.setTimeout(() => {
+            voiceRestartTimerRef.current = null;
+            voiceCaptureRef.current?.();
+          }, 300);
+        }
+        return;
+      }
+      if (voiceRecognitionFailedRef.current) return;
+      const transcript = `${voiceTranscriptRef.current} ${voiceInterimRef.current}`.trim();
+      voiceTranscriptRef.current = "";
+      voiceInterimRef.current = "";
+      if (!transcript) {
+        setVoiceSessionStatus("error");
+        setNotice("I didn’t catch that. Tap the orb to try again, or end voice chat.");
+        return;
+      }
+      setVoiceTranscriptPreview(transcript);
+      setDraft(transcript);
+      setVoiceSessionStatus("thinking");
+      setNotice("");
+      void sendMessage(transcript, { speakReply: true });
+    };
+    recognitionRef.current = recognition;
+    try {
+      recognition.start();
+    } catch {
+      if (recognitionRef.current === recognition) recognitionRef.current = null;
+      voiceBargeInRef.current = false;
+      setVoiceSessionStatus("error");
+      setNotice("Voice input could not start. Tap the orb to retry or end voice chat.");
+    }
+  };
+
+  useEffect(() => {
+    voiceCaptureRef.current = startVoiceCapture;
+  });
+
+  const startVoiceSession = () => {
+    if (!window.sessionStorage.getItem("innoknowvex_access_token")) {
+      setProfileStatus("signed-out");
+      setSkipProfileSetup(false);
+      return;
+    }
+    if (!(window.SpeechRecognition || window.webkitSpeechRecognition)) {
+      setNotice("Voice input is not supported in this browser. You can still type your question.");
+      return;
+    }
+    if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) {
+      setNotice("Spoken replies are not supported in this browser. You can still use text chat.");
+      return;
+    }
+    voiceModeActiveRef.current = true;
+    setIsVoiceSessionActive(true);
+    setVoiceSessionStatus("listening");
+    setVoiceTranscriptPreview("");
+    setDraft("");
+    setNotice("");
+    voiceCaptureRef.current?.();
+    window.requestAnimationFrame(() => {
+      voiceOrbRef.current?.focus();
+    });
   };
 
   function editSavedProfileStep(step) {
@@ -651,6 +929,24 @@ export default function OrvexaPage() {
       setIsSavingProfile(false);
     }
   }
+
+  const latestUserMessage = [...messages].reverse().find((message) => message.role === "user")?.content || "";
+  const suggestedFollowUps = followUpPrompts(latestUserMessage);
+  const latestMessageIsAssistant = messages[messages.length - 1]?.role === "assistant";
+  const assistantStatus = isVoiceSessionActive
+    ? voiceSessionStatus
+    : isSending
+      ? "thinking"
+      : speakingMessageId
+        ? "speaking"
+        : "ready";
+  const assistantStatusLabel = {
+    listening: "Listening",
+    thinking: "Thinking through your question",
+    speaking: "Speaking",
+    error: "Tap the orb to try again",
+    ready: "Here for you",
+  }[assistantStatus] || "Here for you";
 
   return (
     <>
@@ -706,7 +1002,7 @@ export default function OrvexaPage() {
               </span>
             </button>
             <p className={styles.launchHint}>Type or speak. Let’s find your next step.</p>
-            <span className={styles.previewNote}>AI-powered text chat · Voice is not connected yet</span>
+            <span className={styles.previewNote}>AI-powered chat · Optional browser voice</span>
           </div>
 
           {stage === "chat" && <div className={styles.chatLayer}>
@@ -738,8 +1034,20 @@ export default function OrvexaPage() {
                 if (event.key === "Escape") { event.stopPropagation(); closeAssistant(); }
               }}>
               <header className={styles.chatHeader}>
-                <div className={styles.assistantMark} data-orvexa-art="true"><OrbitMark className={styles.headerOrbit} /></div>
-                <div><h2 id="chat-title">ORVEXA</h2><p>Learning & career companion · AI powered</p></div>
+                <div
+                  className={styles.assistantMark}
+                  data-orvexa-art="true"
+                  data-state={assistantStatus}
+                >
+                  <OrbitMark className={styles.headerOrbit} />
+                </div>
+                <div>
+                  <h2 id="chat-title">ORVEXA</h2>
+                  <p className={styles.liveStatus} data-state={assistantStatus}>
+                    <span aria-hidden="true" />
+                    {assistantStatusLabel}
+                  </p>
+                </div>
                 {profileStatus !== "signed-out" && (
                   <button
                     type="button"
@@ -756,6 +1064,62 @@ export default function OrvexaPage() {
                 {stuntEnabled && <button type="button" className={styles.motionToggle} aria-label="Play robot move" onClick={playRobotStunt} title="Play robot gymnastics"><Play size={14} /><span>Robot move</span></button>}
                 <button ref={closeRef} type="button" className={styles.iconButton} aria-label="Close ORVEXA" onClick={closeAssistant}><X size={21} /></button>
               </header>
+              {isVoiceSessionActive && (
+                <div className={styles.voiceConversation} data-state={voiceSessionStatus} role="region" aria-label="ORVEXA voice conversation">
+                  <button type="button" className={styles.endVoiceButton} onClick={endVoiceSession}>
+                    End voice chat
+                  </button>
+                  <p className={styles.voiceEyebrow}>VOICE CONVERSATION</p>
+                  <div className={styles.voiceOrbStage} data-state={voiceSessionStatus}>
+                    <span className={`${styles.voiceOrbRing} ${styles.voiceOrbRingOne}`} aria-hidden="true" />
+                    <span className={`${styles.voiceOrbRing} ${styles.voiceOrbRingTwo}`} aria-hidden="true" />
+                    <span className={`${styles.voiceOrbRing} ${styles.voiceOrbRingThree}`} aria-hidden="true" />
+                    <button
+                      ref={voiceOrbRef}
+                      type="button"
+                      className={styles.voiceOrbButton}
+                      aria-label={isListening
+                        ? "Finish this speaking turn"
+                        : voiceSessionStatus === "speaking"
+                          ? "Interrupt ORVEXA and speak"
+                          : "Start listening"}
+                      disabled={!isListening && !["ready", "error", "speaking"].includes(voiceSessionStatus)}
+                      onClick={() => {
+                        if (isListening) recognitionRef.current?.stop();
+                        else if (voiceSessionStatus === "speaking") {
+                          if (voiceBargeInRef.current && recognitionRef.current) {
+                            voiceBargeInRef.current = false;
+                            stopVoiceOutput();
+                            setIsListening(true);
+                            setVoiceSessionStatus("listening");
+                            setNotice("I’m listening. Finish your thought whenever you’re ready.");
+                            return;
+                          }
+                          stopVoiceOutput();
+                          voiceCaptureRef.current?.();
+                        } else voiceCaptureRef.current?.();
+                      }}
+                    >
+                      <span className={styles.voiceOrbCore}>
+                        <OrbitMark className={styles.voiceOrbMark} />
+                        <span className={styles.voiceOrbPulse} aria-hidden="true" />
+                      </span>
+                    </button>
+                  </div>
+                  <h3 className={styles.voiceStatus} role="status">
+                    {voiceSessionStatus === "listening" && "I’m listening"}
+                    {voiceSessionStatus === "thinking" && "Let me think about that"}
+                    {voiceSessionStatus === "speaking" && "Here’s what I think"}
+                    {voiceSessionStatus === "error" && "Let’s try that again"}
+                    {voiceSessionStatus === "ready" && "Your turn"}
+                    {voiceSessionStatus === "idle" && "Ready when you are"}
+                  </h3>
+                  <p className={styles.voiceTranscript} aria-live="polite">
+                    {voiceTranscriptPreview || (isListening ? "Your words will appear here…" : "Tap the orb and speak naturally.")}
+                  </p>
+                  <p className={styles.voicePrivacy}>Your message and ORVEXA’s reply are saved in this chat history.</p>
+                </div>
+              )}
               {isHistoryOpen && (
                 <>
                   <button
@@ -1006,13 +1370,44 @@ export default function OrvexaPage() {
                         key={message.id || `${message.role}-${index}`}
                       >
                         {message.role === "assistant" ? (
-                          <div className={styles.markdownMessage}>
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
-                          </div>
+                          <>
+                            <div className={styles.markdownMessage}>
+                              <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
+                            </div>
+                            <button
+                              type="button"
+                              className={styles.speakButton}
+                              aria-label={speakingMessageId === (message.id || `assistant-${index}`) ? "Stop spoken reply" : "Play spoken reply"}
+                              title={speakingMessageId === (message.id || `assistant-${index}`) ? "Stop speaking" : "Listen to reply"}
+                              onClick={() => {
+                                if (speakingMessageId === (message.id || `assistant-${index}`)) stopVoiceOutput();
+                                else speakMessage(message.id || `assistant-${index}`, message.content);
+                              }}
+                            >
+                              {speakingMessageId === (message.id || `assistant-${index}`) ? <Square size={13} /> : <Volume2 size={15} />}
+                              <span>{speakingMessageId === (message.id || `assistant-${index}`) ? "Stop" : "Listen"}</span>
+                            </button>
+                          </>
                         ) : <p>{message.content}</p>}
                       </div>
                     ))}
                     {isSending && <p className={styles.typingIndicator} role="status">ORVEXA is thinking…</p>}
+                    {!isSending && latestMessageIsAssistant && (
+                      <div className={styles.followUpPrompts} aria-label="Suggested follow-up questions">
+                        {suggestedFollowUps.map((text) => (
+                          <button
+                            type="button"
+                            key={text}
+                            onClick={() => {
+                              setDraft(text);
+                              inputRef.current?.focus();
+                            }}
+                          >
+                            {text}<ArrowUpRight size={14} />
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -1040,8 +1435,8 @@ export default function OrvexaPage() {
                   )}
                   <p className={styles.notice} role={notice ? "alert" : "status"}>{notice || "Your chats are saved to your account. Your saved profile is included only with your Groq consent."}</p>
                   <form className={styles.composer} onSubmit={submitMessage}>
-                    <textarea ref={inputRef} aria-label="Message ORVEXA" placeholder="What would you like to explore?" rows={1} maxLength={4000} value={draft} disabled={isSending} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); submitMessage(event); } }} />
-                    <button type="button" className={styles.micButton} aria-label="Voice preview information" onClick={() => setNotice("Voice conversations are not connected yet. Your microphone has not been activated.")}><Mic size={19} /></button>
+                    <textarea ref={inputRef} aria-label="Message ORVEXA" placeholder="Ask anything, or use your voice…" rows={1} maxLength={4000} value={draft} disabled={isSending} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); submitMessage(event); } }} />
+                    <button type="button" className={`${styles.micButton} ${isVoiceSessionActive ? styles.micListening : ""}`} aria-label="Start voice conversation" aria-pressed={isVoiceSessionActive} disabled={isSending} onClick={startVoiceSession}><Mic size={19} /></button>
                     <button type="submit" className={styles.sendButton} aria-label="Send message to ORVEXA" disabled={!draft.trim() || isSending}>{isSending ? "…" : <ArrowUp size={21} />}</button>
                   </form>
                   <p className={styles.composerFootnote}>Built for your possibilities. Designed around you.</p>

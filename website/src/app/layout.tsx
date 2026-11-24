@@ -6,6 +6,7 @@ import DroneAnnouncement from "../components/common/DroneAnnouncement/DroneAnnou
 import { getSiteUrl } from "../lib/seo";
 import "./globals.css";
 
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -79,3 +80,4 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     </html>
   );
 }
+

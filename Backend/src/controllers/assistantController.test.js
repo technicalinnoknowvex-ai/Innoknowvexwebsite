@@ -288,6 +288,24 @@ test("sends the named course curriculum and consented profile to Groq", async ()
   );
 });
 
+test("asks for concise, natural speech when the request uses voice mode", async () => {
+  const dependencies = createDependencies();
+  const response = createResponse();
+
+  await dependencies.chat({
+    body: { message: "What can I learn in this program?", voiceMode: true },
+    user: { id: "learner-id" },
+    accessToken: "learner-token",
+  }, response);
+
+  assert.match(dependencies.getProviderMessages()[0].content, /For voice-mode replies/);
+  assert.match(dependencies.getProviderMessages()[0].content, /one to three short sentences/);
+  assert.match(dependencies.getProviderMessages()[0].content, /ordinary conversation, general questions/);
+  assert.match(dependencies.getPrompt(), /Answer greetings, small talk, general knowledge questions/);
+  assert.match(dependencies.getPrompt(), /Do not use Markdown, headings, bullet points/);
+  assert.equal(dependencies.getMessages().at(-1).content, response.body.data.reply);
+});
+
 test("loads previous turns into Groq context and appends the next turn to that chat", async () => {
   const conversationId = "11111111-1111-4111-8111-111111111111";
   const dependencies = createDependencies({
