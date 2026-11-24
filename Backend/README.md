@@ -15,6 +15,78 @@ variable to allow additional frontend origins. A loopback `FRONTEND_URL` is igno
 when `NODE_ENV=production` or the backend is running on Render, preventing
 verification links from pointing to localhost.
 
+## ORVEXA AI chat
+
+Run `supabase/groq_profile_consent.sql`, `supabase/orvexa_company_faq.sql`, and
+`supabase/orvexa_chat_history.sql` from the private
+[ORVEXA repository](https://github.com/technicalinnoknowvex-ai/Orvexa/tree/main/supabase)
+in the Supabase SQL Editor before deploying. Existing Gemini consent is not
+reused: learners must explicitly consent to sharing their profile with Groq
+before profile details are included. Re-run `orvexa_company_faq.sql` after FAQ
+content changes to upsert the approved company facts.
+
+The website and backend consume the private `@technicalinnoknowvex-ai/orvexa`
+package. Configure an `NPM_TOKEN` with GitHub Packages read access in both
+deployment environments and local development; never commit the token.
+
+Set `GROQ_API_KEY` in the backend `.env` and in the backend hosting provider's
+secret settings. The optional `GROQ_MODEL` setting defaults to
+`openai/gpt-oss-20b`. Check Groq's active model list and your account limits when
+choosing a model. Never expose the key in frontend code or a `NEXT_PUBLIC_*` variable.
+
+Authenticated clients send `{ "message": "...", "conversationId": "..." }` to
+`POST /api/assistant/chat`; omit `conversationId` to start a new conversation.
+Set `"voiceMode": true` for a concise, natural spoken-style reply without
+Markdown formatting; omit it for the normal chat response. ORVEXA can also
+answer general conversation and knowledge questions, in addition to
+Innoknowvex-specific questions grounded in supplied facts. The response includes
+the created or continued `conversationId`.
+`GET /api/assistant/conversations` lists the learner's recent chats, and
+`GET /api/assistant/conversations/:id/messages` loads a chat transcript. The
+backend stores turns in `orvexa_conversations` and `orvexa_messages`, and sends
+the latest 20 saved messages to Groq as conversational context. The history
+endpoints only expose conversations belonging to the authenticated learner.
+Chat history requires `SUPABASE_SERVICE_ROLE_KEY` on the backend to save assistant
+replies; never expose this key in frontend code.
+
+Course descriptions and curriculum come from
+`programs_new`; prices come from `program_pricing_new`. Course titles, slugs, title
+phrases, and acronyms resolve names (including `ML`, `FSWD`, and compact forms
+such as `cybersecurity`) across the catalog. For price questions, the backend
+returns the matched table prices directly rather than relying on Groq to repeat
+them. General price questions list the available prices and ask which course or
+plan the learner means.
+
+Training and internship durations are read directly from the
+`training_duration` and `internship_duration` columns in `programs_new`. Populate
+both columns to show both values for each course; missing values are described
+conversationally as unconfirmed. Course slugs and categories are internal matching
+data and are not included in answer context. ORVEXA states verified facts directly
+and does not mention its internal catalogs, databases, tables, or FAQ sources.
+When multiple courses match, ORVEXA asks the learner
+to clarify; a delivery modifier such as “offline” can distinguish similarly
+named courses. Company FAQs are ranked as factual references, with company
+overview facts prioritized for differently worded company questions. Groq phrases
+relevant facts for the learner instead of repeating fixed answers. Edit and add
+approved company facts in `company_faq`, then re-run the FAQ SQL seed to apply
+changes. The FAQ seed also includes the public support email, phone, and office
+address. Resume-building training and LinkedIn profile guidance are general
+career-readiness support across training sessions; they are not exclusive to
+one course.
+It adds the authenticated learner's profile context only when
+`ai_personalization_consent` is true and the consent provider is `groq`. Messages,
+recent conversation turns, resolved course/pricing data, and any newly consented
+profile context are sent to Groq to generate a reply. ORVEXA also searches relevant
+text from public pages listed in the Innoknowvex sitemap and sends only the best
+matching snippets. It accepts HTTPS URLs from the company domain only, excludes
+authentication, admin, dashboard, and checkout paths, removes scripts, and caches
+indexed pages in memory for 30 minutes. If the public site cannot be reached, the
+assistant logs the issue and continues with its program and FAQ information. No
+private or authenticated pages are crawled.
+Innoknowvex-specific answers are limited to facts in this context; general
+educational questions can be answered using the model's general knowledge. Do not
+send sensitive information that is unnecessary for learning guidance.
+
 ## Student guidance leads
 
 Run `supabase/student_guidance_leads.sql` in the Supabase SQL Editor. The optional
