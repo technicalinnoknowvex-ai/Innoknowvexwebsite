@@ -4,7 +4,7 @@ import {
   followUpPrompts,
   isLikelySpeechEcho,
   prepareSpeechText,
-} from "../src/components/orvexa/orvexa-interactions.mjs";
+} from "@technicalinnoknowvex-ai/orvexa/client/helpers";
 
 test("suggests career follow-ups for resume questions", () => {
   assert.match(followUpPrompts("Can you review my resume?")[0], /resume/i);

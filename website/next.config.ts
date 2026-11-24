@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  transpilePackages: ["@technicalinnoknowvex-ai/orvexa"],
   async redirects() {
     return [
       { source: "/Home/Home", destination: "/", permanent: true },

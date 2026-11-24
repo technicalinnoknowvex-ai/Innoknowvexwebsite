@@ -18,12 +18,16 @@ verification links from pointing to localhost.
 ## ORVEXA AI chat
 
 Run `supabase/groq_profile_consent.sql`, `supabase/orvexa_company_faq.sql`, and
-`supabase/orvexa_chat_history.sql` in the
-Supabase SQL Editor before deploying the updated backend. Existing Gemini consent
-is not reused: learners must explicitly consent to sharing their profile with
-Groq before profile details are included.
-Re-run `supabase/orvexa_company_faq.sql` after FAQ content changes to upsert the
-approved company overview, story, mission, vision, and values facts.
+`supabase/orvexa_chat_history.sql` from the private
+[ORVEXA repository](https://github.com/technicalinnoknowvex-ai/Orvexa/tree/main/supabase)
+in the Supabase SQL Editor before deploying. Existing Gemini consent is not
+reused: learners must explicitly consent to sharing their profile with Groq
+before profile details are included. Re-run `orvexa_company_faq.sql` after FAQ
+content changes to upsert the approved company facts.
+
+The website and backend consume the private `@technicalinnoknowvex-ai/orvexa`
+package. Configure an `NPM_TOKEN` with GitHub Packages read access in both
+deployment environments and local development; never commit the token.
 
 Set `GROQ_API_KEY` in the backend `.env` and in the backend hosting provider's
 secret settings. The optional `GROQ_MODEL` setting defaults to
