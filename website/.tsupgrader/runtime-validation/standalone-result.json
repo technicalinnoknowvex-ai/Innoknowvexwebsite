@@ -1,0 +1,97 @@
+{
+  "planHash": "4080e76eccf39262b13f35ac41cbc81c7787ff3d905ca430638d12028083a266",
+  "phase": "standalone",
+  "recordedAtUtc": "2026-11-24T11:04:27.1957941Z",
+  "retryCount": 2,
+  "resetBaseline": false,
+  "complete": true,
+  "result": {
+    "setupSucceeded": true,
+    "setupDurationMs": 0,
+    "setupFailureOutput": null,
+    "assertions": [
+      {
+        "name": "website-lint",
+        "kind": "process",
+        "verificationMethod": "exit-code",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "\r\n\u003E website@0.1.0 lint\r\n\u003E eslint\r\n\r\n\r\nC:\\Users\\Company\\Desktop\\Innoknowvexwebsite\\website\\src\\utils\\formatters.js\r\n  2:1  warning  Assign object to a variable before exporting as module default  import/no-anonymous-default-export\r\n\r\nC:\\Users\\Company\\Desktop\\Innoknowvexwebsite\\website\\src\\utils\\helpers.js\r\n  2:1  warning  Assign object to a variable before exporting as module default  import/no-anonymous-default-export\r\n\r\n\u2716 2 problems (0 errors, 2 warnings)\r\n\r\n",
+        "durationMs": 17877
+      },
+      {
+        "name": "website-build",
+        "kind": "process",
+        "verificationMethod": "exit-code",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "\r\n\u003E website@0.1.0 build\r\n\u003E next build\r\n\r\n\u25B2 Next.js 16.3.6 (Turbopack)\r\n- Environments: .env\r\n\u2713 Running next.config.ts took 195ms\r\n\r\n  Creating an optimized production build ...\r\n\u2713 Compiled successfully in 3.7s\r\n  Running TypeScript ...\r\n  Finished TypeScript in 3.0s ...\r\n  Collecting page data using 11 workers ...\r\n  Generating static pages using 11 workers (0/22) ...\r\n  Generating static pages using 11 workers (5/22) \r\n  Generating static pages using 11 workers (10/22) \r\n  Generating static pages using 11 workers (16/22) \r\n\u2713 Generating static pages using 11 workers (22/22) in 1152ms\r\n  Finalizing page optimization ...\r\n\r\nRoute (app)\r\n\u250C \u25CB /\r\n\u251C \u25CB /_not-found\r\n\u251C \u25CB /auth/admin\r\n\u251C \u0192 /auth/admin/login\r\n\u251C \u25CB /auth/admin/signup\r\n\u251C \u25CB /auth/student/dashboard\r\n\u251C \u0192 /auth/student/login\r\n\u251C \u0192 /auth/student/signup\r\n\u251C \u25CB /careers\r\n\u251C \u25CB /checkout\r\n\u251C \u25CB /login\r\n\u251C \u25CB /programs\r\n\u251C \u0192 /programs/[slug]\r\n\u251C \u25CB /robots.txt\r\n\u251C \u25CB /signup\r\n\u2514 \u0192 /sitemap.xml\r\n\r\nRoute (pages)\r\n\u250C   /_app\r\n\u251C \u25CB /about\r\n\u251C \u25CB /About/About\r\n\u251C \u25CB /Legal/PrivacyPolicy\r\n\u251C \u25CB /Legal/RefundPolicy\r\n\u251C \u25CB /orvexa\r\n\u2514 \u25CB /Orvexa/Orvexa\r\n\r\n\u25CB  (Static)   prerendered as static content\r\n\u0192  (Dynamic)  server-rendered on demand\r\n\r\n",
+        "durationMs": 16395
+      },
+      {
+        "name": "tests-pass",
+        "kind": "process",
+        "verificationMethod": "test-results",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "\r\n\u003E website@0.1.0 test\r\n\u003E node --test\r\n\r\nTAP version 13\r\n# Subtest: suggests career follow-ups for resume questions\r\nok 1 - suggests career follow-ups for resume questions\r\n  ---\r\n  duration_ms: 2.1825\r\n  ...\r\n# Subtest: suggests course follow-ups for learning questions\r\nok 2 - suggests course follow-ups for learning questions\r\n  ---\r\n  duration_ms: 0.3512\r\n  ...\r\n# Subtest: uses general follow-ups when no topic is recognized\r\nok 3 - uses general follow-ups when no topic is recognized\r\n  ---\r\n  duration_ms: 0.3216\r\n  ...\r\n# Subtest: recognizes speech that matches ORVEXA\u0027s spoken answer\r\nok 4 - recognizes speech that matches ORVEXA\u0027s spoken answer\r\n  ---\r\n  duration_ms: 0.4024\r\n  ...\r\n# Subtest: does not mistake an unrelated interruption for assistant echo\r\nok 5 - does not mistake an unrelated interruption for assistant echo\r\n  ---\r\n  duration_ms: 0.3007\r\n  ...\r\n# Subtest: turns Markdown tables into speech without reading separator dashes\r\nok 6 - turns Markdown tables into speech without reading separator dashes\r\n  ---\r\n  duration_ms: 0.9716\r\n  ...\r\n# Subtest: removes Markdown list and horizontal-rule syntax but preserves hyphenated words\r\nok 7 - removes Markdown list and horizontal-rule syntax but preserves hyphenated words\r\n  ---\r\n  duration_ms: 0.9672\r\n  ...\r\n1..7\r\n# tests 7\r\n# suites 0\r\n# pass 7\r\n# fail 0\r\n# cancelled 0\r\n# skipped 0\r\n# todo 0\r\n# duration_ms 162.8836\r\n",
+        "durationMs": 1024,
+        "testResults": {
+          "testFramework": "unknown",
+          "runnerDetectedFrom": "none",
+          "testsTotal": 0,
+          "testsPassed": 0,
+          "testsFailed": 0,
+          "testsSkipped": 0,
+          "parseFailed": true
+        }
+      }
+    ],
+    "executions": [
+      {
+        "source": "website-lint",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "run",
+          "lint"
+        ],
+        "cwd": "C:\\Users\\Company\\Desktop\\Innoknowvexwebsite\\website",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "website-build",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "run",
+          "build"
+        ],
+        "cwd": "C:\\Users\\Company\\Desktop\\Innoknowvexwebsite\\website",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "tests-pass",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "test"
+        ],
+        "cwd": "C:\\Users\\Company\\Desktop\\Innoknowvexwebsite\\website",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      }
+    ]
+  }
+}

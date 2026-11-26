@@ -6,6 +6,7 @@ const studentLeadRoutes = require("./routes/studentLeadRoutes");
 const partnershipInquiryRoutes = require("./routes/partnershipInquiryRoutes");
 const careerRoutes = require("./routes/careerRoutes");
 const authRoutes = require("./routes/authRoutes");
+const assistantRoutes = require("./routes/assistantRoutes");
 const programRoutes = require("./routes/programRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const testimonialRoutes = require("./routes/testimonialRoutes");
@@ -45,6 +46,7 @@ app.get("/health", (request, response) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/assistant", assistantRoutes);
 app.use("/api/leads", studentLeadRoutes);
 app.use("/api/partnership-inquiries", partnershipInquiryRoutes);
 app.use("/api/careers", careerRoutes);
@@ -97,6 +99,7 @@ app.use((error, request, response, next) => {
       message: errorMessage,
       code: errorCode,
       status: statusCode,
+      ...(error.providerFailure ? { providerFailure: error.providerFailure } : {}),
       stack: error.stack,
     });
   }
@@ -104,7 +107,7 @@ app.use((error, request, response, next) => {
   response.status(statusCode).json({
     error:
       statusCode >= 500 && !isPaymentRequest
-        ? "Internal server error."
+        ? error.publicMessage || "Internal server error."
         : responseMessage,
     ...(statusCode < 500 && errorCode ? { code: errorCode } : {}),
   });
