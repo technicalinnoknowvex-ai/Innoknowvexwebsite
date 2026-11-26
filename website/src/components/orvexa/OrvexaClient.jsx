@@ -88,6 +88,34 @@ function OrbitMark({ className = "" }) {
   return <Image src={orbitImage} alt="" aria-hidden="true" width={96} height={72} className={className} draggable={false} onContextMenu={(event) => event.preventDefault()} onDragStart={(event) => event.preventDefault()} unoptimized />;
 }
 
+function getBestVoice() {
+  if (typeof window === "undefined" || !window.speechSynthesis) return null;
+  const voices = window.speechSynthesis.getVoices();
+  if (!voices || !voices.length) return null;
+
+  const naturalFemale = voices.find((voice) =>
+    /natural|neural|online/i.test(voice.name) &&
+    /en/i.test(voice.lang) &&
+    /female|girl|jenny|aria|sonia|neerja/i.test(voice.name),
+  );
+  if (naturalFemale) return naturalFemale;
+
+  const anyNatural = voices.find((voice) =>
+    /natural|neural|online/i.test(voice.name) && /en/i.test(voice.lang),
+  );
+  if (anyNatural) return anyNatural;
+
+  const googleOrApple = voices.find((voice) =>
+    /google|samantha|karen|victoria|moira|serena/i.test(voice.name) && /en/i.test(voice.lang),
+  );
+  if (googleOrApple) return googleOrApple;
+
+  const english = voices.find((voice) => /^en[-_]/i.test(voice.lang));
+  if (english) return english;
+
+  return voices[0];
+}
+
 export default function OrvexaPage({
   Header,
   authApi,
@@ -150,10 +178,17 @@ export default function OrvexaPage({
   const voiceSpokenTextRef = useRef("");
   const voiceRestartTimerRef = useRef(null);
   const voiceSilenceTimerRef = useRef(null);
+  const voiceBargeInTimerRef = useRef(null);
+  const voiceSpeechStartTimeRef = useRef(0);
+  const mediaStreamRef = useRef(null);
 
   const stopVoiceOutput = useCallback(() => {
     if (typeof window !== "undefined" && window.speechSynthesis) {
       window.speechSynthesis.cancel();
+    }
+    if (voiceBargeInTimerRef.current) {
+      window.clearTimeout(voiceBargeInTimerRef.current);
+      voiceBargeInTimerRef.current = null;
     }
     speechUtteranceRef.current = null;
     voiceSpokenTextRef.current = "";
@@ -173,28 +208,56 @@ export default function OrvexaPage({
     }
     voiceSpokenTextRef.current = text;
     const utterance = new window.SpeechSynthesisUtterance(text);
+    const voice = getBestVoice();
+    if (voice) utterance.voice = voice;
+    utterance.rate = 1.0;
+    utterance.pitch = 1.04;
+
     utterance.onstart = () => {
-      if (voiceModeActiveRef.current) voiceCaptureRef.current?.({ bargeIn: true });
+      setSpeakingMessageId(messageId);
+      voiceSpeechStartTimeRef.current = Date.now();
+      if (voiceModeActiveRef.current) {
+        setVoiceSessionStatus("speaking");
+        if (voiceBargeInTimerRef.current) window.clearTimeout(voiceBargeInTimerRef.current);
+        // Start barge-in listening after 600ms grace period so audio output stabilizes
+        voiceBargeInTimerRef.current = window.setTimeout(() => {
+          voiceBargeInTimerRef.current = null;
+          if (speechUtteranceRef.current === utterance && voiceModeActiveRef.current) {
+            voiceCaptureRef.current?.({ bargeIn: true });
+          }
+        }, 600);
+      }
     };
     utterance.onend = () => {
       if (speechUtteranceRef.current === utterance) {
         speechUtteranceRef.current = null;
         voiceSpokenTextRef.current = "";
         setSpeakingMessageId(null);
+        if (voiceBargeInTimerRef.current) {
+          window.clearTimeout(voiceBargeInTimerRef.current);
+          voiceBargeInTimerRef.current = null;
+        }
         if (voiceModeActiveRef.current) {
           if (voiceBargeInRef.current && recognitionRef.current) {
             voiceBargeInRef.current = false;
-            const recognition = recognitionRef.current;
+            const rec = recognitionRef.current;
             recognitionRef.current = null;
-            recognition.abort();
+            try { rec.abort(); } catch {}
           }
-          if (!recognitionRef.current) {
-            setVoiceSessionStatus("ready");
-            voiceRestartTimerRef.current = window.setTimeout(() => {
-              voiceRestartTimerRef.current = null;
-              voiceCaptureRef.current?.();
-            }, 300);
-          }
+          // Clear any interim or transcript fragments collected from the speaker
+          voiceTranscriptRef.current = "";
+          voiceInterimRef.current = "";
+          setVoiceTranscriptPreview("");
+          setVoiceSessionStatus("listening");
+          setIsListening(true);
+          setNotice("I’m listening. Speak naturally or ask another question.");
+          if (voiceRestartTimerRef.current) window.clearTimeout(voiceRestartTimerRef.current);
+          voiceRestartTimerRef.current = window.setTimeout(() => {
+            voiceRestartTimerRef.current = null;
+            if (voiceModeActiveRef.current && !speechUtteranceRef.current) {
+              voiceCaptureRef.current?.({ bargeIn: false });
+            }
+          }, 200);
         }
       }
     };
@@ -202,15 +265,27 @@ export default function OrvexaPage({
       if (speechUtteranceRef.current === utterance) {
         speechUtteranceRef.current = null;
         setSpeakingMessageId(null);
+        if (voiceBargeInTimerRef.current) {
+          window.clearTimeout(voiceBargeInTimerRef.current);
+          voiceBargeInTimerRef.current = null;
+        }
         setNotice("ORVEXA could not play that spoken reply.");
         if (voiceModeActiveRef.current) {
-          setVoiceSessionStatus("error");
           if (voiceBargeInRef.current && recognitionRef.current) {
             voiceBargeInRef.current = false;
-            const recognition = recognitionRef.current;
+            const rec = recognitionRef.current;
             recognitionRef.current = null;
-            recognition.abort();
+            try { rec.abort(); } catch {}
           }
+          setVoiceSessionStatus("listening");
+          setIsListening(true);
+          if (voiceRestartTimerRef.current) window.clearTimeout(voiceRestartTimerRef.current);
+          voiceRestartTimerRef.current = window.setTimeout(() => {
+            voiceRestartTimerRef.current = null;
+            if (voiceModeActiveRef.current) {
+              voiceCaptureRef.current?.({ bargeIn: false });
+            }
+          }, 200);
         }
       }
     };
@@ -225,6 +300,10 @@ export default function OrvexaPage({
     setIsVoiceSessionActive(false);
     setVoiceSessionStatus("idle");
     setIsListening(false);
+    if (voiceBargeInTimerRef.current) {
+      window.clearTimeout(voiceBargeInTimerRef.current);
+      voiceBargeInTimerRef.current = null;
+    }
     if (voiceRestartTimerRef.current) {
       window.clearTimeout(voiceRestartTimerRef.current);
       voiceRestartTimerRef.current = null;
@@ -233,18 +312,31 @@ export default function OrvexaPage({
       window.clearTimeout(voiceSilenceTimerRef.current);
       voiceSilenceTimerRef.current = null;
     }
+    if (mediaStreamRef.current) {
+      try {
+        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+      } catch {}
+      mediaStreamRef.current = null;
+    }
     const recognition = recognitionRef.current;
     recognitionRef.current = null;
-    recognition?.stop();
+    try { recognition?.stop(); } catch {}
     stopVoiceOutput();
   }, [stopVoiceOutput]);
 
   useEffect(() => () => {
     voiceModeActiveRef.current = false;
+    if (voiceBargeInTimerRef.current) window.clearTimeout(voiceBargeInTimerRef.current);
     if (voiceRestartTimerRef.current) window.clearTimeout(voiceRestartTimerRef.current);
     if (voiceSilenceTimerRef.current) window.clearTimeout(voiceSilenceTimerRef.current);
-    recognitionRef.current?.stop();
-    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    if (mediaStreamRef.current) {
+      try {
+        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+      } catch {}
+      mediaStreamRef.current = null;
+    }
+    try { recognitionRef.current?.stop(); } catch {}
+    if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel();
   }, []);
 
   useEffect(() => {
@@ -710,9 +802,10 @@ export default function OrvexaPage({
         { id: assistantMessageId, role: "assistant", content: result.reply },
       ]);
       if (speakReply && voiceModeActiveRef.current) {
-        if (result.spokenReply) {
+        const textToSpeak = result.spokenReply || result.reply;
+        if (textToSpeak) {
           setVoiceSessionStatus("speaking");
-          speakMessage(assistantMessageId, result.spokenReply);
+          speakMessage(assistantMessageId, textToSpeak);
         } else {
           setVoiceSessionStatus("error");
           setNotice(result.spokenReplyError || "Your text answer is available, but ORVEXA could not prepare a natural spoken reply. Please try again.");
@@ -756,51 +849,70 @@ export default function OrvexaPage({
     voiceInterimRef.current = "";
     voiceRecognitionFailedRef.current = false;
     voiceBargeInRef.current = bargeIn;
-    setVoiceTranscriptPreview("");
+    if (!bargeIn) setVoiceTranscriptPreview("");
     const recognition = new SpeechRecognition();
     recognition.lang = navigator.language || "en-IN";
     recognition.interimResults = true;
     recognition.continuous = bargeIn;
     recognition.onstart = () => {
-      if (!voiceModeActiveRef.current || bargeIn) return;
-      setIsListening(true);
-      setVoiceSessionStatus("listening");
-      setNotice("Listening. Your browser handles voice transcription; check its privacy settings for details.");
+      if (!voiceModeActiveRef.current) return;
+      if (!bargeIn) {
+        setIsListening(true);
+        setVoiceSessionStatus("listening");
+        setNotice("Listening… Speak naturally.");
+      }
     };
     recognition.onresult = (event) => {
       let completed = "";
       let interim = "";
-      for (let index = event.resultIndex; index < event.results.length; index += 1) {
-        const transcript = event.results[index][0].transcript;
-        if (event.results[index].isFinal) completed += transcript;
-        else interim += transcript;
+      for (let index = 0; index < event.results.length; index += 1) {
+        const item = event.results[index];
+        const text = item[0]?.transcript || "";
+        if (item.isFinal) completed += " " + text;
+        else interim += " " + text;
       }
-      const newTranscript = `${completed} ${interim}`.trim();
-      if (!newTranscript) return;
+      completed = completed.trim();
+      interim = interim.trim();
+      const fullTranscript = `${completed} ${interim}`.trim();
+      if (!fullTranscript) return;
+
       if (bargeIn && voiceBargeInRef.current) {
-        if (isLikelySpeechEcho(newTranscript, voiceSpokenTextRef.current)) return;
+        // Must be at least 400ms since speech started to avoid initial speaker burst
+        if (Date.now() - voiceSpeechStartTimeRef.current < 400) return;
+
+        // Check if the microphone is picking up ORVEXA's own speech
+        if (isLikelySpeechEcho(fullTranscript, voiceSpokenTextRef.current)) {
+          // It's the assistant's own voice coming through speakers — ignore!
+          return;
+        }
+
+        // Genuine user interruption!
         voiceBargeInRef.current = false;
         stopVoiceOutput();
         setIsListening(true);
         setVoiceSessionStatus("listening");
-        setNotice("I’m listening. Finish your thought whenever you’re ready.");
+        setNotice("I’m listening. Go ahead...");
       }
-      voiceTranscriptRef.current = `${voiceTranscriptRef.current} ${completed}`.trim();
-      voiceInterimRef.current = interim.trim();
-      const transcript = `${voiceTranscriptRef.current} ${voiceInterimRef.current}`.trim();
-      setVoiceTranscriptPreview(transcript);
-      setDraft(transcript);
+
+      voiceTranscriptRef.current = completed;
+      voiceInterimRef.current = interim;
+      setVoiceTranscriptPreview(fullTranscript);
+      setDraft(fullTranscript);
+
       if (recognition.continuous) {
         if (voiceSilenceTimerRef.current) window.clearTimeout(voiceSilenceTimerRef.current);
         voiceSilenceTimerRef.current = window.setTimeout(() => {
           voiceSilenceTimerRef.current = null;
-          if (recognitionRef.current === recognition) recognition.stop();
-        }, 1000);
+          if (recognitionRef.current === recognition) {
+            try { recognition.stop(); } catch {}
+          }
+        }, 1200);
       }
     };
     recognition.onerror = (event) => {
       if (recognitionRef.current !== recognition || !voiceModeActiveRef.current) return;
       if (bargeIn && voiceBargeInRef.current) {
+        if (event.error === "aborted" || event.error === "no-speech") return;
         voiceRecognitionFailedRef.current = true;
         if (["not-allowed", "service-not-allowed", "audio-capture"].includes(event.error)) {
           voiceBargeInRef.current = false;
@@ -812,6 +924,10 @@ export default function OrvexaPage({
         }
         return;
       }
+      if (event.error === "no-speech") {
+        return;
+      }
+      if (event.error === "aborted") return;
       voiceRecognitionFailedRef.current = true;
       setIsListening(false);
       setVoiceSessionStatus("error");
@@ -829,17 +945,12 @@ export default function OrvexaPage({
       }
       if (!voiceModeActiveRef.current) return;
       if (bargeIn && voiceBargeInRef.current) {
-        voiceBargeInRef.current = false;
         if (speechUtteranceRef.current) {
           voiceRestartTimerRef.current = window.setTimeout(() => {
             voiceRestartTimerRef.current = null;
-            voiceCaptureRef.current?.({ bargeIn: true });
-          }, 300);
-        } else {
-          setVoiceSessionStatus("ready");
-          voiceRestartTimerRef.current = window.setTimeout(() => {
-            voiceRestartTimerRef.current = null;
-            voiceCaptureRef.current?.();
+            if (voiceModeActiveRef.current && speechUtteranceRef.current) {
+              voiceCaptureRef.current?.({ bargeIn: true });
+            }
           }, 300);
         }
         return;
@@ -849,8 +960,8 @@ export default function OrvexaPage({
       voiceTranscriptRef.current = "";
       voiceInterimRef.current = "";
       if (!transcript) {
-        setVoiceSessionStatus("error");
-        setNotice("I didn’t catch that. Tap the orb to try again, or end voice chat.");
+        setVoiceSessionStatus("listening");
+        setNotice("I’m listening. Tap the orb or speak whenever you’re ready.");
         return;
       }
       setVoiceTranscriptPreview(transcript);
@@ -865,9 +976,10 @@ export default function OrvexaPage({
     } catch {
       if (recognitionRef.current === recognition) recognitionRef.current = null;
       voiceBargeInRef.current = false;
-      setVoiceSessionStatus("error");
-      setNotice("Voice input could not start. Tap the orb to retry or end voice chat.");
-      if (bargeIn) stopVoiceOutput();
+      if (!bargeIn) {
+        setVoiceSessionStatus("error");
+        setNotice("Voice input could not start. Tap the orb to retry or end voice chat.");
+      }
     }
   };
 
@@ -889,13 +1001,25 @@ export default function OrvexaPage({
       setNotice("Spoken replies are not supported in this browser. You can still use text chat.");
       return;
     }
+    // Attempt browser/hardware echo cancellation
+    if (typeof navigator !== "undefined" && navigator.mediaDevices?.getUserMedia) {
+      navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      }).then((stream) => {
+        mediaStreamRef.current = stream;
+      }).catch(() => {});
+    }
     voiceModeActiveRef.current = true;
     setIsVoiceSessionActive(true);
     setVoiceSessionStatus("listening");
     setVoiceTranscriptPreview("");
     setDraft("");
-    setNotice("");
-    voiceCaptureRef.current?.();
+    setNotice("I’m listening. Speak naturally or ask anything.");
+    voiceCaptureRef.current?.({ bargeIn: false });
     window.requestAnimationFrame(() => {
       voiceOrbRef.current?.focus();
     });
@@ -1098,19 +1222,34 @@ export default function OrvexaPage({
                           : "Start listening"}
                       disabled={!isListening && !["ready", "error", "speaking"].includes(voiceSessionStatus)}
                       onClick={() => {
-                        if (isListening) recognitionRef.current?.stop();
-                        else if (voiceSessionStatus === "speaking") {
-                          if (voiceBargeInRef.current && recognitionRef.current) {
-                            voiceBargeInRef.current = false;
-                            stopVoiceOutput();
-                            setIsListening(true);
-                            setVoiceSessionStatus("listening");
-                            setNotice("I’m listening. Finish your thought whenever you’re ready.");
-                            return;
-                          }
+                        if (voiceSessionStatus === "speaking") {
                           stopVoiceOutput();
-                          voiceCaptureRef.current?.();
-                        } else voiceCaptureRef.current?.();
+                          if (voiceBargeInTimerRef.current) {
+                            window.clearTimeout(voiceBargeInTimerRef.current);
+                            voiceBargeInTimerRef.current = null;
+                          }
+                          voiceBargeInRef.current = false;
+                          if (recognitionRef.current) {
+                            const rec = recognitionRef.current;
+                            recognitionRef.current = null;
+                            try { rec.abort(); } catch {}
+                          }
+                          voiceTranscriptRef.current = "";
+                          voiceInterimRef.current = "";
+                          setVoiceTranscriptPreview("");
+                          setVoiceSessionStatus("listening");
+                          setIsListening(true);
+                          setNotice("I’m listening. Speak naturally.");
+                          if (voiceRestartTimerRef.current) window.clearTimeout(voiceRestartTimerRef.current);
+                          voiceRestartTimerRef.current = window.setTimeout(() => {
+                            voiceRestartTimerRef.current = null;
+                            voiceCaptureRef.current?.({ bargeIn: false });
+                          }, 100);
+                        } else if (isListening) {
+                          try { recognitionRef.current?.stop(); } catch {}
+                        } else {
+                          voiceCaptureRef.current?.({ bargeIn: false });
+                        }
                       }}
                     >
                       <span className={styles.voiceOrbCore}>
@@ -1121,14 +1260,20 @@ export default function OrvexaPage({
                   </div>
                   <h3 className={styles.voiceStatus} role="status">
                     {voiceSessionStatus === "listening" && "I’m listening"}
-                    {voiceSessionStatus === "thinking" && "Let me think about that"}
+                    {voiceSessionStatus === "thinking" && "Let me think about that…"}
                     {voiceSessionStatus === "speaking" && "Here’s what I think"}
                     {voiceSessionStatus === "error" && "Let’s try that again"}
                     {voiceSessionStatus === "ready" && "Your turn"}
                     {voiceSessionStatus === "idle" && "Ready when you are"}
                   </h3>
                   <p className={styles.voiceTranscript} aria-live="polite">
-                    {voiceTranscriptPreview || (isListening ? "Your words will appear here…" : "Tap the orb and speak naturally.")}
+                    {voiceTranscriptPreview || (
+                      voiceSessionStatus === "speaking"
+                        ? "Listening for your interruption… Tap orb to interrupt"
+                        : isListening
+                          ? "Speak naturally, I'm listening…"
+                          : "Tap the orb and speak naturally."
+                    )}
                   </p>
                   <p className={styles.voicePrivacy}>Your message and ORVEXA’s reply are saved in this chat history.</p>
                 </div>

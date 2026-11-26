@@ -26,6 +26,22 @@ test("does not mistake an unrelated interruption for assistant echo", () => {
   assert.equal(isLikelySpeechEcho("wait, I have a question", "The course starts with foundations and projects"), false);
 });
 
+test("recognizes partial bigrams and stemmed variations as echo", () => {
+  assert.equal(isLikelySpeechEcho("the courses starting with foundation", "The course starts with foundations and projects"), true);
+});
+
+test("recognizes stop command as genuine user interruption", () => {
+  assert.equal(isLikelySpeechEcho("stop", "The course starts with foundations and projects"), false);
+});
+
+test("recognizes questions on new topics as genuine user interruption", () => {
+  assert.equal(isLikelySpeechEcho("what about python programming?", "The course starts with foundations and projects"), false);
+});
+
+test("recognizes echoes when assistant itself used wait or actually", () => {
+  assert.equal(isLikelySpeechEcho("wait until tomorrow for the update", "Wait until tomorrow for the update on courses"), true);
+});
+
 test("turns Markdown tables into speech without reading separator dashes", () => {
   assert.equal(
     prepareSpeechText("| Plan | Price |\n| --- | --- |\n| Self-learning | ₹19,999 |"),

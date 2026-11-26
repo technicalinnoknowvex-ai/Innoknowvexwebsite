@@ -12,13 +12,75 @@ export function followUpPrompts(question = "") {
   return ["Tell me a little more", "What should I do next?", "How does that fit my goals?"];
 }
 
+const INTERRUPT_COMMANDS = new Set([
+  "stop", "wait", "hold", "pause", "quiet", "cancel", "shut",
+  "excuse", "listen", "hang"
+]);
+
+function stemWord(word) {
+  return String(word || "")
+    .toLowerCase()
+    .replace(/(?:ing|edly|edly|ed|es|s|ly|ment|tion)$/, "")
+    .trim();
+}
+
+function extractNGrams(words, n) {
+  const ngrams = new Set();
+  for (let index = 0; index <= words.length - n; index += 1) {
+    ngrams.add(words.slice(index, index + n).join(" "));
+  }
+  return ngrams;
+}
+
 export function isLikelySpeechEcho(transcript = "", spokenText = "") {
-  if (/\b(?:stop|wait|hold on|excuse me|actually|one second)\b/i.test(transcript)) return false;
-  const transcriptWords = String(transcript).toLowerCase().match(/[a-z0-9]+/g) || [];
-  const spokenWords = new Set(String(spokenText).toLowerCase().match(/[a-z0-9]+/g) || []);
-  if (!transcriptWords.length || !spokenWords.size) return false;
-  const matchingWords = transcriptWords.filter((word) => spokenWords.has(word)).length;
-  return matchingWords / transcriptWords.length >= 0.75;
+  const normTranscript = String(transcript || "").toLowerCase().trim();
+  const normSpoken = String(spokenText || "").toLowerCase().trim();
+  if (!normTranscript || !normSpoken) return false;
+
+  const tWords = normTranscript.match(/[a-z0-9]+/g) || [];
+  const sWords = normSpoken.match(/[a-z0-9]+/g) || [];
+  if (!tWords.length || !sWords.length) return false;
+
+  const hasInterruptCommand = tWords.some((word) => INTERRUPT_COMMANDS.has(word));
+
+  // Single or double stray words without an interrupt command are almost always speaker leak / mic clicks
+  if (tWords.length <= 2 && !hasInterruptCommand) return true;
+
+  // Bigram and trigram phrase overlap check
+  const sBigrams = extractNGrams(sWords, 2);
+  const sTrigrams = extractNGrams(sWords, 3);
+  const tBigrams = extractNGrams(tWords, 2);
+
+  let matchingBigrams = 0;
+  for (const bigram of tBigrams) {
+    if (sBigrams.has(bigram)) matchingBigrams += 1;
+  }
+
+  // If 2 or more bigrams match, or any trigram matches, it is definitely assistant speech
+  if (matchingBigrams >= 2) return true;
+  if (tWords.length >= 3) {
+    const tTrigrams = extractNGrams(tWords, 3);
+    for (const trigram of tTrigrams) {
+      if (sTrigrams.has(trigram)) return true;
+    }
+  }
+
+  // Check stemmed word overlap
+  const sStemmed = new Set(sWords.map(stemWord));
+  const tStemmed = tWords.map(stemWord);
+  const matchingWords = tStemmed.filter((word) => sStemmed.has(word)).length;
+  const overlapRatio = matchingWords / tWords.length;
+
+  // If user says an interrupt command, ensure it's not just repeating assistant's words
+  if (hasInterruptCommand) {
+    // If the words accompanying the command match the assistant's speech, it is echo
+    return overlapRatio >= 0.70;
+  }
+
+  // For general utterances without a command word, if >= 38% of words match assistant speech, it's echo
+  if (overlapRatio >= 0.38) return true;
+
+  return false;
 }
 
 function isTableSeparator(line) {
