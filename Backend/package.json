@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
-    "test": "node --test"
+    "test": "node --test",
+    "test:ai": "node --test \"tests/ai/*.test.js\""
   },
   "keywords": [],
   "author": "",
@@ -13,7 +14,6 @@
   "description": "",
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",
-    "@technicalinnoknowvex-ai/orvexa": "1.0.2",
     "cors": "^2.8.6",
     "dotenv": "^18.0.4",
     "express": "^5.2.1",

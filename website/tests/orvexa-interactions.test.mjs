@@ -4,7 +4,7 @@ import {
   followUpPrompts,
   isLikelySpeechEcho,
   prepareSpeechText,
-} from "@technicalinnoknowvex-ai/orvexa/client/helpers";
+} from "../src/components/orvexa/orvexa-interactions.mjs";
 
 test("suggests career follow-ups for resume questions", () => {
   assert.match(followUpPrompts("Can you review my resume?")[0], /resume/i);
@@ -37,5 +37,12 @@ test("removes Markdown list and horizontal-rule syntax but preserves hyphenated 
   assert.equal(
     prepareSpeechText("## Career support\n\n- Resume-building help\n---\n- Interview preparation"),
     "Career support. Resume-building help. Interview preparation",
+  );
+});
+
+test("strips raw URLs and emojis from spoken text", () => {
+  assert.equal(
+    prepareSpeechText("Check details at https://innoknowvex.in/programs/ai 🚀! Welcome 👋"),
+    "Check details at! Welcome",
   );
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import OrvexaClient from "@technicalinnoknowvex-ai/orvexa/client";
+import OrvexaClient from "./OrvexaClient";
 import Header from "../layout/Header/Header";
 import {
   clearAuthStorage,

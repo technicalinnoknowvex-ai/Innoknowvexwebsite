@@ -11,7 +11,7 @@ const {
   createAssistantController: createOrvexaAssistantController,
   searchPublicWebsite,
   ...orvexaExports
-} = require("@technicalinnoknowvex-ai/orvexa/server");
+} = require("../ai");
 
 function profileClientForToken(accessToken) {
   return createClient(supabaseUrl, supabaseAnonKey, {
