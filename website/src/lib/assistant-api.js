@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "../services/api";
+import { API_BASE_URL } from "../services/api.js";
 
 async function assistantRequest(accessToken, path, options = {}) {
   let response;
@@ -60,10 +60,22 @@ export async function sendAssistantMessage(
     throw new Error("ORVEXA returned an invalid chat response. Please try again.");
   }
 
-  return {
+  const assistantMessage = {
     reply: result.data.reply,
     conversationId: responseConversationId || null,
   };
+  if (voiceMode) {
+    if (typeof result.data.spokenReply === "string" && result.data.spokenReply.trim()) {
+      assistantMessage.spokenReply = result.data.spokenReply;
+    }
+    if (
+      typeof result.data.spokenReplyError === "string" &&
+      result.data.spokenReplyError.trim()
+    ) {
+      assistantMessage.spokenReplyError = result.data.spokenReplyError;
+    }
+  }
+  return assistantMessage;
 }
 
 export async function listAssistantConversations(accessToken) {

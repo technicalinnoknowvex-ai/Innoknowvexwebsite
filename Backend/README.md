@@ -36,10 +36,11 @@ choosing a model. Never expose the key in frontend code or a `NEXT_PUBLIC_*` var
 
 Authenticated clients send `{ "message": "...", "conversationId": "..." }` to
 `POST /api/assistant/chat`; omit `conversationId` to start a new conversation.
-Set `"voiceMode": true` for a concise, natural spoken-style reply without
-Markdown formatting; omit it for the normal chat response. ORVEXA can also
-answer general conversation and knowledge questions, in addition to
-Innoknowvex-specific questions grounded in supplied facts. The response includes
+Set `"voiceMode": true` to receive a separate concise, natural `spokenReply`
+alongside the normal chat `reply`; `spokenReplyError` is returned if speech
+wording could not be generated. Omit it for a normal chat response. ORVEXA can
+also answer general conversation and knowledge questions, in addition to
+Innoknowvex-specific questions grounded in supplied facts. Responses include
 the created or continued `conversationId`.
 `GET /api/assistant/conversations` lists the learner's recent chats, and
 `GET /api/assistant/conversations/:id/messages` loads a chat transcript. The
