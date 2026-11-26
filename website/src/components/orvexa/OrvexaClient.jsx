@@ -219,13 +219,13 @@ export default function OrvexaPage({
       if (voiceModeActiveRef.current) {
         setVoiceSessionStatus("speaking");
         if (voiceBargeInTimerRef.current) window.clearTimeout(voiceBargeInTimerRef.current);
-        // Start barge-in listening after 600ms grace period so audio output stabilizes
+        // Start barge-in listening after 300ms grace period so audio output stabilizes
         voiceBargeInTimerRef.current = window.setTimeout(() => {
           voiceBargeInTimerRef.current = null;
           if (speechUtteranceRef.current === utterance && voiceModeActiveRef.current) {
             voiceCaptureRef.current?.({ bargeIn: true });
           }
-        }, 600);
+        }, 300);
       }
     };
     utterance.onend = () => {
@@ -877,8 +877,8 @@ export default function OrvexaPage({
       if (!fullTranscript) return;
 
       if (bargeIn && voiceBargeInRef.current) {
-        // Must be at least 400ms since speech started to avoid initial speaker burst
-        if (Date.now() - voiceSpeechStartTimeRef.current < 400) return;
+        // Must be at least 250ms since speech started to avoid initial speaker burst
+        if (Date.now() - voiceSpeechStartTimeRef.current < 250) return;
 
         // Check if the microphone is picking up ORVEXA's own speech
         if (isLikelySpeechEcho(fullTranscript, voiceSpokenTextRef.current)) {
@@ -962,6 +962,11 @@ export default function OrvexaPage({
       if (!transcript) {
         setVoiceSessionStatus("listening");
         setNotice("I’m listening. Tap the orb or speak whenever you’re ready.");
+        return;
+      }
+      if (/^(stop|quiet|cancel|pause|shut up|hush|silence)$/i.test(transcript.replace(/[.,!?]/g, "").trim())) {
+        setVoiceSessionStatus("listening");
+        setNotice("Stopped. Speak or ask whenever you’re ready.");
         return;
       }
       setVoiceTranscriptPreview(transcript);

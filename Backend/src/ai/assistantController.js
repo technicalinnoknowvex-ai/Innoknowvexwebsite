@@ -479,15 +479,15 @@ async function generateSpokenReply({ fetchImpl, apiKey, model, message, reply })
         messages: [
           {
             role: "system",
-            content: "You are preparing a spoken version of ORVEXA's answer for a live conversation. Rephrase it naturally rather than reading it verbatim. Keep it warm, concise, and easy to say aloud in one to three short sentences. Preserve the answer's meaning, facts, and caveats exactly. Do not add information, headings, lists, Markdown, or stage directions.",
+            content: "You are preparing a natural spoken reply for ORVEXA in a live conversation. Rephrase it naturally rather than reading it verbatim. Speak like a real human: keep it warm, direct, and concise in one or two short sentences (maximum 30 words total). Deliver only the essential takeaway or answer directly. Never recite lists, bullet points, full tables, or markdown formatting.",
           },
           {
             role: "user",
             content: `LEARNER QUESTION:\n${message}\n\nTEXT ANSWER TO REPHRASE:\n${reply}`,
           },
         ],
-        temperature: 0.6,
-        max_completion_tokens: 250,
+        temperature: 0.5,
+        max_completion_tokens: 75,
       }),
       signal: AbortSignal.timeout(30000),
     },
@@ -504,7 +504,7 @@ async function generateSpokenReply({ fetchImpl, apiKey, model, message, reply })
 }
 
 function plainSpokenText(content) {
-  return String(content || "")
+  const cleaned = String(content || "")
     .replace(/```[\s\S]*?```/g, "")
     .replace(/https?:\/\/\S+/gi, "")
     .replace(/!\[([^\]]*)\]\([^)]+\)/g, "$1")
@@ -512,10 +512,37 @@ function plainSpokenText(content) {
     .replace(/[#*_`>|]/g, "")
     .replace(/^\s*(?:[-*+]|\d+[.)])\s+/gm, "")
     .replace(/\r?\n+/g, ". ")
-    .replace(/\s+/g, " ")
+    .replace(/:\s*\./g, ".")
+    .replace(/\s+([,.;!?])/g, "$1")
     .replace(/([.!?])(?:\s*[.!?])+/g, "$1")
-    .trim()
-    .slice(0, 5000);
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!cleaned) return "";
+
+  const allWords = cleaned.split(/\s+/).filter(Boolean);
+  if (allWords.length <= 35) {
+    return cleaned;
+  }
+
+  // Cap to at most first 2-3 complete sentences (maximum ~35 words)
+  const sentences = cleaned.match(/[^.!?]+[.!?]+|\S+$/g) || [cleaned];
+  const selected = [];
+  let totalWords = 0;
+
+  for (const sentence of sentences) {
+    const trimmed = sentence.trim();
+    if (!trimmed) continue;
+    const count = trimmed.split(/\s+/).filter(Boolean).length;
+    if (selected.length >= 1 && (totalWords + count > 35 || (selected.length >= 2 && totalWords >= 15))) {
+      break;
+    }
+    selected.push(trimmed);
+    totalWords += count;
+    if (totalWords >= 28 || (selected.length >= 3 && totalWords >= 15)) break;
+  }
+
+  return selected.join(" ").trim() || allWords.slice(0, 30).join(" ");
 }
 
 function createAssistantController({

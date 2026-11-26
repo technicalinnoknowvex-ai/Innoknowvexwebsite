@@ -56,9 +56,42 @@ test("removes Markdown list and horizontal-rule syntax but preserves hyphenated 
   );
 });
 
-test("strips raw URLs and emojis from spoken text", () => {
+test("recognizes questions about the course topic as genuine user interruptions", () => {
   assert.equal(
-    prepareSpeechText("Check details at https://innoknowvex.in/programs/ai 🚀! Welcome 👋"),
-    "Check details at! Welcome",
+    isLikelySpeechEcho("how long is this machine learning course?", "The machine learning course covers deep learning and neural networks"),
+    false,
   );
+  assert.equal(
+    isLikelySpeechEcho("what is the fee for machine learning?", "The machine learning course covers deep learning and neural networks"),
+    false,
+  );
+  assert.equal(
+    isLikelySpeechEcho("can you tell me more?", "The machine learning course covers deep learning and neural networks"),
+    false,
+  );
+  assert.equal(
+    isLikelySpeechEcho("hold on", "The machine learning course covers deep learning and neural networks"),
+    false,
+  );
+});
+
+test("caps long multi-paragraph content to concise spoken sentences", () => {
+  const longContent = `Here are the current training and internship durations:
+
+**Artificial Intelligence**
+- Training duration: 8 weeks
+- Internship duration: 4 weeks
+
+**Machine Learning**
+- Training duration: 10 weeks
+- Internship duration: 6 weeks
+
+**Web Development**
+- Training duration: 12 weeks
+- Internship duration: 8 weeks`;
+
+  const spoken = prepareSpeechText(longContent);
+  const wordCount = spoken.split(/\s+/).filter(Boolean).length;
+  assert.ok(wordCount <= 35, `Expected word count <= 35, got ${wordCount}`);
+  assert.match(spoken, /training and internship durations/i);
 });

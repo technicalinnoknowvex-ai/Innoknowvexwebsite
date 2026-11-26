@@ -14,22 +14,41 @@ export function followUpPrompts(question = "") {
 
 const INTERRUPT_COMMANDS = new Set([
   "stop", "wait", "hold", "pause", "quiet", "cancel", "shut",
-  "excuse", "listen", "hang"
+  "excuse", "listen", "hang", "hush", "silence", "enough"
+]);
+
+const QUESTION_OR_INTERRUPT_STARTERS = new Set([
+  "what", "whats", "how", "hows", "why", "where", "wheres", "when", "whens",
+  "who", "which", "can", "could", "would", "will", "should", "tell", "explain",
+  "is", "are", "do", "does", "did", "have", "has", "hey", "hello", "hi", "orvexa",
+  "no", "nope", "actually", "sorry"
 ]);
 
 function stemWord(word) {
   return String(word || "")
     .toLowerCase()
-    .replace(/(?:ing|edly|edly|ed|es|s|ly|ment|tion)$/, "")
+    .replace(/s$/, "")
+    .replace(/(?:ing|edly|ed|es|ly|ment|tion)$/, "")
     .trim();
 }
 
-function extractNGrams(words, n) {
-  const ngrams = new Set();
-  for (let index = 0; index <= words.length - n; index += 1) {
-    ngrams.add(words.slice(index, index + n).join(" "));
+function wordsMatch(w1, w2) {
+  return w1 === w2 || stemWord(w1) === stemWord(w2);
+}
+
+function findContiguousSubsequence(needle, haystack) {
+  if (!needle.length || !haystack.length || needle.length > haystack.length) return false;
+  for (let i = 0; i <= haystack.length - needle.length; i += 1) {
+    let match = true;
+    for (let j = 0; j < needle.length; j += 1) {
+      if (!wordsMatch(needle[j], haystack[i + j])) {
+        match = false;
+        break;
+      }
+    }
+    if (match) return true;
   }
-  return ngrams;
+  return false;
 }
 
 export function isLikelySpeechEcho(transcript = "", spokenText = "") {
@@ -41,44 +60,51 @@ export function isLikelySpeechEcho(transcript = "", spokenText = "") {
   const sWords = normSpoken.match(/[a-z0-9]+/g) || [];
   if (!tWords.length || !sWords.length) return false;
 
+  const firstWord = tWords[0];
   const hasInterruptCommand = tWords.some((word) => INTERRUPT_COMMANDS.has(word));
+  const isQuestionOrInterruptStarter = QUESTION_OR_INTERRUPT_STARTERS.has(firstWord) || hasInterruptCommand;
 
-  // Single or double stray words without an interrupt command are almost always speaker leak / mic clicks
-  if (tWords.length <= 2 && !hasInterruptCommand) return true;
+  // Check if transcript is an exact or stemmed contiguous segment of what the assistant is speaking
+  const isContiguousEcho = findContiguousSubsequence(tWords, sWords);
 
-  // Bigram and trigram phrase overlap check
-  const sBigrams = extractNGrams(sWords, 2);
-  const sTrigrams = extractNGrams(sWords, 3);
-  const tBigrams = extractNGrams(tWords, 2);
-
-  let matchingBigrams = 0;
-  for (const bigram of tBigrams) {
-    if (sBigrams.has(bigram)) matchingBigrams += 1;
+  // If the user's transcript starts with an interruption command or question starter:
+  if (isQuestionOrInterruptStarter) {
+    // If the assistant was literally speaking these exact contiguous words at this moment, it is echo
+    if (isContiguousEcho) {
+      return true;
+    }
+    // Otherwise, the user is interrupting or asking a new question!
+    return false;
   }
 
-  // If 2 or more bigrams match, or any trigram matches, it is definitely assistant speech
-  if (matchingBigrams >= 2) return true;
-  if (tWords.length >= 3) {
-    const tTrigrams = extractNGrams(tWords, 3);
-    for (const trigram of tTrigrams) {
-      if (sTrigrams.has(trigram)) return true;
+  // If the transcript matches a contiguous slice of assistant speech (at least 2 words), it's definitely echo
+  if (tWords.length >= 2 && isContiguousEcho) {
+    return true;
+  }
+
+  // 1 or 2 stray words without interrupt or question intent:
+  // If they exist anywhere in the assistant's speech, treat as speaker bleed/click
+  if (tWords.length <= 2) {
+    const sWordSet = new Set(sWords.map(stemWord));
+    const allMatch = tWords.every((word) => sWordSet.has(stemWord(word)));
+    if (allMatch) return true;
+    return false;
+  }
+
+  // For longer utterances (3+ words), check sequential bigrams
+  let matchingBigrams = 0;
+  for (let i = 0; i < tWords.length - 1; i += 1) {
+    const pair = [tWords[i], tWords[i + 1]];
+    if (findContiguousSubsequence(pair, sWords)) {
+      matchingBigrams += 1;
     }
   }
 
-  // Check stemmed word overlap
-  const sStemmed = new Set(sWords.map(stemWord));
-  const tStemmed = tWords.map(stemWord);
-  const matchingWords = tStemmed.filter((word) => sStemmed.has(word)).length;
-  const overlapRatio = matchingWords / tWords.length;
-
-  // If user says an interrupt command, ensure it's not just repeating assistant's words
-  if (hasInterruptCommand) {
-    // If the words accompanying the command match the assistant's speech, it is echo
-    return overlapRatio >= 0.70;
+  // If more than 60% of word pairs appear sequentially in assistant speech, it's echo
+  const bigramRatio = matchingBigrams / (tWords.length - 1);
+  if (bigramRatio >= 0.60) {
+    return true;
   }
-
-  // For general utterances without a command word, if >= 38% of words match assistant speech, it's echo
-  if (overlapRatio >= 0.38) return true;
 
   return false;
 }
@@ -133,12 +159,37 @@ export function prepareSpeechText(content = "") {
     );
   }
 
-  return spokenLines
+  const rawCleaned = spokenLines
     .filter(Boolean)
     .join(". ")
+    .replace(/:\s*\./g, ".")
     .replace(/\s+([,.;!?])/g, "$1")
     .replace(/([.!?])(?:\s*[.!?])+/g, "$1")
     .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 5000);
+    .trim();
+
+  const allWords = rawCleaned.split(/\s+/).filter(Boolean);
+  if (allWords.length <= 35) {
+    return rawCleaned;
+  }
+
+  // Cap long text to concise spoken sentences (at most 2-3 sentences, max ~35 words)
+  const sentences = rawCleaned.match(/[^.!?]+[.!?]+|\S+$/g) || [rawCleaned];
+  const selected = [];
+  let totalWords = 0;
+
+  for (const sentence of sentences) {
+    const trimmed = sentence.trim();
+    if (!trimmed) continue;
+    const count = trimmed.split(/\s+/).filter(Boolean).length;
+    if (selected.length >= 1 && (totalWords + count > 35 || (selected.length >= 2 && totalWords >= 15))) {
+      break;
+    }
+    selected.push(trimmed);
+    totalWords += count;
+    if (totalWords >= 28 || (selected.length >= 3 && totalWords >= 15)) break;
+  }
+
+  const result = selected.join(" ").trim();
+  return result || allWords.slice(0, 30).join(" ");
 }
