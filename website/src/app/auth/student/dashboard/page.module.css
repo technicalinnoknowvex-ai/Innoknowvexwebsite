@@ -227,6 +227,7 @@
 }
 
 .portfolioField input,
+.portfolioField select,
 .portfolioField textarea {
   width: 100%;
   min-height: 44px;
@@ -245,6 +246,7 @@
 }
 
 .portfolioField input:focus,
+.portfolioField select:focus,
 .portfolioField textarea:focus {
   border-color: #159fe0;
   box-shadow: 0 0 0 3px rgb(21 159 224 / 12%);
@@ -254,6 +256,37 @@
   color: #7a8b99;
   font-size: 11px;
   font-weight: 450;
+}
+
+.profileSummary {
+  margin: 0;
+  color: #64788a;
+  font-size: 13px;
+  line-height: 1.6;
+  text-transform: capitalize;
+}
+
+.profileSummaryGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.profileConsent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: #354b60;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.profileConsent input {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  margin: 2px 0 0;
+  accent-color: #078fce;
 }
 
 .projectEditorHeader {
@@ -519,6 +552,10 @@
   }
 
   .projectList {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .profileSummaryGrid {
     grid-template-columns: minmax(0, 1fr);
   }
 }

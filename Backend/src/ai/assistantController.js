@@ -733,7 +733,7 @@ function createAssistantController({
     ].join(" ");
     const prompt = [
       "Use the supplied information to answer Innoknowvex questions accurately. Treat it as private supporting information: never mention a catalog, database, table, FAQ, website page, record, or source, and never say something is 'listed' or 'according to' one. Answer directly in natural language.",
-      "When relevant company information is supplied, use it to answer company questions even if the learner phrases the question differently. Do not apologize or say the information is unavailable when it answers the question. Phrase facts naturally and do not invent additional company claims.",
+      "When relevant company information is supplied, use it to answer company questions even if the learner phrases the question differently. Treat company FAQ entries as factual references, not fixed scripts. Do not apologize or say the information is unavailable when it answers the question. Phrase facts naturally and do not invent additional company claims.",
       "Resume-building training and LinkedIn profile guidance are general career-readiness support across Innoknowvex training sessions, not exclusive to one course. Do not attribute this support only to a course unless the learner explicitly asks about that course.",
       "When asked about fees, prices, or discounts, report the exact current and actual price for the named course and each available plan. Include the currency. Never calculate, guess, or substitute another course's price.",
       "When a price question has no named course, show the available course names and ask which one they mean. Never ask for a location unless the supplied information says price depends on location.",

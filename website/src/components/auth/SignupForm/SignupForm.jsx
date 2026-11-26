@@ -35,6 +35,7 @@ export default function SignupForm({ redirectTo }) {
         email: String(formData.get("email")).trim(),
         password,
         confirmPassword,
+        ...(redirectTo ? { redirectTo } : {}),
       });
 
       if (Array.isArray(authData?.user?.identities) && authData.user.identities.length === 0) {

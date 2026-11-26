@@ -58,16 +58,27 @@ async function updateAuthenticatedUser(accessToken, updates) {
 
 async function register(request, response) {
   const { fullName, email, password } = requireRegistration(request);
-  const emailRedirectPath =
-    request.body?.redirectTo === "/auth/admin/login"
-      ? "/auth/admin/login"
-      : "/auth/student/login";
+  const isAdminSignup = request.body?.redirectTo === "/auth/admin/login";
+  const emailRedirectUrl = new URL(
+    isAdminSignup ? "/auth/admin/login" : "/auth/student/login",
+    frontendUrl,
+  );
+  const postVerificationPath = request.body?.redirectTo;
+  if (
+    !isAdminSignup &&
+    typeof postVerificationPath === "string" &&
+    postVerificationPath.startsWith("/") &&
+    !postVerificationPath.startsWith("//") &&
+    !postVerificationPath.includes("\\")
+  ) {
+    emailRedirectUrl.searchParams.set("next", postVerificationPath);
+  }
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
       data: { full_name: fullName },
-      emailRedirectTo: new URL(emailRedirectPath, frontendUrl).toString(),
+      emailRedirectTo: emailRedirectUrl.toString(),
     },
   });
 
@@ -107,7 +118,9 @@ async function getStudentPortfolio(request, response) {
   const authenticatedSupabase = createAuthenticatedClient(accessTokenFromRequest(request));
   const { data, error } = await authenticatedSupabase
     .from("user_profiles_new")
-    .select("skills, projects")
+    .select(
+      "skills, learning_skills, projects, current_status, education_level, experience, interests, goals, ai_personalization_consent, ai_personalization_consent_provider, onboarding_completed",
+    )
     .eq("id", request.user.id)
     .maybeSingle();
 
@@ -115,28 +128,66 @@ async function getStudentPortfolio(request, response) {
   response.json({
     data: {
       skills: data?.skills || [],
+      learning_skills: data?.learning_skills || [],
       projects: data?.projects || [],
+      current_status: data?.current_status || null,
+      education_level: data?.education_level || null,
+      experience: data?.experience || [],
+      interests: data?.interests || [],
+      goals: data?.goals || [],
+      ai_personalization_consent: data?.ai_personalization_consent ?? false,
+      ai_personalization_consent_provider: data?.ai_personalization_consent_provider || null,
+      onboarding_completed: data?.onboarding_completed ?? false,
     },
   });
 }
 
 async function updateStudentPortfolio(request, response) {
-  const { skills, projects } = requireStudentPortfolio(request);
+  const profile = requireStudentPortfolio(request);
   const authenticatedSupabase = createAuthenticatedClient(accessTokenFromRequest(request));
-  const { data, error } = await authenticatedSupabase
-    .from("user_profiles_new")
-    .update({ skills, projects })
-    .eq("id", request.user.id)
-    .select("skills, projects")
-    .single();
+  const isConsentWithdrawal =
+    profile.ai_personalization_consent === false &&
+    profile.onboarding_completed === true &&
+    Object.keys(profile).length === 3;
+  const profileQuery = isConsentWithdrawal
+    ? authenticatedSupabase
+        .from("user_profiles_new")
+        .update(profile)
+        .eq("id", request.user.id)
+    : authenticatedSupabase
+        .from("user_profiles_new")
+        .upsert(
+          {
+            id: request.user.id,
+            full_name:
+              request.user.user_metadata?.full_name ||
+              request.user.email?.split("@")[0] ||
+              "Student",
+            email: request.user.email,
+            ...profile,
+          },
+          { onConflict: "id" },
+        );
+  const { data, error } = await profileQuery.select(
+    "skills, learning_skills, projects, current_status, education_level, experience, interests, goals, ai_personalization_consent, ai_personalization_consent_provider, onboarding_completed",
+  ).single();
 
   if (error) throw error;
   response.json({
     data: {
-      skills: data.skills,
-      projects: data.projects,
+      skills: data.skills || [],
+      learning_skills: data.learning_skills || [],
+      projects: data.projects || [],
+      current_status: data.current_status || null,
+      education_level: data.education_level || null,
+      experience: data.experience || [],
+      interests: data.interests || [],
+      goals: data.goals || [],
+      ai_personalization_consent: data.ai_personalization_consent ?? false,
+      ai_personalization_consent_provider: data.ai_personalization_consent_provider || null,
+      onboarding_completed: data.onboarding_completed ?? false,
     },
-    message: "Student portfolio updated.",
+    message: "Learner profile updated.",
   });
 }
 
