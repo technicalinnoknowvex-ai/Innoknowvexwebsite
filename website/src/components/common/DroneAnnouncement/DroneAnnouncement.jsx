@@ -5,9 +5,13 @@ import styles from "./DroneAnnouncement.module.css";
 
 const SOURCE_WIDTH = 960;
 const SOURCE_HEIGHT = 540;
-const PLAYBACK_RATE = 0.15;
-const FLIGHT_FALLBACK_DURATION = 53000;
-const VIDEO_URL = "/announcements/gree_drone_banner.mp4";
+const PLAYBACK_RATE = 0.2;
+const VIDEO_START_TIME = 2;
+const BANNER_OPEN_VIDEO_TIME = 3.6;
+const CENTER_HOLD_VIDEO_TIME = 4.6;
+const CENTER_HOLD_DURATION = 2000;
+const FLIGHT_FALLBACK_DURATION = 40000;
+const VIDEO_URL = "/announcements/dronenew.mp4";
 
 function removeGreenScreen(context) {
   const { data } = context.getImageData(0, 0, SOURCE_WIDTH, SOURCE_HEIGHT);
@@ -17,7 +21,7 @@ function removeGreenScreen(context) {
     const green = data[index + 1];
     const blue = data[index + 2];
     const greenExcess = green - Math.max(red, blue);
-    const keyProgress = Math.max(0, Math.min((greenExcess - 24) / 46, 1));
+    const keyProgress = Math.max(0, Math.min((greenExcess - 8) / 28, 1));
     const smoothKey = keyProgress * keyProgress * (3 - 2 * keyProgress);
 
     data[index + 3] = Math.round(data[index + 3] * (1 - smoothKey));
@@ -35,22 +39,14 @@ export default function DroneAnnouncement() {
   const flightRef = useRef(null);
   const canvasRef = useRef(null);
   const videoRef = useRef(null);
-  const pointerRef = useRef(null);
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-    const handlePointerMove = (event) => {
-      if (event.pointerType === "touch") return;
-      pointerRef.current = { x: event.clientX, y: event.clientY };
-    };
-
-    const timeoutId = window.setTimeout(() => setIsVisible(true), 3000);
-    window.addEventListener("pointermove", handlePointerMove, { passive: true });
+    const timeoutId = window.setTimeout(() => setIsVisible(true), 5000);
 
     return () => {
       window.clearTimeout(timeoutId);
-      window.removeEventListener("pointermove", handlePointerMove);
     };
   }, []);
 
@@ -63,39 +59,51 @@ export default function DroneAnnouncement() {
     const context = canvas?.getContext("2d", { willReadFrequently: true });
     if (!canvas || !flight || !video || !context) return;
 
+    const isMobile = window.matchMedia("(max-width: 700px)").matches;
+    const videoStartTime = isMobile ? BANNER_OPEN_VIDEO_TIME : VIDEO_START_TIME;
     let cancelled = false;
     let animationFrameId;
     let startTime;
-    let pausedAt;
+    let pausedDuration = 0;
+    let holdStartedAt;
+    let holdProgress;
     let lastDrawTime = 0;
-    let isPointerPaused = false;
     let didStartPlayback = false;
+    let isHolding = false;
+    let didHold = false;
 
     const render = (now) => {
       if (cancelled) return;
 
-      const bounds = flight.getBoundingClientRect();
-      const pointer = pointerRef.current;
-      const pointerIsOverFlight =
-        pointer &&
-        pointer.x >= bounds.left &&
-        pointer.x <= bounds.right &&
-        pointer.y >= bounds.top &&
-        pointer.y <= bounds.bottom;
+      const duration = Number.isFinite(video.duration)
+        ? ((video.duration - videoStartTime) * 1000) / PLAYBACK_RATE
+        : FLIGHT_FALLBACK_DURATION;
+      const elapsed = isHolding
+        ? holdProgress * duration
+        : now - startTime - pausedDuration;
+      const progress = Math.min(elapsed / duration, 1);
+      const bannerOpenProgress = Math.min(
+        (BANNER_OPEN_VIDEO_TIME - videoStartTime) /
+          (video.duration - videoStartTime),
+        1,
+      );
+      const centerHoldProgress = Math.min(
+        (CENTER_HOLD_VIDEO_TIME - videoStartTime) /
+          (video.duration - videoStartTime),
+        1,
+      );
 
-      if (pointerIsOverFlight) {
-        if (!isPointerPaused) {
-          isPointerPaused = true;
-          pausedAt = now;
-          video.pause();
-        }
-        animationFrameId = window.requestAnimationFrame(render);
-        return;
+      if (!isMobile && !didHold && !isHolding && progress >= centerHoldProgress) {
+        isHolding = true;
+        holdStartedAt = now;
+        holdProgress = centerHoldProgress;
+        video.pause();
       }
 
-      if (isPointerPaused) {
-        startTime += now - pausedAt;
-        isPointerPaused = false;
+      if (isHolding && now - holdStartedAt >= CENTER_HOLD_DURATION) {
+        pausedDuration += now - holdStartedAt;
+        isHolding = false;
+        didHold = true;
         video.play().catch((error) => {
           if (!cancelled) {
             console.error("The drone announcement video could not resume.", error);
@@ -104,23 +112,31 @@ export default function DroneAnnouncement() {
         });
       }
 
-      const duration = Number.isFinite(video.duration)
-        ? (video.duration * 1000) / PLAYBACK_RATE
-        : FLIGHT_FALLBACK_DURATION;
-      const elapsed = now - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      const easedProgress =
-        progress < 0.5
-          ? 4 * progress * progress * progress
-          : 1 - Math.pow(-2 * progress + 2, 3) / 2;
       const width = flight.offsetWidth;
-      const height = flight.offsetHeight;
-      const x =
-        -width * 0.85 + (window.innerWidth + width * 1.05) * easedProgress;
-      const y = window.innerHeight + height - (window.innerHeight + height * 2.1) * easedProgress;
-      const float = Math.sin(elapsed / 900) * 4;
+      const startX = -width * 1.1;
+      const centerX = (window.innerWidth - width) / 2;
+      const endX = window.innerWidth + width * 1.1;
+      let x;
 
-      flight.style.transform = `translate3d(${x}px, ${y + float}px, 0)`;
+      if (isMobile) {
+        x = startX + (endX - startX) * progress;
+      } else if (progress <= bannerOpenProgress) {
+        x = startX + (0 - startX) * (progress / bannerOpenProgress);
+      } else if (progress <= centerHoldProgress) {
+        x =
+          centerX *
+          ((progress - bannerOpenProgress) /
+            (centerHoldProgress - bannerOpenProgress));
+      } else {
+        x =
+          centerX +
+          (endX - centerX) *
+            ((progress - centerHoldProgress) / (1 - centerHoldProgress));
+      }
+
+      const float = Math.sin(elapsed / 900) * 3;
+
+      flight.style.transform = `translate3d(${x}px, calc(-50% + ${float}px), 0)`;
 
       if (
         video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA &&
@@ -131,7 +147,7 @@ export default function DroneAnnouncement() {
         lastDrawTime = now;
       }
 
-      if (progress === 1) {
+      if (!isHolding && progress === 1) {
         setIsVisible(false);
         return;
       }
@@ -143,16 +159,20 @@ export default function DroneAnnouncement() {
       if (cancelled || didStartPlayback) return;
       didStartPlayback = true;
 
+      video.currentTime = videoStartTime;
       video.playbackRate = PLAYBACK_RATE;
-      video.play().then(() => {
-        if (cancelled) return;
-        startTime = performance.now();
-        animationFrameId = window.requestAnimationFrame(render);
-      }).catch((error) => {
-        if (cancelled) return;
-        console.error("The drone announcement video could not be played.", error);
-        setIsVisible(false);
-      });
+      video.play().then(
+        () => {
+          if (cancelled) return;
+          startTime = performance.now();
+          animationFrameId = window.requestAnimationFrame(render);
+        },
+        (error) => {
+          if (cancelled) return;
+          console.error("The drone announcement video could not be played.", error);
+          setIsVisible(false);
+        },
+      );
     };
 
     video.addEventListener("canplay", start, { once: true });
@@ -166,10 +186,11 @@ export default function DroneAnnouncement() {
     };
   }, [isVisible]);
 
-  if (!isVisible) return null;
-
   return (
-    <div className={styles.overlay} aria-hidden="true">
+    <div
+      className={`${styles.overlay} ${isVisible ? styles.visible : ""}`}
+      aria-hidden="true"
+    >
       <div ref={flightRef} className={styles.flight}>
         <video
           ref={videoRef}

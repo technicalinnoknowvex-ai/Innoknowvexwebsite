@@ -159,11 +159,17 @@ function PartnerVisualization({ partners, category, activeCategory }) {
         aria-hidden="true"
       >
         {category === "hiring_partner" && (
-          <>
-            <path className={styles.flowPath} d="M 4 22 C 27 20, 34 38, 50 50 C 66 62, 73 80, 96 78" />
-            <path className={styles.flowPath} d="M 4 50 C 27 50, 35 50, 50 50 C 65 50, 73 50, 96 50" />
-            <path className={styles.flowPath} d="M 4 78 C 27 80, 34 62, 50 50 C 66 38, 73 20, 96 22" />
-          </>
+          nodes.map((node, index) => (
+            <line
+              key={node.id}
+              x1="50"
+              y1="50"
+              x2={node.x}
+              y2={node.y}
+              pathLength="1"
+              style={{ "--node-index": index }}
+            />
+          ))
         )}
         {category === "brand" &&
           nodes.map(

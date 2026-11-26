@@ -152,18 +152,6 @@
   animation: drawConnection 850ms calc(180ms + var(--node-index, 0) * 55ms) ease-out forwards;
 }
 
-.flowPath {
-  fill: none;
-  stroke: #70a7d7;
-  stroke-dasharray: 1.4 1.8;
-  stroke-opacity: 0.36;
-  stroke-width: 0.3;
-}
-
-.section[data-visible="true"] .flowPath {
-  animation: flowTrace 9s linear infinite;
-}
-
 .nodes {
   position: absolute;
   inset: 0;
@@ -192,7 +180,7 @@
   padding: 8px 12px;
   border: 1px solid rgb(221 233 246 / 92%);
   border-radius: 13px;
-  background: rgb(255 255 255 / 96%);
+  background: #fff;
   box-shadow: 0 8px 24px rgb(23 63 104 / 9%);
   overflow: hidden;
 }
@@ -481,12 +469,6 @@
   }
 }
 
-@keyframes flowTrace {
-  to {
-    stroke-dashoffset: -19.2;
-  }
-}
-
 @media (max-width: 1180px) {
   .networkGrid {
     grid-template-columns: minmax(0, 1fr);
@@ -583,8 +565,7 @@
   .orbit,
   .networkNode,
   .centerRing,
-  .connections line,
-  .flowPath {
+  .connections line {
     animation: none;
   }
 

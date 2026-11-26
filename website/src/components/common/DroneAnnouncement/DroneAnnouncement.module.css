@@ -5,15 +5,20 @@
   overflow: hidden;
   pointer-events: none;
   contain: paint;
+  visibility: hidden;
+}
+
+.visible {
+  visibility: visible;
 }
 
 .flight {
   position: absolute;
-  top: 0;
+  top: clamp(180px, 42vh, 420px);
   left: 0;
   width: min(56vw, 880px, 88.88vh);
   aspect-ratio: 16 / 9;
-  transform: translate3d(-110%, 100vh, 0);
+  transform: translate3d(-110%, -50%, 0);
   will-change: transform;
   filter: drop-shadow(0 10px 12px rgb(15 23 42 / 18%));
 }
@@ -36,6 +41,7 @@
 
 @media (max-width: 700px) {
   .flight {
+    top: 36vh;
     width: min(78vw, 67.55vh);
   }
 }
